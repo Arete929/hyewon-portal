@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>명단 가져오기 (관리자)</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&family=Noto+Serif+KR:wght@600;700&display=swap">
+<style>
+  :root {
+    --bg:#F6F5F1; --surface:#FFFFFF; --text:#1C1B1A; --text2:#6B6863; --text3:#A8A49A;
+    --border:#E3E0D8; --accent:#2F6FED; --accent-dark:#1F52BE;
+    --success-bg:#E7F6EC; --success-text:#1F7A3D;
+    --error-bg:#FDEBEB; --error-text:#C22B2B;
+    --warn-bg:#FFF4E0; --warn-text:#9A6400;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: 'Noto Sans KR', sans-serif; }
+  .serif { font-family: 'Noto Serif KR', serif; }
+  #app { max-width: 640px; margin: 0 auto; min-height: 100vh; padding: 28px 20px 60px; }
+  h1 { font-size: 22px; font-weight: 700; margin: 0 0 6px; }
+  .lead { font-size: 13px; color: var(--text2); margin: 0 0 20px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 22px 20px; margin-bottom: 16px; }
+  .field { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+  .field:last-child { margin-bottom: 0; }
+  label { font-size: 13px; font-weight: 600; color: var(--text2); }
+  input[type=text], input[type=password], textarea { width: 100%; box-sizing: border-box; padding: 12px 14px; font-size: 15px; border: 1px solid var(--border); border-radius: 10px; background: #FCFCFB; font-family: inherit; color: var(--text); }
+  textarea { min-height: 220px; font-family: ui-monospace, Menlo, monospace; font-size: 13px; line-height: 1.6; white-space: pre; }
+  .btn { display: inline-block; text-align: center; text-decoration: none; background: var(--accent); color: #fff; font-size: 15px; font-weight: 600; padding: 12px 20px; border-radius: 10px; border: none; cursor: pointer; font-family: inherit; }
+  .btn:hover { background: var(--accent-dark); }
+  .btn:disabled { opacity: 0.5; cursor: default; }
+  .hint { font-size: 12px; color: var(--text3); }
+  .msg { padding: 10px 12px; border-radius: 8px; font-size: 13px; line-height: 1.5; margin-bottom: 16px; }
+  .msg.error { background: var(--error-bg); color: var(--error-text); }
+  .msg.ok { background: var(--success-bg); color: var(--success-text); }
+  .msg.warn { background: var(--warn-bg); color: var(--warn-text); }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 10px; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border); }
+  th { color: var(--text2); font-weight: 600; }
+  .skipped { color: var(--warn-text); }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+const state = { exec: '', token: '', parsed: [], skipped: [] };
+
+function qs(name) { return new URLSearchParams(location.search).get(name) || ''; }
+function escapeHtml(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+  });
+}
+function el(html) { const t = document.createElement('template'); t.innerHTML = html.trim(); return t.content.firstElementChild; }
+function render(html) { const app = document.getElementById('app'); app.innerHTML = ''; app.appendChild(el(html)); }
+
+async function api(action, data) {
+  const body = new URLSearchParams();
+  body.set('action', action);
+  if (data) body.set('data', JSON.stringify(data));
+  const res = await fetch(state.exec, { method: 'POST', body: body });
+  return res.json();
+}
+
+async function boot() {
+  const override = qs('exec');
+  if (override) {
+    state.exec = override;
+  } else {
+    try {
+      const routes = await (await fetch('../routes.json')).json();
+      state.exec = routes.tools && routes.tools.report && routes.tools.report.exec;
+    } catch (e) {}
+  }
+  if (!state.exec) {
+    render('<div class="card"><div class="msg error">연결 주소를 찾지 못했습니다. ?exec=... 로 직접 붙여서 열어주세요.</div></div>');
+    return;
+  }
+  renderLogin();
+}
+
+function renderLogin(errorMsg) {
+  render(
+    '<h1 class="serif">명단 가져오기</h1>' +
+    '<p class="lead">관리자 전용 도구입니다. 기존에 쓰던 학생코드를 그대로 유지한 채 명단을 올릴 때 씁니다.</p>' +
+    '<div class="card">' +
+      (errorMsg ? '<div class="msg error">' + escapeHtml(errorMsg) + '</div>' : '') +
+      '<div class="field"><label for="pw">관리자 비밀번호</label>' +
+      '<input id="pw" type="password"></div>' +
+      '<button class="btn" id="loginBtn">로그인</button>' +
+    '</div>'
+  );
+  document.getElementById('loginBtn').onclick = doLogin;
+  document.getElementById('pw').addEventListener('keydown', function (e) { if (e.key === 'Enter') doLogin(); });
+}
+
+async function doLogin() {
+  const pw = document.getElementById('pw').value;
+  if (!pw) return;
+  const btn = document.getElementById('loginBtn');
+  btn.disabled = true; btn.textContent = '확인 중…';
+  let res;
+  try { res = await api('login', { password: pw }); }
+  catch (e) { return renderLogin('서버에 연결할 수 없습니다.'); }
+  if (!res.success) { return renderLogin(res.message || '로그인에 실패했습니다.'); }
+  state.token = res.token;
+  renderImport();
+}
+
+function renderImport(notice) {
+  render(
+    '<h1 class="serif">명단 가져오기</h1>' +
+    '<p class="lead">아래에 <strong>학번 / 이름 / 학생코드</strong>를 탭이나 쉼표로 구분해서 그대로 붙여넣으세요. 헤더 줄이나 "전출"·"유학" 같은 상태 표시는 자동으로 걸러집니다.</p>' +
+    '<div class="card">' +
+      (notice ? '<div class="msg ' + notice.type + '">' + escapeHtml(notice.text) + '</div>' : '') +
+      '<div class="field"><label for="tabName">과제 이름(탭 이름)</label>' +
+      '<input id="tabName" type="text" placeholder="예: 2학년 또는 실제 과제 이름">' +
+      '<span class="hint">이미 있는 과제 이름이 아니어도 됩니다 — 나중에 같은 이름으로 과제를 만들면 이 코드가 그대로 이어집니다.</span></div>' +
+      '<div class="field"><label for="raw">붙여넣기</label>' +
+      '<textarea id="raw" placeholder="3101&#9;강승주&#9;LX85P5I25"></textarea></div>' +
+      '<button class="btn" id="parseBtn">미리보기</button>' +
+    '</div>' +
+    '<div id="preview"></div>'
+  );
+  document.getElementById('parseBtn').onclick = doParse;
+}
+
+function doParse() {
+  const tabName = document.getElementById('tabName').value.trim();
+  const raw = document.getElementById('raw').value;
+  const lines = raw.split('\n');
+  const parsed = [];
+  const skipped = [];
+
+  lines.forEach(function (line) {
+    const t = line.trim();
+    if (!t) return;
+    const cols = (t.indexOf('\t') >= 0 ? t.split('\t') : t.split(',')).map(function (c) { return c.trim(); });
+    const id = cols[0] || '';
+    const name = cols[1] || '';
+    const code = (cols[2] || '').toUpperCase();
+
+    if (!/^\d{4,10}$/.test(id)) { if (id && id !== '학번') skipped.push(t + '  (학번 형식 아님)'); return; }
+    if (!name) { skipped.push(t + '  (이름 없음)'); return; }
+    if (!/^[A-Z0-9]+$/.test(code)) { skipped.push(id + ' ' + name + '  (코드 없음/상태표시: ' + (cols[2] || '') + ')'); return; }
+
+    parsed.push({ studentId: id, name: name, code: code });
+  });
+
+  state.parsed = parsed;
+  state.skipped = skipped;
+
+  const rows = parsed.map(function (e) {
+    return '<tr><td>' + escapeHtml(e.studentId) + '</td><td>' + escapeHtml(e.name) + '</td><td>' + escapeHtml(e.code) + '</td></tr>';
+  }).join('');
+  const skippedHtml = skipped.length
+    ? '<p class="skipped hint">제외됨 (' + skipped.length + '건): ' + skipped.map(escapeHtml).join(' · ') + '</p>'
+    : '';
+
+  document.getElementById('preview').innerHTML =
+    '<div class="card">' +
+      '<div class="msg ' + (parsed.length ? 'ok' : 'warn') + '">' + parsed.length + '명 인식됨' + (tabName ? (' · 과제: ' + escapeHtml(tabName)) : ' · 과제 이름을 입력해주세요') + '</div>' +
+      skippedHtml +
+      '<table><tr><th>학번</th><th>이름</th><th>학생코드</th></tr>' + rows + '</table>' +
+      '<div style="margin-top:14px;"><button class="btn" id="submitBtn"' + (parsed.length && tabName ? '' : ' disabled') + '>이 ' + parsed.length + '명 명단에 저장</button></div>' +
+    '</div>';
+
+  const submitBtn = document.getElementById('submitBtn');
+  if (submitBtn) submitBtn.onclick = function () { doSubmit(tabName); };
+}
+
+async function doSubmit(tabName) {
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true; btn.textContent = '저장 중…';
+  let res;
+  try {
+    res = await api('saveRoster', { token: state.token, tabName: tabName, entries: state.parsed });
+  } catch (e) {
+    return renderImport({ type: 'error', text: '서버에 연결할 수 없습니다. 다시 시도해주세요.' });
+  }
+  if (!res.success) {
+    return renderImport({ type: 'error', text: res.message || '저장에 실패했습니다.' });
+  }
+  renderImport({ type: 'ok', text: res.message || '저장되었습니다.' });
+}
+
+boot();
+</script>
+</body>
+</html>
