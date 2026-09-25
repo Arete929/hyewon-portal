@@ -1,0 +1,497 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>혜원포털 관리자</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&family=Noto+Serif+KR:wght@600;700&display=swap">
+<style>
+  :root {
+    --bg:#F6F5F1; --surface:#FFFFFF; --text:#1C1B1A; --text2:#6B6863; --text3:#A8A49A;
+    --border:#E3E0D8; --accent:#2F6FED; --accent-dark:#1F52BE;
+    --success-bg:#E7F6EC; --success-text:#1F7A3D;
+    --error-bg:#FDEBEB; --error-text:#C22B2B;
+    --warn-bg:#FFF4E0; --warn-text:#9A6400;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: 'Noto Sans KR', sans-serif; }
+  .serif { font-family: 'Noto Serif KR', serif; }
+  #app { max-width: 900px; margin: 0 auto; min-height: 100vh; padding-bottom: 60px; }
+  .topbar { display: flex; justify-content: space-between; align-items: center; padding: 18px 20px; border-bottom: 1px solid var(--border); background: var(--surface); }
+  .topbar .brand { font-weight: 700; font-size: 15px; }
+  .topbar .nav { display: flex; gap: 14px; align-items: center; }
+  .topbar a, .topbar button.link { font-size: 13px; color: var(--text2); text-decoration: none; background: none; border: none; cursor: pointer; font-family: inherit; padding: 0; }
+  .wrap { padding: 24px 20px; }
+  .center-pad { min-height: 80vh; display: flex; flex-direction: column; justify-content: center; padding: 0 20px; }
+  h1 { font-size: 22px; font-weight: 700; margin: 0 0 4px; }
+  h2 { font-size: 17px; font-weight: 700; margin: 0 0 12px; }
+  .lead { font-size: 13px; color: var(--text2); margin: 0 0 20px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 22px 20px; margin-bottom: 16px; max-width: 440px; }
+  .card.wide { max-width: none; }
+  .field { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+  .field:last-child { margin-bottom: 0; }
+  .row { display: flex; gap: 8px; align-items: center; }
+  label { font-size: 13px; font-weight: 600; color: var(--text2); }
+  input[type=text], input[type=password], select, textarea { width: 100%; box-sizing: border-box; padding: 11px 13px; font-size: 14px; border: 1px solid var(--border); border-radius: 9px; background: #FCFCFB; font-family: inherit; color: var(--text); }
+  textarea { min-height: 160px; font-family: ui-monospace, Menlo, monospace; font-size: 13px; line-height: 1.6; }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(47,111,237,0.12); }
+  .btn { display: inline-flex; align-items: center; gap: 6px; text-align: center; text-decoration: none; background: var(--accent); color: #fff; font-size: 14px; font-weight: 600; padding: 10px 18px; border-radius: 9px; border: none; cursor: pointer; font-family: inherit; }
+  .btn:hover { background: var(--accent-dark); }
+  .btn:disabled { opacity: 0.5; cursor: default; }
+  .btn-outline { display: inline-flex; align-items: center; gap: 6px; background: #fff; color: var(--text); font-size: 13px; font-weight: 600; padding: 9px 14px; border-radius: 9px; border: 1px solid var(--border); cursor: pointer; font-family: inherit; }
+  .btn-danger { color: var(--error-text); border-color: rgba(194,43,43,.35); }
+  .btn-sm { padding: 6px 10px; font-size: 12px; }
+  .hint { font-size: 12px; color: var(--text3); }
+  .msg { padding: 10px 12px; border-radius: 8px; font-size: 13px; line-height: 1.5; margin-bottom: 16px; }
+  .msg.error { background: var(--error-bg); color: var(--error-text); }
+  .msg.ok { background: var(--success-bg); color: var(--success-text); }
+  .msg.warn { background: var(--warn-bg); color: var(--warn-text); }
+  .list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+  .list a.item { display: flex; justify-content: space-between; align-items: center; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; text-decoration: none; color: var(--text); font-weight: 600; font-size: 15px; }
+  .pill { font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 999px; }
+  .pill.open { color: var(--success-text); background: var(--success-bg); }
+  .pill.wait, .pill.closed { color: var(--text2); background: #EFEDE7; }
+  .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 18px; }
+  .tabs button { background: none; border: none; padding: 10px 14px; font-size: 13px; font-weight: 600; color: var(--text2); cursor: pointer; font-family: inherit; border-bottom: 2px solid transparent; }
+  .tabs button.active { color: var(--accent); border-bottom-color: var(--accent); }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+  th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { background: #FAFAF8; color: var(--text2); font-weight: 700; font-size: 12px; }
+  tr:last-child td { border-bottom: none; }
+  .tablewrap { overflow-x: auto; margin-bottom: 16px; }
+  .code { font-family: ui-monospace, Menlo, monospace; letter-spacing: .06em; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 2px 7px; }
+  .fieldrow { display: grid; grid-template-columns: 1fr 140px 34px; gap: 8px; margin-bottom: 8px; align-items: center; }
+  .loading { text-align: center; padding: 60px 20px; color: var(--text2); font-size: 14px; }
+  .statusbtns { display: flex; gap: 6px; }
+  .statusbtns button { flex: 1; }
+  .ok-dot { color: var(--success-text); font-weight: 800; }
+  .no-dot { color: var(--error-text); font-weight: 800; }
+</style>
+</head>
+<body>
+<div id="app"><div class="loading">불러오는 중…</div></div>
+
+<script>
+const TOKEN_KEY = 'hyewon_admin_token';
+const state = { exec: '', token: '', config: null, currentTab: '', detailView: 'roster' };
+
+function qs(name) { return new URLSearchParams(location.search).get(name) || ''; }
+function escapeHtml(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+  });
+}
+function render(inner) {
+  document.getElementById('app').innerHTML =
+    '<div class="topbar"><span class="brand serif">혜원포털 관리자</span>' +
+    (state.token
+      ? '<div class="nav"><a href="#" id="navDash">과제</a><a href="#" id="navSettings">설정</a><button class="link" id="navLogout">로그아웃</button></div>'
+      : '') +
+    '</div>' + inner;
+  if (state.token) {
+    document.getElementById('navDash').onclick = function (e) { e.preventDefault(); renderDashboard(); };
+    document.getElementById('navSettings').onclick = function (e) { e.preventDefault(); renderSettings(); };
+    document.getElementById('navLogout').onclick = doLogout;
+  }
+}
+
+async function api(action, data, opts) {
+  opts = opts || {};
+  const body = new URLSearchParams();
+  body.set('action', action);
+  const payload = Object.assign({}, data || {});
+  if (state.token && !opts.noToken) payload.token = state.token;
+  body.set('data', JSON.stringify(payload));
+  const res = await fetch(state.exec, { method: 'POST', body: body });
+  const json = await res.json();
+  if (json && json.error === 'unauthorized') {
+    state.token = '';
+    try { localStorage.removeItem(TOKEN_KEY); } catch (e) {}
+    renderLogin('세션이 끊어졌습니다. 다시 로그인해주세요.');
+    throw new Error('unauthorized');
+  }
+  return json;
+}
+async function apiGet(action) {
+  const url = new URL(state.exec);
+  url.searchParams.set('action', action);
+  const res = await fetch(url.toString());
+  return res.json();
+}
+
+// ---------- 부팅 ----------
+
+async function boot() {
+  const override = qs('exec');
+  if (override) {
+    state.exec = override;
+  } else {
+    try {
+      const routes = await (await fetch('../routes.json')).json();
+      state.exec = routes.tools && routes.tools.report && routes.tools.report.exec;
+    } catch (e) {}
+  }
+  if (!state.exec) {
+    render('<div class="center-pad"><div class="card"><div class="msg error">연결 주소를 찾지 못했습니다. ?exec=... 로 직접 열어주세요.</div></div></div>');
+    return;
+  }
+  try { state.token = localStorage.getItem(TOKEN_KEY) || ''; } catch (e) {}
+  if (state.token) { renderDashboard(); } else { renderLogin(); }
+}
+
+// ---------- 로그인 ----------
+
+function renderLogin(errorMsg) {
+  render(
+    '<div class="center-pad"><div class="card">' +
+      '<h1 class="serif">관리자 로그인</h1>' +
+      (errorMsg ? '<div class="msg error">' + escapeHtml(errorMsg) + '</div>' : '') +
+      '<div class="field"><label for="pw">비밀번호</label><input id="pw" type="password"></div>' +
+      '<div class="field" style="flex-direction:row;align-items:center;gap:8px;">' +
+        '<input type="checkbox" id="remember" style="width:auto;"><label for="remember" style="margin:0;">이 기기 기억하기 (30일)</label>' +
+      '</div>' +
+      '<button class="btn" id="loginBtn" style="width:100%;justify-content:center;">로그인</button>' +
+    '</div></div>'
+  );
+  document.getElementById('loginBtn').onclick = doLogin;
+  document.getElementById('pw').addEventListener('keydown', function (e) { if (e.key === 'Enter') doLogin(); });
+}
+
+async function doLogin() {
+  const pw = document.getElementById('pw').value;
+  const remember = document.getElementById('remember').checked;
+  if (!pw) return;
+  const btn = document.getElementById('loginBtn');
+  btn.disabled = true; btn.textContent = '확인 중…';
+  let res;
+  try { res = await api('login', { password: pw, remember: remember }, { noToken: true }); }
+  catch (e) { return renderLogin('서버에 연결할 수 없습니다.'); }
+  if (!res.success) { return renderLogin(res.message || '로그인에 실패했습니다.'); }
+  state.token = res.token;
+  if (remember) { try { localStorage.setItem(TOKEN_KEY, res.token); } catch (e) {} }
+  renderDashboard();
+}
+
+function doLogout() {
+  api('logout', {}).catch(function () {});
+  state.token = '';
+  try { localStorage.removeItem(TOKEN_KEY); } catch (e) {}
+  renderLogin();
+}
+
+// ---------- 대시보드(과제 목록) ----------
+
+async function renderDashboard() {
+  render('<div class="wrap"><div class="loading">불러오는 중…</div></div>');
+  let cfg;
+  try { cfg = await apiGet('getConfig'); } catch (e) { return render('<div class="wrap"><div class="msg error">서버에 연결할 수 없습니다.</div></div>'); }
+  state.config = cfg;
+
+  const items = (cfg.tabs || []).map(function (t) {
+    const s = (t.meta && t.meta.status) || 'open';
+    const label = s === 'open' ? '진행중' : s === 'wait' ? '대기' : '마감';
+    return '<a class="item" href="#" data-tab="' + escapeHtml(t.sheetName) + '"><span>' + escapeHtml(t.sheetName) + '</span><span class="pill ' + s + '">' + label + '</span></a>';
+  }).join('');
+
+  render(
+    '<div class="wrap">' +
+      '<h1 class="serif">과제 관리</h1>' +
+      '<p class="lead">' + escapeHtml(cfg.title || '') + '</p>' +
+      '<div class="list">' + (items || '<p class="hint">아직 과제가 없습니다.</p>') + '</div>' +
+      '<button class="btn" id="newTabBtn">+ 새 과제 만들기</button>' +
+    '</div>'
+  );
+  document.querySelectorAll('[data-tab]').forEach(function (a) {
+    a.onclick = function (e) { e.preventDefault(); renderDetail(a.getAttribute('data-tab')); };
+  });
+  document.getElementById('newTabBtn').onclick = renderNewTab;
+}
+
+// ---------- 새 과제 만들기 ----------
+
+function renderNewTab(notice) {
+  render(
+    '<div class="wrap">' +
+      '<h1 class="serif">새 과제 만들기</h1>' +
+      (notice ? '<div class="msg error">' + escapeHtml(notice) + '</div>' : '') +
+      '<div class="card wide">' +
+        '<div class="field"><label for="tabName">과제 이름</label>' +
+        '<input id="tabName" type="text" placeholder="예: 2학년-줄넘기 (학년 접두어를 붙이면 학년별 링크가 자동으로 걸러줍니다)"></div>' +
+        '<label style="margin-bottom:8px;display:block;">항목</label>' +
+        '<div id="fieldRows"></div>' +
+        '<button class="btn-outline btn-sm" id="addFieldBtn" type="button">+ 항목 추가</button>' +
+        '<div style="margin-top:20px;"><button class="btn" id="createBtn">만들기</button></div>' +
+      '</div>' +
+    '</div>'
+  );
+  const rows = document.getElementById('fieldRows');
+  function addRow(name, type) {
+    const row = document.createElement('div');
+    row.className = 'fieldrow';
+    row.innerHTML =
+      '<input type="text" class="fname" placeholder="예: 느낀 점" value="' + escapeHtml(name || '') + '">' +
+      '<select class="ftype">' +
+        '<option value="short"' + (type === 'short' || !type ? ' selected' : '') + '>짧은 텍스트</option>' +
+        '<option value="long"' + (type === 'long' ? ' selected' : '') + '>긴 텍스트</option>' +
+        '<option value="file"' + (type === 'file' ? ' selected' : '') + '>파일 첨부</option>' +
+      '</select>' +
+      '<button type="button" class="btn-outline btn-sm delRow">×</button>';
+    row.querySelector('.delRow').onclick = function () { row.remove(); };
+    rows.appendChild(row);
+  }
+  addRow('항목1', 'short');
+  document.getElementById('addFieldBtn').onclick = function () { addRow('', 'short'); };
+  document.getElementById('createBtn').onclick = doCreateTab;
+}
+
+async function doCreateTab() {
+  const tabName = document.getElementById('tabName').value.trim();
+  if (!tabName) return renderNewTab('과제 이름을 입력해주세요.');
+  const fields = Array.prototype.slice.call(document.querySelectorAll('#fieldRows .fieldrow')).map(function (row) {
+    const name = row.querySelector('.fname').value.trim();
+    const type = row.querySelector('.ftype').value;
+    if (!name) return null;
+    return type === 'long' ? name + '::long' : type === 'file' ? name + '::file' : name;
+  }).filter(Boolean);
+  if (!fields.length) return renderNewTab('항목을 하나 이상 입력해주세요.');
+
+  const btn = document.getElementById('createBtn');
+  btn.disabled = true; btn.textContent = '만드는 중…';
+  let res;
+  try { res = await api('addTab', { tabName: tabName, fields: fields }); }
+  catch (e) { return; }
+  if (!res.success) return renderNewTab(res.message || '만들기에 실패했습니다.');
+  renderDetail(tabName);
+}
+
+// ---------- 과제 상세 ----------
+
+async function renderDetail(tabName) {
+  state.currentTab = tabName;
+  render('<div class="wrap"><div class="loading">불러오는 중…</div></div>');
+  let cfg;
+  try { cfg = await apiGet('getConfig'); } catch (e) { return; }
+  state.config = cfg;
+  const tab = (cfg.tabs || []).find(function (t) { return t.sheetName === tabName; });
+  if (!tab) return renderDashboard();
+
+  const status = (tab.meta && tab.meta.status) || 'open';
+
+  render(
+    '<div class="wrap">' +
+      '<a href="#" id="backBtn" class="hint">← 과제 목록</a>' +
+      '<h1 class="serif" style="margin-top:8px;">' + escapeHtml(tabName) + '</h1>' +
+      (tab.description ? '<p class="lead">' + escapeHtml(tab.description) + '</p>' : '') +
+      '<div class="statusbtns" style="max-width:440px;margin-bottom:16px;">' +
+        '<button class="btn-outline' + (status === 'wait' ? '' : '') + '" data-status="wait">대기</button>' +
+        '<button class="btn-outline" data-status="open">진행중</button>' +
+        '<button class="btn-outline" data-status="closed">마감</button>' +
+        '<button class="btn-outline btn-danger" id="delTabBtn">삭제</button>' +
+      '</div>' +
+      '<div class="tabs">' +
+        '<button data-view="roster">명단</button>' +
+        '<button data-view="submissions">제출 현황</button>' +
+        '<button data-view="log">로그</button>' +
+      '</div>' +
+      '<div id="detailBody"></div>' +
+    '</div>'
+  );
+  document.getElementById('backBtn').onclick = function (e) { e.preventDefault(); renderDashboard(); };
+  document.querySelectorAll('[data-status]').forEach(function (b) {
+    if (b.getAttribute('data-status') === status) b.style.background = 'var(--accent)', b.style.color = '#fff', b.style.borderColor = 'transparent';
+    b.onclick = function () { doSetStatus(tabName, b.getAttribute('data-status')); };
+  });
+  document.getElementById('delTabBtn').onclick = function () { doDeleteTab(tabName); };
+  document.querySelectorAll('.tabs button').forEach(function (b) {
+    if (b.getAttribute('data-view') === state.detailView) b.classList.add('active');
+    b.onclick = function () { state.detailView = b.getAttribute('data-view'); renderDetail(tabName); };
+  });
+
+  if (state.detailView === 'roster') renderRoster(tab);
+  else if (state.detailView === 'submissions') renderSubmissions(tab);
+  else renderLog(tab);
+}
+
+async function doSetStatus(tabName, status) {
+  try { await api('setTabStatus', { tabName: tabName, status: status }); } catch (e) { return; }
+  renderDetail(tabName);
+}
+
+async function doDeleteTab(tabName) {
+  if (!confirm('"' + tabName + '" 과제를 정말 삭제할까요? 학생 답변은 _이전제출 시트에 보관됩니다.')) return;
+  try { await api('deleteTab', { tabName: tabName }); } catch (e) { return; }
+  renderDashboard();
+}
+
+// ---------- 명단 ----------
+
+async function renderRoster(tab) {
+  const body = document.getElementById('detailBody');
+  body.innerHTML = '<div class="loading">불러오는 중…</div>';
+  let roster;
+  try { roster = await api('getRoster', { tabName: tab.sheetName }); } catch (e) { return; }
+  const entries = roster.entries || [];
+
+  const rows = entries.map(function (e) {
+    const confirmBtn = e.confirmLabel
+      ? '<button class="btn-outline btn-sm" data-confirm-off="' + escapeHtml(e.studentId) + '">확인 취소</button>'
+      : '<button class="btn-outline btn-sm" data-confirm-on="' + escapeHtml(e.studentId) + '">미제출 확인</button>';
+    return '<tr>' +
+      '<td>' + escapeHtml(e.studentId) + '</td>' +
+      '<td>' + escapeHtml(e.name) + '</td>' +
+      '<td><span class="code">' + escapeHtml(e.code || '—') + '</span> ' +
+        (e.code ? '<button class="btn-outline btn-sm" data-copy="' + escapeHtml(e.code) + '">복사</button>' : '') +
+        ' <button class="btn-outline btn-sm" data-regen="' + escapeHtml(e.studentId) + '">재발급</button></td>' +
+      '<td>' + (e.confirmLabel ? '<span class="hint">' + escapeHtml(e.confirmLabel) + '</span>' : '') + confirmBtn + '</td>' +
+    '</tr>';
+  }).join('');
+
+  body.innerHTML =
+    '<div class="tablewrap"><table><tr><th>학번</th><th>이름</th><th>학생코드</th><th>본인확인</th></tr>' +
+      (rows || '<tr><td colspan="4" class="hint">아직 명단이 없습니다.</td></tr>') +
+    '</table></div>' +
+    '<div class="card wide">' +
+      '<h2>명단 올리기 / 갱신</h2>' +
+      '<p class="hint" style="margin-bottom:12px;">학번, 이름 (코드는 있으면 그대로 씁니다, 없으면 자동 발급). 탭 또는 쉼표로 구분해서 붙여넣으세요. 다시 올리면 이 과제의 명단이 통째로 바뀝니다.</p>' +
+      '<textarea id="rosterRaw" placeholder="2101&#9;강수빈&#9;PARQWGBXT"></textarea>' +
+      '<div style="margin-top:12px;"><button class="btn" id="saveRosterBtn">저장</button></div>' +
+      '<div id="rosterMsg"></div>' +
+    '</div>';
+
+  body.querySelectorAll('[data-copy]').forEach(function (b) {
+    b.onclick = function () { navigator.clipboard.writeText(b.getAttribute('data-copy')); b.textContent = '복사됨'; setTimeout(function () { b.textContent = '복사'; }, 1200); };
+  });
+  body.querySelectorAll('[data-regen]').forEach(function (b) {
+    b.onclick = async function () {
+      let res;
+      try { res = await api('regenerateStudentCode', { studentId: b.getAttribute('data-regen') }); } catch (e) { return; }
+      if (res.success) renderRoster(tab);
+    };
+  });
+  body.querySelectorAll('[data-confirm-on]').forEach(function (b) {
+    b.onclick = async function () {
+      try { await api('setRosterConfirm', { tabName: tab.sheetName, studentId: b.getAttribute('data-confirm-on'), on: true }); } catch (e) { return; }
+      renderRoster(tab);
+    };
+  });
+  body.querySelectorAll('[data-confirm-off]').forEach(function (b) {
+    b.onclick = async function () {
+      try { await api('setRosterConfirm', { tabName: tab.sheetName, studentId: b.getAttribute('data-confirm-off'), on: false }); } catch (e) { return; }
+      renderRoster(tab);
+    };
+  });
+  document.getElementById('saveRosterBtn').onclick = function () { doSaveRoster(tab); };
+}
+
+async function doSaveRoster(tab) {
+  const raw = document.getElementById('rosterRaw').value;
+  const lines = raw.split('\n');
+  const entries = [];
+  lines.forEach(function (line) {
+    const t = line.trim();
+    if (!t) return;
+    const cols = (t.indexOf('\t') >= 0 ? t.split('\t') : t.split(',')).map(function (c) { return c.trim(); });
+    const id = cols[0] || '';
+    const name = cols[1] || '';
+    const code = (cols[2] || '').toUpperCase();
+    if (!/^\d{4,10}$/.test(id) || !name) return;
+    const entry = { studentId: id, name: name };
+    if (/^[A-Z0-9]+$/.test(code)) entry.code = code;
+    entries.push(entry);
+  });
+  const msg = document.getElementById('rosterMsg');
+  if (!entries.length) { msg.innerHTML = '<div class="msg error">인식된 줄이 없습니다.</div>'; return; }
+
+  const btn = document.getElementById('saveRosterBtn');
+  btn.disabled = true; btn.textContent = '저장 중…';
+  let res;
+  try { res = await api('saveRoster', { tabName: tab.sheetName, entries: entries }); } catch (e) { return; }
+  if (!res.success) { msg.innerHTML = '<div class="msg error">' + escapeHtml(res.message || '저장 실패') + '</div>'; btn.disabled = false; btn.textContent = '저장'; return; }
+  renderRoster(tab);
+}
+
+// ---------- 제출 현황 ----------
+
+async function renderSubmissions(tab) {
+  const body = document.getElementById('detailBody');
+  body.innerHTML = '<div class="loading">불러오는 중…</div>';
+  let res;
+  try { res = await api('getSubmissions', { tabName: tab.sheetName }); } catch (e) { return; }
+  if (!res.success) { body.innerHTML = '<div class="msg error">' + escapeHtml(res.message || '불러오기 실패') + '</div>'; return; }
+
+  const fields = res.fields || [];
+  const rows = res.rows || [];
+  const head = '<tr>' + fields.map(function (f) { return '<th>' + escapeHtml(f.name) + '</th>'; }).join('') + '</tr>';
+  const body_ = rows.map(function (r) {
+    return '<tr>' + r.map(function (v) { return '<td>' + escapeHtml(v) + '</td>'; }).join('') + '</tr>';
+  }).join('');
+
+  body.innerHTML =
+    '<p class="hint">총 ' + rows.length + '건</p>' +
+    '<div class="tablewrap"><table>' + head + (body_ || '<tr><td class="hint">제출된 답변이 없습니다.</td></tr>') + '</table></div>' +
+    '<button class="btn-outline" id="csvBtn">CSV 내보내기</button>';
+
+  document.getElementById('csvBtn').onclick = function () { exportCsv(tab.sheetName, fields, rows); };
+}
+
+function exportCsv(name, fields, rows) {
+  function q(v) { v = String(v == null ? '' : v); return '"' + v.replace(/"/g, '""') + '"'; }
+  let csv = fields.map(function (f) { return q(f.name); }).join(',') + '\n';
+  rows.forEach(function (r) { csv += r.map(q).join(',') + '\n'; });
+  const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = name + '_제출현황.csv';
+  a.click();
+}
+
+// ---------- 로그 ----------
+
+async function renderLog(tab) {
+  const body = document.getElementById('detailBody');
+  body.innerHTML = '<div class="loading">불러오는 중…</div>';
+  let res;
+  try { res = await api('getLog', { limit: 300, tabName: tab.sheetName }); } catch (e) { return; }
+  const rows = (res.rows || []).map(function (r) {
+    return '<tr>' + r.map(function (v) { return '<td>' + escapeHtml(v) + '</td>'; }).join('') + '</tr>';
+  }).join('');
+  body.innerHTML =
+    '<div class="tablewrap"><table><tr><th>시각</th><th>학번</th><th>이름</th><th>구분</th></tr>' +
+      (rows || '<tr><td colspan="4" class="hint">기록이 없습니다.</td></tr>') +
+    '</table></div>';
+}
+
+// ---------- 설정 ----------
+
+function renderSettings(notice) {
+  render(
+    '<div class="wrap">' +
+      '<h1 class="serif">설정</h1>' +
+      '<div class="card">' +
+        '<h2>비밀번호 변경</h2>' +
+        (notice ? '<div class="msg ' + notice.type + '">' + escapeHtml(notice.text) + '</div>' : '') +
+        '<div class="field"><label for="curPw">현재 비밀번호</label><input id="curPw" type="password"></div>' +
+        '<div class="field"><label for="newPw">새 비밀번호 (10자 이상)</label><input id="newPw" type="password"></div>' +
+        '<button class="btn" id="changePwBtn">변경</button>' +
+      '</div>' +
+    '</div>'
+  );
+  document.getElementById('changePwBtn').onclick = doChangePassword;
+}
+
+async function doChangePassword() {
+  const cur = document.getElementById('curPw').value;
+  const next = document.getElementById('newPw').value;
+  if (!cur || !next) return;
+  let res;
+  try { res = await api('changePassword', { currentPassword: cur, newPassword: next }); } catch (e) { return; }
+  if (!res.success) return renderSettings({ type: 'error', text: res.message || '변경 실패' });
+  state.token = '';
+  try { localStorage.removeItem(TOKEN_KEY); } catch (e) {}
+  renderLogin('비밀번호가 변경되었습니다. 다시 로그인해주세요.');
+}
+
+boot();
+</script>
+</body>
+</html>
