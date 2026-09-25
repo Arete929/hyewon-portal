@@ -32,8 +32,9 @@
   .field:last-child { margin-bottom: 0; }
   label { font-size: 13px; font-weight: 600; color: var(--text2); }
   input[type=text], textarea { width: 100%; box-sizing: border-box; padding: 13px 14px; font-size: 16px; border: 1px solid var(--border); border-radius: 10px; background: #FCFCFB; font-family: inherit; color: var(--text); }
-  input#loginCode { letter-spacing: 0.18em; text-transform: uppercase; font-size: 17px; }
   textarea { min-height: 140px; resize: vertical; line-height: 1.6; }
+  .otp { display: flex; gap: 6px; }
+  .otp input { flex: 1 1 0; min-width: 0; padding: 0; text-align: center; font-size: 18px; font-weight: 700; letter-spacing: 0; text-transform: uppercase; aspect-ratio: 3 / 4; }
   input:focus, textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(47,111,237,0.12); }
   .hint { font-size: 12px; color: var(--text3); }
   .btn { display: block; width: 100%; text-align: center; text-decoration: none; background: var(--accent); color: #fff; font-size: 16px; font-weight: 600; padding: 14px; border-radius: 10px; border: none; cursor: pointer; font-family: inherit; }
@@ -83,6 +84,7 @@
     .btn, .btn-outline { font-size: 17px; padding: 16px; }
     .upload { padding: 30px; font-size: 14px; }
     .footer { padding: 22px 32px 32px; }
+    .otp input { padding: 0; font-size: 22px; }
   }
   @media (min-width: 900px) {
     #app { max-width: 760px; }
@@ -105,16 +107,8 @@ const state = {
 
 function qs(name) { return new URLSearchParams(location.search).get(name) || ''; }
 
-function el(html) {
-  const t = document.createElement('template');
-  t.innerHTML = html.trim();
-  return t.content.firstElementChild;
-}
-
 function render(html) {
-  const app = document.getElementById('app');
-  app.innerHTML = '';
-  app.appendChild(el(html));
+  document.getElementById('app').innerHTML = html;
 }
 
 function brandLabel() {
@@ -349,27 +343,31 @@ function renderLogin(tab, errorMsg) {
     '<div class="center-pad" style="padding-top:0;">' +
       '<div class="card">' +
         (errorMsg ? '<div class="msg error">' + escapeHtml(errorMsg) + '</div>' : '') +
-        '<div class="field"><label for="loginId">학번</label>' +
-        '<input id="loginId" type="text" inputmode="numeric" placeholder="예: 10305"></div>' +
-        '<div class="field"><label for="loginCode">학생코드</label>' +
-        '<input id="loginCode" type="text" placeholder="예: H3F9K2">' +
-        '<span class="hint">선생님이 나눠준 학생코드 6자리를 입력하세요</span></div>' +
+        '<div class="field"><label>학번</label>' +
+        '<div class="otp" id="otpId">' + otpBoxesHtml(4, true) + '</div></div>' +
+        '<div class="field"><label>학생코드</label>' +
+        '<div class="otp" id="otpCode">' + otpBoxesHtml(9, false) + '</div>' +
+        '<span class="hint">선생님이 나눠준 학생코드 9자리를 입력하세요</span></div>' +
         '<button class="btn" id="loginBtn">로그인</button>' +
       '</div>' +
     '</div>' +
     '<div class="footer"><span>Made by Eagle Teacher · 교육 목적</span></div>'
   );
 
+  wireOtp('otpId', true);
+  wireOtp('otpCode', false);
   document.getElementById('loginBtn').onclick = function () { doLogin(tab); };
-  document.getElementById('loginCode').addEventListener('keydown', function (e) {
+  document.getElementById('otpCode').addEventListener('keydown', function (e) {
     if (e.key === 'Enter') doLogin(tab);
   });
+  const first = document.querySelector('#otpId input');
+  if (first) first.focus();
 }
 
 async function doLogin(tab) {
-  const studentId = document.getElementById('loginId').value.trim();
-  const code = document.getElementById('loginCode').value.trim();
-  if (!studentId || !code) { return renderLogin(tab, '학번과 학생코드를 입력해주세요.'); }
+  const studentId = otpValue('otpId');
+  const code = otpValue('otpCode');
+  if (!studentId || !code) { return renderLogin(tab, '학번과 학생코드를 모두 입력해주세요.'); }
 
   const btn = document.getElementById('loginBtn');
   btn.disabled = true; btn.textContent = '확인 중…';
@@ -541,6 +539,44 @@ function renderSuccess(tab, message) {
       '<p style="color:var(--text2);font-size:14px;margin:0;">' + escapeHtml(message || '제출이 완료되었습니다.') + '</p>' +
     '</div></div>'
   );
+}
+
+// ---------- OTP 입력칸 ----------
+
+function otpBoxesHtml(count, numeric) {
+  let html = '';
+  for (let i = 0; i < count; i++) {
+    html += '<input type="text" maxlength="1" autocomplete="one-time-code"' + (numeric ? ' inputmode="numeric"' : ' inputmode="text"') + '>';
+  }
+  return html;
+}
+
+function wireOtp(containerId, numeric) {
+  const box = document.getElementById(containerId);
+  const inputs = Array.prototype.slice.call(box.querySelectorAll('input'));
+  inputs.forEach(function (inp, i) {
+    inp.addEventListener('input', function () {
+      let v = inp.value.slice(-1);
+      v = numeric ? v.replace(/[^0-9]/g, '') : v.toUpperCase().replace(/[^A-Z0-9]/g, '');
+      inp.value = v;
+      if (v && i < inputs.length - 1) inputs[i + 1].focus();
+    });
+    inp.addEventListener('keydown', function (e) {
+      if (e.key === 'Backspace' && !inp.value && i > 0) inputs[i - 1].focus();
+    });
+    inp.addEventListener('paste', function (e) {
+      e.preventDefault();
+      let text = (e.clipboardData || window.clipboardData).getData('text');
+      text = numeric ? text.replace(/[^0-9]/g, '') : text.toUpperCase().replace(/[^A-Z0-9]/g, '');
+      for (let j = 0; j < text.length && (i + j) < inputs.length; j++) inputs[i + j].value = text[j];
+      inputs[Math.min(i + text.length, inputs.length - 1)].focus();
+    });
+  });
+}
+
+function otpValue(containerId) {
+  return Array.prototype.slice.call(document.querySelectorAll('#' + containerId + ' input'))
+    .map(function (i) { return i.value; }).join('');
 }
 
 // ---------- 유틸 ----------

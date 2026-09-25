@@ -51,8 +51,7 @@ function escapeHtml(s) {
     return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
   });
 }
-function el(html) { const t = document.createElement('template'); t.innerHTML = html.trim(); return t.content.firstElementChild; }
-function render(html) { const app = document.getElementById('app'); app.innerHTML = ''; app.appendChild(el(html)); }
+function render(html) { document.getElementById('app').innerHTML = html; }
 
 async function api(action, data) {
   const body = new URLSearchParams();
