@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-<title>학생 포털</title>
+<title>혜원포털</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&family=Noto+Serif+KR:wght@600;700&display=swap">
 <style>
   :root {
@@ -15,6 +15,7 @@
   .serif { font-family: 'Noto Serif KR', serif; }
   #app { max-width: 480px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; }
   .head { padding: 32px 20px 20px; }
+  .head .brand { font-size: 12px; font-weight: 600; letter-spacing: 0.04em; color: var(--text2); display: block; margin-bottom: 8px; }
   .head h1 { margin: 0; font-size: 24px; font-weight: 700; }
   .main { flex-grow: 1; padding: 0 20px; display: flex; flex-direction: column; gap: 10px; }
   .card { display: flex; justify-content: space-between; align-items: center; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 18px 20px; text-decoration: none; color: var(--text); font-weight: 600; font-size: 16px; }
@@ -67,7 +68,7 @@ async function boot() {
   }).join('');
 
   document.getElementById('app').innerHTML =
-    '<div class="head"><h1 class="serif">무엇을 하시겠어요?</h1></div>' +
+    '<div class="head"><span class="brand">혜원포털</span><h1 class="serif">무엇을 하시겠어요?</h1></div>' +
     '<div class="main">' + items + '</div>' +
     '<div class="footer"><span>Made by Eagle Teacher · 교육 목적</span></div>';
 }
