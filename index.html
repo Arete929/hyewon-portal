@@ -23,6 +23,19 @@
   .loading { text-align: center; padding: 60px 20px; color: var(--text2); font-size: 14px; }
   .footer { padding: 24px 20px 28px; text-align: center; }
   .footer span { font-size: 11px; color: var(--text3); }
+
+  /* 태블릿(디벗 등)·큰 화면 — 폭을 넓히고 글자·터치 영역을 키웁니다 */
+  @media (min-width: 640px) {
+    #app { max-width: 640px; }
+    .head { padding: 48px 32px 28px; }
+    .head h1 { font-size: 30px; }
+    .main { padding: 0 32px; gap: 14px; }
+    .card { padding: 24px 28px; font-size: 18px; border-radius: 16px; }
+    .tag { font-size: 13px; padding: 4px 12px; }
+  }
+  @media (min-width: 900px) {
+    #app { max-width: 760px; }
+  }
 </style>
 </head>
 <body>
