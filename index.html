@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>학생 포털</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&family=Noto+Serif+KR:wght@600;700&display=swap">
+<style>
+  :root {
+    --bg:#F6F5F1; --surface:#FFFFFF; --text:#1C1B1A; --text2:#6B6863; --text3:#A8A49A;
+    --border:#E3E0D8; --accent:#2F6FED;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: 'Noto Sans KR', sans-serif; }
+  .serif { font-family: 'Noto Serif KR', serif; }
+  #app { max-width: 480px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; }
+  .head { padding: 32px 20px 20px; }
+  .head h1 { margin: 0; font-size: 24px; font-weight: 700; }
+  .main { flex-grow: 1; padding: 0 20px; display: flex; flex-direction: column; gap: 10px; }
+  .card { display: flex; justify-content: space-between; align-items: center; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 18px 20px; text-decoration: none; color: var(--text); font-weight: 600; font-size: 16px; }
+  .card.soon { color: var(--text3); }
+  .tag { font-size: 12px; font-weight: 600; color: var(--text3); background: #EFEDE7; padding: 3px 10px; border-radius: 999px; }
+  .loading { text-align: center; padding: 60px 20px; color: var(--text2); font-size: 14px; }
+  .footer { padding: 24px 20px 28px; text-align: center; }
+  .footer span { font-size: 11px; color: var(--text3); }
+</style>
+</head>
+<body>
+<div id="app"><div class="loading">불러오는 중…</div></div>
+<script>
+const ORDER = ['report', 'captain', 'scores'];
+
+function escapeHtml(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+  });
+}
+
+async function boot() {
+  let cfg;
+  try {
+    cfg = await (await fetch('./routes.json')).json();
+  } catch (e) {
+    document.getElementById('app').innerHTML = '<div class="loading">설정을 불러오지 못했습니다.</div>';
+    return;
+  }
+
+  const items = ORDER.filter(function (k) { return cfg.tools && cfg.tools[k]; }).map(function (k) {
+    const t = cfg.tools[k];
+    if (t.comingSoon) {
+      return '<div class="card soon"><span>' + escapeHtml(t.label) + '</span><span class="tag">준비중</span></div>';
+    }
+    return '<a class="card" href="./' + k + '/"><span>' + escapeHtml(t.label) + '</span><span class="tag">→</span></a>';
+  }).join('');
+
+  document.getElementById('app').innerHTML =
+    '<div class="head"><h1 class="serif">무엇을 하시겠어요?</h1></div>' +
+    '<div class="main">' + items + '</div>' +
+    '<div class="footer"><span>Made by Eagle Teacher · 교육 목적</span></div>';
+}
+
+boot();
+</script>
+</body>
+</html>

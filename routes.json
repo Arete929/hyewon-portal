@@ -1,0 +1,17 @@
+{
+  "tools": {
+    "report": {
+      "label": "2026 체육 과제제출",
+      "exec": "https://script.google.com/macros/s/AKfycbymu42qwlpJTSvn2pfd_VlXrTPvvlQOZfenFcMMhkMPiJpXM_PC5m7Owcsh7oJXouOlkw/exec",
+      "gradePrefixes": { "2": "2학년", "3": "3학년" }
+    },
+    "captain": {
+      "label": "주장선발",
+      "comingSoon": true
+    },
+    "scores": {
+      "label": "성적확인",
+      "comingSoon": true
+    }
+  }
+}

@@ -1,0 +1,548 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>과제 제출</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&family=Noto+Serif+KR:wght@600;700&display=swap">
+<style>
+  :root {
+    --bg:#F6F5F1; --surface:#FFFFFF; --text:#1C1B1A; --text2:#6B6863; --text3:#A8A49A;
+    --border:#E3E0D8; --accent:#2F6FED; --accent-dark:#1F52BE;
+    --success-bg:#E7F6EC; --success-text:#1F7A3D;
+    --error-bg:#FDEBEB; --error-text:#C22B2B;
+    --warn-bg:#FFF4E0; --warn-text:#9A6400;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: 'Noto Sans KR', sans-serif; }
+  .serif { font-family: 'Noto Serif KR', serif; }
+  #app { max-width: 480px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; }
+  .topbar { padding: 18px 20px 0; display: flex; justify-content: space-between; align-items: center; }
+  .topbar .brand { font-size: 12px; font-weight: 600; letter-spacing: 0.04em; color: var(--text2); }
+  .pill { font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 999px; }
+  .pill.open { color: var(--success-text); background: var(--success-bg); }
+  .pill.wait { color: var(--text2); background: #EFEDE7; }
+  .pill.closed { color: var(--text2); background: #EFEDE7; }
+  .head { padding: 12px 20px 18px; }
+  .head h1 { margin: 0; font-size: 24px; font-weight: 700; line-height: 1.3; }
+  .head p { margin: 6px 0 0; font-size: 14px; color: var(--text2); }
+  .main { flex-grow: 1; padding: 0 20px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 24px 20px; margin-bottom: 16px; box-shadow: 0 1px 2px rgba(28,27,26,0.04); }
+  .field { display: flex; flex-direction: column; gap: 8px; margin-bottom: 18px; }
+  .field:last-child { margin-bottom: 0; }
+  label { font-size: 13px; font-weight: 600; color: var(--text2); }
+  input[type=text], textarea { width: 100%; box-sizing: border-box; padding: 13px 14px; font-size: 16px; border: 1px solid var(--border); border-radius: 10px; background: #FCFCFB; font-family: inherit; color: var(--text); }
+  input#loginCode { letter-spacing: 0.18em; text-transform: uppercase; font-size: 17px; }
+  textarea { min-height: 140px; resize: vertical; line-height: 1.6; }
+  input:focus, textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(47,111,237,0.12); }
+  .hint { font-size: 12px; color: var(--text3); }
+  .btn { display: block; width: 100%; text-align: center; text-decoration: none; background: var(--accent); color: #fff; font-size: 16px; font-weight: 600; padding: 14px; border-radius: 10px; border: none; cursor: pointer; font-family: inherit; }
+  .btn:hover { background: var(--accent-dark); }
+  .btn:disabled { opacity: 0.5; cursor: default; }
+  .btn-outline { display: block; width: 100%; text-align: center; text-decoration: none; background: #fff; color: var(--text); font-size: 14px; font-weight: 600; padding: 12px; border-radius: 10px; border: 1px solid var(--border); cursor: pointer; font-family: inherit; }
+  .linklike { display: block; text-align: center; font-size: 12px; color: var(--text2); text-decoration: underline; text-underline-offset: 2px; background: none; border: none; cursor: pointer; font-family: inherit; padding: 4px; }
+  .msg { display: flex; align-items: flex-start; gap: 8px; padding: 10px 12px; border-radius: 8px; font-size: 13px; line-height: 1.5; margin-bottom: 16px; }
+  .msg.error { background: var(--error-bg); color: var(--error-text); }
+  .msg.warn { background: var(--warn-bg); color: var(--warn-text); }
+  .msg.ok { background: var(--success-bg); color: var(--success-text); }
+  .identity { margin: 0 0 16px; background: var(--success-bg); border: 1px solid #BFE6CB; border-radius: 10px; padding: 10px 14px; display: flex; align-items: center; gap: 10px; }
+  .identity b { display: block; font-size: 14px; font-weight: 700; }
+  .identity small { display: block; font-size: 12px; color: var(--success-text); }
+  .badge-anti { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; color: var(--warn-text); background: var(--warn-bg); padding: 3px 8px; border-radius: 999px; }
+  .rowbetween { display: flex; justify-content: space-between; align-items: center; }
+  .upload { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 22px; border: 1.5px dashed #C9C5BA; border-radius: 10px; background: #FCFCFB; color: var(--text2); font-size: 13px; text-align: center; }
+  .upload input { display: none; }
+  .footer { padding: 18px 20px 28px; text-align: center; }
+  .footer span { font-size: 11px; color: var(--text3); }
+  .center-pad { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; padding: 0 20px; }
+  .picklist { display: flex; flex-direction: column; gap: 8px; }
+  .picklist a { display: flex; justify-content: space-between; align-items: center; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; text-decoration: none; color: var(--text); font-weight: 600; font-size: 15px; }
+  .loading { text-align: center; padding: 60px 20px; color: var(--text2); font-size: 14px; }
+  .success-icon { width: 56px; height: 56px; border-radius: 50%; background: var(--success-bg); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; }
+  .teacher-box { margin-top: 24px; border-top: 1px dashed var(--border); padding-top: 16px; }
+  .teacher-box summary { font-size: 12px; color: var(--text3); cursor: pointer; }
+  .teacher-box .row { display: flex; gap: 8px; align-items: center; margin-top: 10px; }
+  .teacher-box .row input { flex-grow: 1; padding: 10px 12px; font-size: 13px; }
+  .teacher-box .smallbtn { flex-shrink: 0; padding: 10px 14px; font-size: 13px; }
+  .teacher-box .note { font-size: 12px; color: var(--text3); margin: 8px 0; }
+  .charcount { font-size: 12px; color: var(--text3); }
+  .grade-links { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+</style>
+</head>
+<body>
+<div id="app"><div class="loading">불러오는 중…</div></div>
+
+<script>
+const state = {
+  exec: '',
+  toolCfg: null,   // routes.json 의 tools.report (label, gradePrefixes 등)
+  grade: '',
+  tab: '',
+  config: null,
+  login: null,   // { studentId, studentName, code }
+  antiPaste: { pasteTries: 0, maxChunk: 0, chunks: 0, deletes: 0, startedAt: 0 }
+};
+
+function qs(name) { return new URLSearchParams(location.search).get(name) || ''; }
+
+function el(html) {
+  const t = document.createElement('template');
+  t.innerHTML = html.trim();
+  return t.content.firstElementChild;
+}
+
+function render(html) {
+  const app = document.getElementById('app');
+  app.innerHTML = '';
+  app.appendChild(el(html));
+}
+
+function brandLabel() {
+  return (state.toolCfg && state.toolCfg.label) || (state.config && state.config.title) || '과제 제출';
+}
+
+async function api(action, data, method) {
+  method = method || 'POST';
+  if (method === 'GET') {
+    const url = new URL(state.exec);
+    url.searchParams.set('action', action);
+    if (data) url.searchParams.set('data', JSON.stringify(data));
+    const res = await fetch(url.toString());
+    return res.json();
+  }
+  const body = new URLSearchParams();
+  body.set('action', action);
+  if (data) body.set('data', JSON.stringify(data));
+  const res = await fetch(state.exec, { method: 'POST', body: body });
+  return res.json();
+}
+
+function fileToBase64(file) {
+  return new Promise(function (resolve, reject) {
+    const reader = new FileReader();
+    reader.onload = function () { resolve(String(reader.result).split(',')[1]); };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function statusLabel(s) {
+  return s === 'open' ? '진행중' : s === 'wait' ? '대기' : '마감';
+}
+
+// ---------- 부팅 ----------
+// 실제 /exec 주소는 이 화면에 직접 넣지 않고, 같은 사이트의 routes.json에서 읽어옵니다.
+// 시트를 새로 만들어 주소가 바뀌어도(예: 매년 새 학년도) routes.json 한 곳만 고치면
+// 학생들이 쓰는 이 링크(QR 포함)는 그대로 유지됩니다.
+
+async function boot() {
+  state.tab = qs('tab') || '';
+  state.tabsFilter = qs('tabs') ? qs('tabs').split(',').map(function (s) { return s.trim(); }).filter(Boolean) : null;
+  state.groupLabel = qs('label') || '';
+  state.grade = qs('grade') || '';
+
+  const override = qs('exec');
+  if (override) {
+    state.exec = override;
+  } else {
+    try {
+      const routes = await (await fetch('../routes.json')).json();
+      const tool = routes.tools && routes.tools.report;
+      if (!tool || !tool.exec) throw new Error('not-configured');
+      state.toolCfg = tool;
+      state.exec = tool.exec;
+    } catch (e) {
+      return renderSetup();
+    }
+  }
+
+  try {
+    state.config = await api('getConfig', null, 'GET');
+  } catch (e) {
+    return renderError('서버에 연결할 수 없습니다. 인터넷 연결을 확인하거나 선생님께 문의해주세요.');
+  }
+  if (!state.config || !state.config.tabs) {
+    return renderError('서버에 연결할 수 없습니다. 주소가 올바른지 확인해주세요.');
+  }
+
+  if (!state.tab) { return renderPicker(); }
+
+  const tab = state.config.tabs.find(function (t) { return t.sheetName === state.tab; });
+  if (!tab) { return renderError('요청하신 과제를 찾을 수 없습니다.'); }
+
+  const status = (tab.meta && tab.meta.status) || 'open';
+  if (status === 'wait') { return renderBlocked(tab, '아직 시작 전인 과제입니다. 선생님이 시작하면 제출할 수 있어요.'); }
+  if (status === 'closed') { return renderBlocked(tab, '이 과제는 제출이 마감되었습니다.'); }
+
+  renderLogin(tab);
+}
+
+// ---------- 설정 실패 시(직접 입력) ----------
+
+function renderSetup() {
+  render(
+    '<div class="center-pad">' +
+      '<div class="card">' +
+        '<div style="font-size:18px;font-weight:700;margin-bottom:6px;">연결할 수 없습니다</div>' +
+        '<p style="font-size:13px;color:var(--text2);margin:0 0 16px;">설정(routes.json)을 찾지 못했습니다. 테스트용으로 Apps Script 웹앱 주소를 직접 입력할 수 있습니다.</p>' +
+        '<div class="field"><label for="execInput">Apps Script 웹앱 주소</label>' +
+        '<input id="execInput" type="text" placeholder="https://script.google.com/macros/s/.../exec"></div>' +
+        '<button class="btn" id="setupBtn">연결하기</button>' +
+      '</div>' +
+    '</div>'
+  );
+  document.getElementById('setupBtn').onclick = function () {
+    const v = document.getElementById('execInput').value.trim();
+    if (!v) return;
+    const url = new URL(location.href);
+    url.searchParams.set('exec', v);
+    location.href = url.toString();
+  };
+}
+
+// ---------- 과제 선택 ----------
+
+function renderPicker() {
+  let open = state.config.tabs.filter(function (t) { return (t.meta && t.meta.status) !== 'wait'; });
+
+  if (state.grade && state.toolCfg && state.toolCfg.gradePrefixes && state.toolCfg.gradePrefixes[state.grade]) {
+    const prefix = state.toolCfg.gradePrefixes[state.grade];
+    open = open.filter(function (t) { return t.sheetName.indexOf(prefix) === 0; });
+  } else if (state.tabsFilter) {
+    const want = state.tabsFilter;
+    open = open.filter(function (t) { return want.indexOf(t.sheetName) >= 0; });
+  }
+
+  const items = open.map(function (t) {
+    const s = (t.meta && t.meta.status) || 'open';
+    return '<a href="?tab=' + encodeURIComponent(t.sheetName) + '">' +
+      '<span>' + escapeHtml(t.sheetName) + '</span>' +
+      '<span class="pill ' + s + '">' + statusLabel(s) + '</span>' +
+    '</a>';
+  }).join('');
+
+  const titleText = state.grade ? (brandLabel() + ' · ' + state.grade + '학년')
+    : (state.groupLabel || brandLabel());
+
+  const isFiltered = !!(state.grade || state.tabsFilter);
+
+  render(
+    '<div class="topbar"><span class="brand">' + escapeHtml(titleText) + '</span></div>' +
+    '<div class="head"><h1 class="serif">과제를 선택하세요</h1></div>' +
+    '<div class="main"><div class="picklist">' + (items || '<p style="color:var(--text2);font-size:14px;">표시할 과제가 없습니다.</p>') + '</div>' +
+      (isFiltered ? '' : teacherLinkBox()) +
+    '</div>' +
+    '<div class="footer"><span>' + escapeHtml(brandLabel()) + '</span></div>'
+  );
+
+  if (!isFiltered) {
+    document.querySelectorAll('.grpChk').forEach(function (b) { b.addEventListener('change', updateGroupLink); });
+    const grpLabel = document.getElementById('grpLabel');
+    if (grpLabel) grpLabel.addEventListener('input', updateGroupLink);
+    updateGroupLink();
+  }
+}
+
+// 교사용 — 학년별 고정 링크(매년 재사용 가능) + 과제별 바로가기 + 임시로 묶은 링크를 만듭니다.
+function teacherLinkBox() {
+  const gradeRows = (state.toolCfg && state.toolCfg.gradePrefixes)
+    ? Object.keys(state.toolCfg.gradePrefixes).map(function (g) {
+        const link = location.origin + location.pathname + '?grade=' + encodeURIComponent(g);
+        return '<div class="row"><input readonly value="' + escapeHtml(link) + '"><button class="btn-outline smallbtn" data-link="' + escapeHtml(link) + '">복사</button></div>';
+      }).join('')
+    : '';
+
+  const rows = state.config.tabs.map(function (t) {
+    const link = location.origin + location.pathname + '?tab=' + encodeURIComponent(t.sheetName);
+    return '<div class="row"><input readonly value="' + escapeHtml(link) + '"><button class="btn-outline smallbtn" data-link="' + escapeHtml(link) + '">복사</button></div>';
+  }).join('');
+
+  const checks = state.config.tabs.map(function (t) {
+    return '<label style="display:flex;align-items:center;gap:8px;font-size:13px;padding:6px 0;">' +
+      '<input type="checkbox" class="grpChk" data-name="' + escapeHtml(t.sheetName) + '" checked> ' + escapeHtml(t.sheetName) +
+    '</label>';
+  }).join('');
+
+  return '<details class="teacher-box" open><summary>교사용 — 학생 링크 만들기</summary>' +
+    (gradeRows ? (
+      '<div class="note">학년별 고정 링크 — 과제 이름이 그 학년 접두어로 시작하면 자동으로 걸러집니다. <strong>매년 시트를 새로 만들어도 이 링크(QR)는 그대로 재사용</strong>됩니다.</div>' +
+      '<div class="grade-links">' + gradeRows + '</div>'
+    ) : '') +
+    '<div class="note">과제별 바로가기</div>' + rows +
+    '<div style="margin-top:16px;padding-top:14px;border-top:1px dashed var(--border);">' +
+      '<div class="note">여러 과제를 임시로 묶어서 링크 만들기 — 이 링크는 과제 이름이 바뀌면 다시 만들어야 합니다.</div>' +
+      '<div class="field"><label for="grpLabel">이 링크의 이름 (선택, 화면 상단에 표시됨)</label>' +
+      '<input id="grpLabel" type="text" placeholder="예: 방과후반"></div>' +
+      checks +
+      '<div class="row" style="margin-top:12px;">' +
+        '<input readonly id="grpLink" value="">' +
+        '<button class="btn-outline smallbtn" id="grpCopy">복사</button>' +
+      '</div>' +
+    '</div>' +
+  '</details>';
+}
+
+function updateGroupLink() {
+  const boxes = Array.prototype.slice.call(document.querySelectorAll('.grpChk'));
+  const all = boxes.map(function (b) { return b.getAttribute('data-name'); });
+  const checked = boxes.filter(function (b) { return b.checked; }).map(function (b) { return b.getAttribute('data-name'); });
+  const label = document.getElementById('grpLabel').value.trim();
+
+  let link = location.origin + location.pathname + '?';
+  const parts = [];
+  if (checked.length && checked.length < all.length) {
+    parts.push('tabs=' + checked.map(encodeURIComponent).join(','));
+  }
+  if (label) parts.push('label=' + encodeURIComponent(label));
+  link += parts.join('&');
+
+  const linkInput = document.getElementById('grpLink');
+  if (linkInput) linkInput.value = link;
+  const copyBtn = document.getElementById('grpCopy');
+  if (copyBtn) copyBtn.setAttribute('data-link', link);
+}
+
+// ---------- 대기/마감 안내 ----------
+
+function renderBlocked(tab, message) {
+  render(
+    '<div class="topbar"><span class="brand">' + escapeHtml(brandLabel()) + '</span></div>' +
+    '<div class="head"><h1 class="serif">' + escapeHtml(tab.sheetName) + '</h1></div>' +
+    '<div class="main"><div class="msg warn">' + escapeHtml(message) + '</div></div>'
+  );
+}
+
+function renderError(message) {
+  render(
+    '<div class="center-pad"><div class="card"><div class="msg error">' + escapeHtml(message) + '</div></div></div>'
+  );
+}
+
+// ---------- 학생 로그인 ----------
+
+function renderLogin(tab, errorMsg) {
+  const status = (tab.meta && tab.meta.status) || 'open';
+  render(
+    '<div class="topbar"><span class="brand">' + escapeHtml(brandLabel()) + '</span><span class="pill ' + status + '">' + statusLabel(status) + '</span></div>' +
+    '<div class="head"><h1 class="serif">' + escapeHtml(tab.sheetName) + '</h1>' +
+      '<p>학번과 학생코드로 로그인하세요</p></div>' +
+    '<div class="center-pad" style="padding-top:0;">' +
+      '<div class="card">' +
+        (errorMsg ? '<div class="msg error">' + escapeHtml(errorMsg) + '</div>' : '') +
+        '<div class="field"><label for="loginId">학번</label>' +
+        '<input id="loginId" type="text" inputmode="numeric" placeholder="예: 10305"></div>' +
+        '<div class="field"><label for="loginCode">학생코드</label>' +
+        '<input id="loginCode" type="text" placeholder="예: H3F9K2">' +
+        '<span class="hint">선생님이 나눠준 학생코드 6자리를 입력하세요</span></div>' +
+        '<button class="btn" id="loginBtn">로그인</button>' +
+      '</div>' +
+    '</div>' +
+    '<div class="footer"><span>Made by Eagle Teacher · 교육 목적</span></div>'
+  );
+
+  document.getElementById('loginBtn').onclick = function () { doLogin(tab); };
+  document.getElementById('loginCode').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') doLogin(tab);
+  });
+}
+
+async function doLogin(tab) {
+  const studentId = document.getElementById('loginId').value.trim();
+  const code = document.getElementById('loginCode').value.trim();
+  if (!studentId || !code) { return renderLogin(tab, '학번과 학생코드를 입력해주세요.'); }
+
+  const btn = document.getElementById('loginBtn');
+  btn.disabled = true; btn.textContent = '확인 중…';
+
+  let res;
+  try {
+    res = await api('studentLogin', { tabName: tab.sheetName, studentId: studentId, code: code });
+  } catch (e) {
+    return renderLogin(tab, '서버에 연결할 수 없습니다. 다시 시도해주세요.');
+  }
+  if (!res.success) { return renderLogin(tab, res.message || '로그인에 실패했습니다.'); }
+
+  state.login = { studentId: studentId, studentName: res.studentName, code: code };
+  renderForm(tab);
+}
+
+// ---------- 제출 폼 ----------
+
+function fieldInputs(tab) {
+  return tab.fields.filter(function (f) {
+    return f.type === 'short' || f.type === 'long' || f.type === 'file';
+  });
+}
+
+function renderForm(tab, notice) {
+  const status = (tab.meta && tab.meta.status) || 'open';
+  const antiPaste = !!(tab.meta && tab.meta.antiPaste);
+  const inputs = fieldInputs(tab);
+
+  const fieldsHtml = inputs.map(function (f, i) {
+    const id = 'f_' + i;
+    if (f.type === 'short') {
+      return '<div class="field"><label for="' + id + '">' + escapeHtml(f.name) + '</label>' +
+        '<input id="' + id + '" type="text" data-field="' + i + '"></div>';
+    }
+    if (f.type === 'long') {
+      return '<div class="field"><label for="' + id + '">' + escapeHtml(f.name) + '</label>' +
+        '<textarea id="' + id + '" data-field="' + i + '" data-antipaste="' + (antiPaste ? '1' : '0') + '"></textarea>' +
+        '<div class="rowbetween">' +
+          (antiPaste ? '<span class="badge-anti">복사-붙여넣기 제한</span>' : '<span></span>') +
+          '<span class="charcount" id="cc_' + id + '">0자</span>' +
+        '</div></div>';
+    }
+    return '<div class="field"><label>' + escapeHtml(f.name) + '</label>' +
+      '<label class="upload">사진 선택하기 (최대 8MB)<input id="' + id + '" type="file" data-field="' + i + '" accept="image/*,.pdf,.doc,.docx,.hwp,.hwpx"></label>' +
+      '<span class="hint" id="fn_' + id + '"></span></div>';
+  }).join('');
+
+  render(
+    '<div class="topbar"><span class="brand">' + escapeHtml(brandLabel()) + '</span><span class="pill ' + status + '">' + statusLabel(status) + '</span></div>' +
+    '<div class="head"><h1 class="serif">' + escapeHtml(tab.sheetName) + '</h1>' +
+      (tab.description ? '<p>' + escapeHtml(tab.description) + '</p>' : '') +
+    '</div>' +
+    '<div class="main">' +
+      '<div class="identity">' +
+        '<div><b>' + escapeHtml(state.login.studentId) + ' · ' + escapeHtml(state.login.studentName) + '</b>' +
+        '<small>학생코드로 확인됨</small></div>' +
+      '</div>' +
+      (notice ? '<div class="msg error">' + escapeHtml(notice) + '</div>' : '') +
+      '<div class="card">' + fieldsHtml + '</div>' +
+      '<button class="btn" id="submitBtn" style="margin-bottom:10px;">제출하기</button>' +
+      '<p style="text-align:center;"><span class="hint">제출 시 ' + escapeHtml(state.login.studentId) + ' ' + escapeHtml(state.login.studentName) + ' 이름으로 기록됩니다</span></p>' +
+    '</div>' +
+    '<div class="footer"><span>Made by Eagle Teacher · 교육 목적</span></div>'
+  );
+
+  // 복붙 방지 + 글자수
+  inputs.forEach(function (f, i) {
+    if (f.type !== 'long') return;
+    const ta = document.getElementById('f_' + i);
+    const cc = document.getElementById('cc_f_' + i);
+    ta.addEventListener('input', function () { cc.textContent = ta.value.length + '자'; });
+    if (f.type === 'long' && tab.meta && tab.meta.antiPaste) {
+      ta.addEventListener('paste', function (e) {
+        e.preventDefault();
+        state.antiPaste.pasteTries++;
+        const text = (e.clipboardData || window.clipboardData).getData('text');
+        state.antiPaste.maxChunk = Math.max(state.antiPaste.maxChunk, text.length);
+        state.antiPaste.chunks++;
+      });
+      ta.addEventListener('keydown', function (e) {
+        if (e.key === 'Backspace' || e.key === 'Delete') state.antiPaste.deletes++;
+      });
+    }
+  });
+  inputs.forEach(function (f, i) {
+    if (f.type !== 'file') return;
+    document.getElementById('f_' + i).addEventListener('change', function (e) {
+      const file = e.target.files[0];
+      document.getElementById('fn_f_' + i).textContent = file ? file.name : '';
+    });
+  });
+  if (!state.antiPaste.startedAt) state.antiPaste.startedAt = Date.now();
+
+  document.getElementById('submitBtn').onclick = function () { doSubmit(tab, false); };
+}
+
+async function doSubmit(tab, confirmOverwrite) {
+  const inputs = fieldInputs(tab);
+  const values = tab.fields.map(function () { return ''; });
+  values[0] = state.login.studentId;
+  values[1] = state.login.studentName;
+
+  const files = [];
+  for (let i = 0; i < inputs.length; i++) {
+    const idx = tab.fields.indexOf(inputs[i]);
+    const f = inputs[i];
+    if (f.type === 'file') {
+      const input = document.getElementById('f_' + i);
+      const file = input.files[0];
+      if (file) {
+        if (file.size > 8 * 1024 * 1024) { return renderForm(tab, '첨부파일은 8MB 이하만 가능합니다.'); }
+        const base64 = await fileToBase64(file);
+        files.push({ index: idx, name: file.name, mimeType: file.type, base64: base64 });
+      }
+    } else {
+      values[idx] = document.getElementById('f_' + i).value;
+    }
+  }
+
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true; btn.textContent = '제출 중…';
+
+  const payload = {
+    tab: tab.sheetName,
+    code: state.login.code,
+    values: values,
+    files: files,
+    confirm: !!confirmOverwrite
+  };
+  if (tab.meta && tab.meta.antiPaste) {
+    payload.trace = {
+      v: 1,
+      pasteTries: state.antiPaste.pasteTries,
+      maxChunk: state.antiPaste.maxChunk,
+      chunks: state.antiPaste.chunks,
+      deletes: state.antiPaste.deletes,
+      activeSec: Math.round((Date.now() - state.antiPaste.startedAt) / 1000)
+    };
+  }
+
+  let res;
+  try {
+    res = await api('submit', payload);
+  } catch (e) {
+    btn.disabled = false; btn.textContent = '제출하기';
+    return renderForm(tab, '서버에 연결할 수 없습니다. 다시 시도해주세요.');
+  }
+
+  if (res.duplicate) {
+    const ok = confirm('이미 제출된 학번입니다 (' + (res.studentName || '') + '). 덮어쓸까요?');
+    if (ok) return doSubmit(tab, true);
+    btn.disabled = false; btn.textContent = '제출하기';
+    return;
+  }
+  if (!res.success) {
+    btn.disabled = false; btn.textContent = '제출하기';
+    return renderForm(tab, res.message || '제출에 실패했습니다.');
+  }
+
+  renderSuccess(tab, res.message);
+}
+
+function renderSuccess(tab, message) {
+  render(
+    '<div class="center-pad"><div class="card" style="text-align:center;">' +
+      '<div class="success-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#1F7A3D" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>' +
+      '<div style="font-size:18px;font-weight:700;margin-bottom:6px;">제출 완료</div>' +
+      '<p style="color:var(--text2);font-size:14px;margin:0;">' + escapeHtml(message || '제출이 완료되었습니다.') + '</p>' +
+    '</div></div>'
+  );
+}
+
+// ---------- 유틸 ----------
+
+function escapeHtml(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+  });
+}
+
+document.addEventListener('click', function (e) {
+  const btn = e.target.closest('[data-link]');
+  if (!btn) return;
+  const link = btn.getAttribute('data-link');
+  navigator.clipboard.writeText(link).then(function () {
+    const old = btn.textContent;
+    btn.textContent = '복사됨';
+    setTimeout(function () { btn.textContent = old; }, 1500);
+  });
+});
+
+boot();
+</script>
+</body>
+</html>
