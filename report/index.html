@@ -107,7 +107,23 @@ const state = {
   antiPaste: { pasteTries: 0, maxChunk: 0, chunks: 0, deletes: 0, startedAt: 0 }
 };
 
+const LOGIN_KEY = 'hyewon_report_login';   // 한 번 로그인하면 이 기기에서는 다시 묻지 않습니다(학번/학생코드만 저장).
+
 function qs(name) { return new URLSearchParams(location.search).get(name) || ''; }
+
+function saveLogin(studentId, code) {
+  try { localStorage.setItem(LOGIN_KEY, JSON.stringify({ studentId: studentId, code: code })); } catch (e) {}
+}
+function loadLogin() {
+  try {
+    const v = JSON.parse(localStorage.getItem(LOGIN_KEY) || 'null');
+    if (v && v.studentId && v.code) return v;
+  } catch (e) {}
+  return null;
+}
+function clearLogin() {
+  try { localStorage.removeItem(LOGIN_KEY); } catch (e) {}
+}
 
 function render(html) {
   document.getElementById('app').innerHTML = html;
@@ -190,7 +206,25 @@ async function boot() {
   if (status === 'wait') { return renderBlocked(tab, '아직 시작 전인 과제입니다. 선생님이 시작하면 제출할 수 있어요.'); }
   if (status === 'closed') { return renderBlocked(tab, '이 과제는 제출이 마감되었습니다.'); }
 
+  const saved = loadLogin();
+  if (saved) { return tryAutoLogin(tab, saved); }
+
   renderLogin(tab);
+}
+
+// 전에 로그인한 적이 있으면(이 기기에 학번·학생코드가 저장돼 있으면) 다시 묻지 않고 바로 들어갑니다.
+async function tryAutoLogin(tab, saved) {
+  render('<div class="loading">불러오는 중…</div>');
+  let res;
+  try {
+    res = await api('studentLogin', { tabName: tab.sheetName, studentId: saved.studentId, code: saved.code });
+  } catch (e) {
+    return renderLogin(tab);
+  }
+  if (!res.success) { clearLogin(); return renderLogin(tab); }
+
+  state.login = { studentId: saved.studentId, studentName: res.studentName, code: saved.code };
+  renderForm(tab);
 }
 
 // ---------- 설정 실패 시(직접 입력) ----------
@@ -383,6 +417,7 @@ async function doLogin(tab) {
   if (!res.success) { return renderLogin(tab, res.message || '로그인에 실패했습니다.'); }
 
   state.login = { studentId: studentId, studentName: res.studentName, code: code };
+  saveLogin(studentId, code);
   renderForm(tab);
 }
 
@@ -424,9 +459,10 @@ function renderForm(tab, notice) {
       (tab.description ? '<p>' + escapeHtml(tab.description) + '</p>' : '') +
     '</div>' +
     '<div class="main">' +
-      '<div class="identity">' +
+      '<div class="identity rowbetween">' +
         '<div><b>' + escapeHtml(state.login.studentId) + ' · ' + escapeHtml(state.login.studentName) + '</b>' +
         '<small>학생코드로 확인됨</small></div>' +
+        '<button class="linklike" id="logoutBtn" style="padding:4px 0;">로그아웃</button>' +
       '</div>' +
       (notice ? '<div class="msg error">' + escapeHtml(notice) + '</div>' : '') +
       '<div class="card">' + fieldsHtml + '</div>' +
@@ -465,6 +501,12 @@ function renderForm(tab, notice) {
   if (!state.antiPaste.startedAt) state.antiPaste.startedAt = Date.now();
 
   document.getElementById('submitBtn').onclick = function () { doSubmit(tab, false); };
+  document.getElementById('logoutBtn').onclick = function () {
+    if (!confirm('로그아웃할까요? 다시 쓰려면 학번과 학생코드를 입력해야 합니다.')) return;
+    clearLogin();
+    state.login = null;
+    renderLogin(tab);
+  };
 }
 
 async function doSubmit(tab, confirmOverwrite) {
