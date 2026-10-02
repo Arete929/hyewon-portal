@@ -4,7 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <title>혜원포털</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&family=Noto+Serif+KR:wght@600;700&display=swap">
+<link rel="icon" type="image/png" sizes="32x32" href="./assets/favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="./assets/favicon-192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="./assets/favicon-180.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dongle:wght@700&family=Noto+Sans+KR:wght@400;500;600;700&family=Noto+Serif+KR:wght@600;700&display=swap">
 <style>
   :root {
     --bg:#F6F5F1; --surface:#FFFFFF; --text:#1C1B1A; --text2:#6B6863; --text3:#A8A49A;
@@ -15,7 +18,9 @@
   .serif { font-family: 'Noto Serif KR', serif; }
   #app { max-width: 480px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; }
   .head { padding: 32px 20px 20px; }
-  .head .brand { font-size: 12px; font-weight: 600; letter-spacing: 0.04em; color: var(--text2); display: block; margin-bottom: 8px; }
+  .head .brand { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+  .head .brand img { width: 36px; height: 36px; }
+  .head .brand span { font-family: 'Dongle', sans-serif; font-weight: 700; font-size: 34px; line-height: 1; color: var(--text); }
   .head h1 { margin: 0; font-size: 24px; font-weight: 700; }
   .main { flex-grow: 1; padding: 0 20px; display: flex; flex-direction: column; gap: 10px; }
   .card { display: flex; justify-content: space-between; align-items: center; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 18px 20px; text-decoration: none; color: var(--text); font-weight: 600; font-size: 16px; }
@@ -29,6 +34,8 @@
   @media (min-width: 640px) {
     #app { max-width: 640px; }
     .head { padding: 48px 32px 28px; }
+    .head .brand img { width: 44px; height: 44px; }
+    .head .brand span { font-size: 40px; }
     .head h1 { font-size: 30px; }
     .main { padding: 0 32px; gap: 14px; }
     .card { padding: 24px 28px; font-size: 18px; border-radius: 16px; }
@@ -68,7 +75,7 @@ async function boot() {
   }).join('');
 
   document.getElementById('app').innerHTML =
-    '<div class="head"><span class="brand">혜원포털</span><h1 class="serif">무엇을 하시겠어요?</h1></div>' +
+    '<div class="head"><div class="brand"><img src="./assets/logo.png" alt=""><span>혜원포털</span></div><h1 class="serif">무엇을 하시겠어요?</h1></div>' +
     '<div class="main">' + items + '</div>' +
     '<div class="footer"><span>Made by Eagle Teacher · 교육 목적</span></div>';
 }
