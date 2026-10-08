@@ -83,6 +83,20 @@ function escapeHtml(s) {
     return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
   });
 }
+function fileToBase64(file) {
+  return new Promise(function (resolve, reject) {
+    const reader = new FileReader();
+    reader.onload = function () { resolve(String(reader.result).split(',')[1]); };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+function fileSizeLabel(bytes) {
+  bytes = Number(bytes) || 0;
+  if (bytes < 1024) return bytes + 'B';
+  if (bytes < 1024 * 1024) return Math.round(bytes / 1024) + 'KB';
+  return (bytes / (1024 * 1024)).toFixed(1) + 'MB';
+}
 function render(inner) {
   document.getElementById('app').innerHTML =
     '<div class="topbar"><span class="brand serif">혜원포털 관리자</span>' +
@@ -278,6 +292,7 @@ async function renderDetail(tabName) {
   if (!tab) return renderDashboard();
 
   const status = (tab.meta && tab.meta.status) || 'open';
+  const teacherFile = tab.meta && tab.meta.teacherFile;
 
   render(
     '<div class="wrap">' +
@@ -289,6 +304,16 @@ async function renderDetail(tabName) {
         '<button class="btn-outline" data-status="open">진행중</button>' +
         '<button class="btn-outline" data-status="closed">마감</button>' +
         '<button class="btn-outline btn-danger" id="delTabBtn">삭제</button>' +
+      '</div>' +
+      '<div class="card wide" style="margin-bottom:16px;">' +
+        '<h2>안내 파일 (학생이 내려받는 파일)</h2>' +
+        (teacherFile
+          ? '<p class="hint">' + escapeHtml(teacherFile.name) + ' · ' + fileSizeLabel(teacherFile.size) + '</p>' +
+            '<a class="btn-outline btn-sm" href="' + escapeHtml(teacherFile.url) + '" target="_blank" rel="noopener">열기</a> ' +
+            '<button class="btn-outline btn-sm btn-danger" id="clearTeacherFileBtn">삭제</button>'
+          : '<p class="hint">아직 올린 파일이 없습니다.</p>') +
+        '<div style="margin-top:10px;"><input type="file" id="teacherFileInput"></div>' +
+        '<div id="teacherFileMsg"></div>' +
       '</div>' +
       '<div class="tabs">' +
         '<button data-view="roster">명단</button>' +
@@ -304,6 +329,9 @@ async function renderDetail(tabName) {
     b.onclick = function () { doSetStatus(tabName, b.getAttribute('data-status')); };
   });
   document.getElementById('delTabBtn').onclick = function () { doDeleteTab(tabName); };
+  document.getElementById('teacherFileInput').onchange = function (e) { doUploadTeacherFile(tabName, e.target.files[0]); };
+  const clearBtn = document.getElementById('clearTeacherFileBtn');
+  if (clearBtn) clearBtn.onclick = function () { doClearTeacherFile(tabName); };
   document.querySelectorAll('.tabs button').forEach(function (b) {
     if (b.getAttribute('data-view') === state.detailView) b.classList.add('active');
     b.onclick = function () { state.detailView = b.getAttribute('data-view'); renderDetail(tabName); };
@@ -323,6 +351,29 @@ async function doDeleteTab(tabName) {
   if (!confirm('"' + tabName + '" 과제를 정말 삭제할까요? 학생 답변은 _이전제출 시트에 보관됩니다.')) return;
   try { await api('deleteTab', { tabName: tabName }); } catch (e) { return; }
   renderDashboard();
+}
+
+async function doUploadTeacherFile(tabName, file) {
+  if (!file) return;
+  const msg = document.getElementById('teacherFileMsg');
+  if (file.size > 8 * 1024 * 1024) { msg.innerHTML = '<div class="msg error">8MB 이하 파일만 올릴 수 있습니다.</div>'; return; }
+  msg.innerHTML = '<div class="hint">올리는 중…</div>';
+  const base64 = await fileToBase64(file);
+  let res;
+  try {
+    res = await api('setTeacherFile', {
+      tabName: tabName,
+      file: { name: file.name, mimeType: file.type, base64: base64 }
+    });
+  } catch (e) { return; }
+  if (!res.success) { msg.innerHTML = '<div class="msg error">' + escapeHtml(res.message || '업로드 실패') + '</div>'; return; }
+  renderDetail(tabName);
+}
+
+async function doClearTeacherFile(tabName) {
+  if (!confirm('안내 파일을 삭제할까요?')) return;
+  try { await api('clearTeacherFile', { tabName: tabName }); } catch (e) { return; }
+  renderDetail(tabName);
 }
 
 // ---------- 명단 ----------
