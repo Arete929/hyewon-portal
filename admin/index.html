@@ -423,17 +423,72 @@ async function renderSubmissions(tab) {
 
   const fields = res.fields || [];
   const rows = res.rows || [];
+  const reviewIdx = fields.findIndex(function (f) { return f.type === 'reviewStatus'; });
+  const feedbackIdx = fields.findIndex(function (f) { return f.type === 'feedback'; });
+
   const head = '<tr>' + fields.map(function (f) { return '<th>' + escapeHtml(f.name) + '</th>'; }).join('') + '</tr>';
-  const body_ = rows.map(function (r) {
-    return '<tr>' + r.map(function (v) { return '<td>' + escapeHtml(v) + '</td>'; }).join('') + '</tr>';
+
+  const body_ = rows.map(function (r, ri) {
+    const sid = r[0];
+    return '<tr>' + r.map(function (v, ci) {
+      if (ci === reviewIdx) {
+        const done = v === '검토완료';
+        return '<td><span class="pill ' + (done ? 'open' : 'wait') + '">' + escapeHtml(v || '제출됨') + '</span><br>' +
+          '<button class="btn-outline btn-sm reviewToggle" data-row="' + ri + '" data-next="' + (done ? '검토중' : '검토완료') + '" style="margin-top:6px;">' +
+          (done ? '검토중으로' : '검토완료로') + '</button></td>';
+      }
+      if (ci === feedbackIdx) {
+        return '<td style="min-width:160px;"><div class="fbtext" style="white-space:pre-wrap;font-size:12px;margin-bottom:6px;">' +
+          (v ? escapeHtml(v) : '<span class="hint">없음</span>') + '</div>' +
+          '<button class="btn-outline btn-sm fbEditBtn" data-row="' + ri + '">피드백 작성</button></td>';
+      }
+      return '<td>' + escapeHtml(v) + '</td>';
+    }).join('') + '</tr>';
   }).join('');
 
   body.innerHTML =
     '<p class="hint">총 ' + rows.length + '건</p>' +
+    (reviewIdx < 0 ? '<p class="hint">검토상태·피드백 열은 학생이 한 번 이상 제출하면 자동으로 생깁니다.</p>' : '') +
     '<div class="tablewrap"><table>' + head + (body_ || '<tr><td class="hint">제출된 답변이 없습니다.</td></tr>') + '</table></div>' +
     '<button class="btn-outline" id="csvBtn">CSV 내보내기</button>';
 
   document.getElementById('csvBtn').onclick = function () { exportCsv(tab.sheetName, fields, rows); };
+
+  document.querySelectorAll('.reviewToggle').forEach(function (btn) {
+    btn.onclick = async function () {
+      const ri = Number(btn.getAttribute('data-row'));
+      const sid = rows[ri][0];
+      const next = btn.getAttribute('data-next');
+      const curFeedback = feedbackIdx >= 0 ? (rows[ri][feedbackIdx] || '') : '';
+      btn.disabled = true;
+      let res2;
+      try { res2 = await api('setReview', { tabName: tab.sheetName, studentId: sid, reviewStatus: next, feedback: curFeedback }); }
+      catch (e) { btn.disabled = false; return; }
+      if (res2.success) renderSubmissions(tab);
+      else { alert(res2.message || '저장 실패'); btn.disabled = false; }
+    };
+  });
+
+  document.querySelectorAll('.fbEditBtn').forEach(function (btn) {
+    btn.onclick = function () {
+      const ri = Number(btn.getAttribute('data-row'));
+      const cur = feedbackIdx >= 0 ? (rows[ri][feedbackIdx] || '') : '';
+      const cell = btn.closest('td');
+      cell.innerHTML =
+        '<textarea class="fbInput" style="width:100%;box-sizing:border-box;min-height:64px;font-size:12px;font-family:inherit;padding:6px;border:1px solid var(--border);border-radius:6px;">' + escapeHtml(cur) + '</textarea>' +
+        '<button class="btn btn-sm fbSaveBtn" style="margin-top:6px;">저장</button>';
+      cell.querySelector('.fbSaveBtn').onclick = async function () {
+        const sid = rows[ri][0];
+        const text = cell.querySelector('.fbInput').value;
+        const curStatus = (reviewIdx >= 0 && rows[ri][reviewIdx]) || '검토중';
+        let res2;
+        try { res2 = await api('setReview', { tabName: tab.sheetName, studentId: sid, reviewStatus: curStatus, feedback: text }); }
+        catch (e) { return; }
+        if (res2.success) renderSubmissions(tab);
+        else alert(res2.message || '저장 실패');
+      };
+    };
+  });
 }
 
 function exportCsv(name, fields, rows) {
