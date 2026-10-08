@@ -6,18 +6,22 @@
 <title>과제 제출</title>
 <link rel="icon" type="image/png" sizes="32x32" href="../assets/favicon-32.png">
 <link rel="apple-touch-icon" sizes="180x180" href="../assets/favicon-180.png">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&family=Noto+Serif+KR:wght@600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dongle:wght@700&family=Noto+Sans+KR:wght@400;500;600;700&family=Noto+Serif+KR:wght@600;700&display=swap">
 <style>
   :root {
-    --bg:#F6F5F1; --surface:#FFFFFF; --text:#1C1B1A; --text2:#6B6863; --text3:#A8A49A;
-    --border:#E3E0D8; --accent:#2F6FED; --accent-dark:#1F52BE;
-    --success-bg:#E7F6EC; --success-text:#1F7A3D;
-    --error-bg:#FDEBEB; --error-text:#C22B2B;
+    --hyewon-emerald:#087A55; --hyewon-coral:#F04E68; --hyewon-cream:#FFFCF6;
+    --hyewon-mint:#E5F4EE; --hyewon-ink:#183A35; --hyewon-muted:#72827E; --hyewon-border:#E5EAE7;
+
+    --bg: var(--hyewon-cream); --surface:#FFFFFF; --text: var(--hyewon-ink); --text2: var(--hyewon-muted); --text3:#9AA79F;
+    --border: var(--hyewon-border); --accent: var(--hyewon-emerald); --accent-dark:#065F44;
+    --success-bg: var(--hyewon-mint); --success-text: var(--hyewon-emerald);
+    --error-bg:#FDEAEC; --error-text: var(--hyewon-coral);
     --warn-bg:#FFF4E0; --warn-text:#9A6400;
   }
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--text); font-family: 'Noto Sans KR', sans-serif; }
   .serif { font-family: 'Noto Serif KR', serif; }
+  .dongle { font-family: 'Dongle', sans-serif; font-weight: 700; display: block; margin: 0; line-height: 1; }
   #app { max-width: 480px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; }
   .topbar { padding: 18px 20px 0; display: flex; justify-content: space-between; align-items: center; }
   .topbar .brand { font-size: 12px; font-weight: 600; letter-spacing: 0.04em; color: var(--text2); }
@@ -71,6 +75,36 @@
   .charcount { font-size: 12px; color: var(--text3); }
   .grade-links { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
 
+  /* 로그인 배경 — 로고를 낮은 대비로 카드 아래쪽에 깔아둡니다 */
+  .login-page { position: relative; isolation: isolate; overflow: hidden; min-height: 100vh; display: flex; flex-direction: column; }
+  .login-page::after {
+    content: ""; position: absolute; z-index: -1; inset: auto 0 0; height: 42%;
+    background: url("../assets/logo.png") center 85% / min(70%, 300px) auto no-repeat;
+    opacity: 0.1;
+    -webkit-mask-image: linear-gradient(to bottom, transparent, #000 30%, #000 85%, transparent);
+    mask-image: linear-gradient(to bottom, transparent, #000 30%, #000 85%, transparent);
+    pointer-events: none;
+  }
+  .tagline { text-align: center; font-size: 12px; color: var(--text3); margin-top: 18px; }
+
+  /* 오늘의 과제 */
+  .assign-list { display: flex; flex-direction: column; gap: 10px; }
+  .assign-card { display: flex; justify-content: space-between; align-items: center; gap: 10px; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px 18px; text-decoration: none; color: var(--text); }
+  .assign-main { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+  .assign-title { font-weight: 700; font-size: 15px; }
+  .assign-time { font-size: 12px; color: var(--text3); }
+  .rpill { font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 999px; white-space: nowrap; flex-shrink: 0; }
+  .rpill.none { color: var(--text2); background: #EFEDE7; }
+  .rpill.pending { color: var(--warn-text); background: var(--warn-bg); }
+  .rpill.done { color: var(--success-text); background: var(--success-bg); }
+
+  /* 과제 상세 — 교사 안내 파일 · 피드백 */
+  .file-chip { display: flex; align-items: center; gap: 10px; background: var(--hyewon-mint); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; margin-bottom: 16px; }
+  .file-chip b { display: block; font-size: 14px; }
+  .feedback-box { background: var(--hyewon-mint); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; margin-bottom: 16px; }
+  .feedback-box b { display: block; font-size: 13px; color: var(--accent); margin-bottom: 6px; }
+  .feedback-box p { margin: 0; font-size: 14px; line-height: 1.6; white-space: pre-wrap; }
+
   /* 태블릿(디벗 등)·큰 화면 — 폭을 넓히고 글자·입력칸·버튼을 키웁니다 */
   @media (min-width: 640px) {
     #app { max-width: 640px; }
@@ -87,6 +121,8 @@
     .upload { padding: 30px; font-size: 14px; }
     .footer { padding: 22px 32px 32px; }
     .otp input { padding: 0; font-size: 22px; }
+    .assign-card { padding: 20px 22px; border-radius: 16px; }
+    .assign-title { font-size: 16px; }
   }
   @media (min-width: 900px) {
     #app { max-width: 760px; }
@@ -104,6 +140,9 @@ const state = {
   tab: '',
   config: null,
   login: null,   // { studentId, studentName, code }
+  globalMode: false,   // 과제를 먼저 고르지 않고 로그인부터 하는 흐름(오늘의 과제)
+  myTabs: null,        // getMySubmissions() 결과 — 이 학생이 속한 모든 과제의 제출 현황
+  currentEntry: null,  // globalMode에서 지금 보고 있는 과제의 myTabs 항목
   antiPaste: { pasteTries: 0, maxChunk: 0, chunks: 0, deletes: 0, startedAt: 0 }
 };
 
@@ -197,6 +236,16 @@ async function boot() {
     return renderError('서버에 연결할 수 없습니다. 주소가 올바른지 확인해주세요.');
   }
 
+  // 과제·학년을 특정하는 값이 전혀 없는 "맨 주소"(허브에서 들어오는 기본 진입점)는
+  // 학번+학생코드로 먼저 로그인하고 "오늘의 과제"를 보여주는 새 흐름으로 갑니다.
+  // ?grade= 나 ?tab= 처럼 선생님이 이미 나눠준 링크/QR은 예전 흐름 그대로 둡니다.
+  if (!state.tab && !state.grade && !state.tabsFilter) {
+    state.globalMode = true;
+    const savedGlobal = loadLogin();
+    if (savedGlobal) { return tryGlobalAutoLogin(savedGlobal); }
+    return renderGlobalLogin();
+  }
+
   if (!state.tab) { return renderPicker(); }
 
   const tab = state.config.tabs.find(function (t) { return t.sheetName === state.tab; });
@@ -225,6 +274,166 @@ async function tryAutoLogin(tab, saved) {
 
   state.login = { studentId: saved.studentId, studentName: res.studentName, code: saved.code };
   renderForm(tab);
+}
+
+// ---------- 오늘의 과제 (과제를 먼저 고르지 않는 로그인) ----------
+
+async function tryGlobalAutoLogin(saved) {
+  render('<div class="loading">불러오는 중…</div>');
+  let res;
+  try {
+    res = await api('getMySubmissions', { studentId: saved.studentId, code: saved.code });
+  } catch (e) {
+    return renderGlobalLogin();
+  }
+  if (!res.success) { clearLogin(); return renderGlobalLogin(); }
+  state.login = { studentId: saved.studentId, studentName: res.studentName, code: saved.code };
+  state.myTabs = res.tabs || [];
+  renderToday();
+}
+
+function renderGlobalLogin(errorMsg) {
+  render(
+    '<div class="login-page">' +
+      '<div class="head" style="text-align:center;padding-top:48px;">' +
+        '<h1 class="dongle" style="font-size:34px;">혜원포털</h1>' +
+        '<p>학생 로그인</p>' +
+      '</div>' +
+      '<div class="center-pad" style="padding-top:0;">' +
+        '<div class="card">' +
+          (errorMsg ? '<div class="msg error">' + escapeHtml(errorMsg) + '</div>' : '') +
+          '<div class="field"><label>학번</label>' +
+          '<div class="otp" id="otpId">' + otpBoxesHtml(4, true) + '</div></div>' +
+          '<div class="field"><label>학생코드</label>' +
+          '<div class="otp" id="otpCode">' + otpBoxesHtml(9, false) + '</div>' +
+          '<span class="hint">선생님이 나눠준 학생코드를 입력하세요</span></div>' +
+          '<button class="btn" id="loginBtn">로그인</button>' +
+        '</div>' +
+        '<p class="tagline">건강한 신체에 건전한 정신이 깃든다</p>' +
+      '</div>' +
+      '<div class="footer"><span>Made by Eagle Teacher · 교육 목적</span></div>' +
+    '</div>'
+  );
+  wireOtp('otpId', true);
+  wireOtp('otpCode', false);
+  document.getElementById('loginBtn').onclick = doGlobalLogin;
+  document.getElementById('otpCode').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') doGlobalLogin();
+  });
+  const first = document.querySelector('#otpId input');
+  if (first) first.focus();
+}
+
+async function doGlobalLogin() {
+  const studentId = otpValue('otpId');
+  const code = otpValue('otpCode');
+  if (!studentId || !code) { return renderGlobalLogin('학번과 학생코드를 모두 입력해주세요.'); }
+
+  const btn = document.getElementById('loginBtn');
+  btn.disabled = true; btn.textContent = '확인 중…';
+
+  let res;
+  try {
+    res = await api('getMySubmissions', { studentId: studentId, code: code });
+  } catch (e) {
+    return renderGlobalLogin('서버에 연결할 수 없습니다. 다시 시도해주세요.');
+  }
+  if (!res.success) { return renderGlobalLogin(res.message || '로그인에 실패했습니다.'); }
+
+  state.login = { studentId: studentId, studentName: res.studentName, code: code };
+  state.myTabs = res.tabs || [];
+  saveLogin(studentId, code);
+  renderToday();
+}
+
+function reviewLabel_(entry) {
+  if (!entry.submitted) return '미제출';
+  return entry.reviewStatus === '검토완료' ? '검토 완료' : '검토 중';
+}
+function reviewClass_(entry) {
+  if (!entry.submitted) return 'none';
+  return entry.reviewStatus === '검토완료' ? 'done' : 'pending';
+}
+
+function renderToday() {
+  const items = (state.myTabs || []).map(function (t) {
+    return '<a class="assign-card" href="#" data-tab="' + escapeHtml(t.sheetName) + '">' +
+      '<div class="assign-main">' +
+        '<span class="assign-title">' + escapeHtml(t.sheetName) + '</span>' +
+        (t.submittedAt ? '<span class="assign-time">제출 ' + escapeHtml(t.submittedAt) + '</span>' : '') +
+      '</div>' +
+      '<span class="rpill ' + reviewClass_(t) + '">' + reviewLabel_(t) + '</span>' +
+    '</a>';
+  }).join('');
+
+  render(
+    '<div class="topbar"><span class="brand dongle" style="font-size:20px;">혜원포털</span>' +
+      '<button class="linklike" id="logoutBtn" style="padding:4px 0;">로그아웃</button></div>' +
+    '<div class="head"><h1 class="serif">오늘의 과제</h1>' +
+      '<p>' + escapeHtml(state.login.studentId) + ' · ' + escapeHtml(state.login.studentName) + '</p></div>' +
+    '<div class="main"><div class="assign-list">' +
+      (items || '<p class="hint">표시할 과제가 없습니다.</p>') +
+    '</div></div>' +
+    '<div class="footer"><span>Made by Eagle Teacher · 교육 목적</span></div>'
+  );
+
+  document.querySelectorAll('[data-tab]').forEach(function (a) {
+    a.onclick = function (e) {
+      e.preventDefault();
+      const entry = (state.myTabs || []).find(function (t) { return t.sheetName === a.getAttribute('data-tab'); });
+      if (entry) openAssignment(entry);
+    };
+  });
+  document.getElementById('logoutBtn').onclick = function () {
+    if (!confirm('로그아웃할까요? 다시 쓰려면 학번과 학생코드를 입력해야 합니다.')) return;
+    clearLogin();
+    state.login = null; state.myTabs = null; state.currentEntry = null;
+    renderGlobalLogin();
+  };
+}
+
+function openAssignment(entry) {
+  const tab = state.config.tabs.find(function (t) { return t.sheetName === entry.sheetName; });
+  if (!tab) return;
+  renderAssignmentDetail(tab, entry);
+}
+
+function fileSizeLabel(bytes) {
+  bytes = Number(bytes) || 0;
+  if (bytes < 1024) return bytes + 'B';
+  if (bytes < 1024 * 1024) return Math.round(bytes / 1024) + 'KB';
+  return (bytes / (1024 * 1024)).toFixed(1) + 'MB';
+}
+
+function renderAssignmentDetail(tab, entry) {
+  state.currentEntry = entry;
+  const teacherFile = tab.meta && tab.meta.teacherFile;
+  const hasFeedback = entry.submitted && entry.feedback;
+  const btnLabel = !entry.submitted ? '제출하기' : (hasFeedback ? '피드백 반영해 수정 제출' : '다시 제출하기');
+
+  render(
+    '<div class="topbar"><a href="#" id="backBtn" class="hint">← 오늘의 과제</a>' +
+      '<span class="rpill ' + reviewClass_(entry) + '">' + reviewLabel_(entry) + '</span></div>' +
+    '<div class="head"><h1 class="serif">' + escapeHtml(tab.sheetName) + '</h1>' +
+      (tab.description ? '<p>' + escapeHtml(tab.description) + '</p>' : '') +
+    '</div>' +
+    '<div class="main">' +
+      (teacherFile
+        ? '<div class="file-chip">' +
+            '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>' +
+            '<div style="flex-grow:1;min-width:0;"><b>' + escapeHtml(teacherFile.name) + '</b>' +
+            '<span class="hint">' + fileSizeLabel(teacherFile.size) + '</span></div>' +
+            '<a class="btn-outline" style="width:auto;flex-shrink:0;" href="' + escapeHtml(teacherFile.url) + '" target="_blank" rel="noopener">열기</a>' +
+          '</div>'
+        : '') +
+      (entry.submittedAt ? '<p class="hint" style="margin-bottom:16px;">제출 시각: ' + escapeHtml(entry.submittedAt) + '</p>' : '') +
+      (hasFeedback ? '<div class="feedback-box"><b>선생님 피드백</b><p>' + escapeHtml(entry.feedback) + '</p></div>' : '') +
+      '<button class="btn" id="goFormBtn">' + btnLabel + '</button>' +
+    '</div>' +
+    '<div class="footer"><span>Made by Eagle Teacher · 교육 목적</span></div>'
+  );
+  document.getElementById('backBtn').onclick = function (e) { e.preventDefault(); renderToday(); };
+  document.getElementById('goFormBtn').onclick = function () { renderForm(tab); };
 }
 
 // ---------- 설정 실패 시(직접 입력) ----------
@@ -454,7 +663,11 @@ function renderForm(tab, notice) {
   }).join('');
 
   render(
-    '<div class="topbar"><span class="brand">' + escapeHtml(brandLabel()) + '</span><span class="pill ' + status + '">' + statusLabel(status) + '</span></div>' +
+    '<div class="topbar">' +
+      (state.globalMode
+        ? '<a href="#" id="backDetailBtn" class="hint">← 뒤로</a>'
+        : '<span class="brand">' + escapeHtml(brandLabel()) + '</span>') +
+      '<span class="pill ' + status + '">' + statusLabel(status) + '</span></div>' +
     '<div class="head"><h1 class="serif">' + escapeHtml(tab.sheetName) + '</h1>' +
       (tab.description ? '<p>' + escapeHtml(tab.description) + '</p>' : '') +
     '</div>' +
@@ -501,11 +714,19 @@ function renderForm(tab, notice) {
   if (!state.antiPaste.startedAt) state.antiPaste.startedAt = Date.now();
 
   document.getElementById('submitBtn').onclick = function () { doSubmit(tab, false); };
+  const backDetailBtn = document.getElementById('backDetailBtn');
+  if (backDetailBtn) {
+    backDetailBtn.onclick = function (e) {
+      e.preventDefault();
+      renderAssignmentDetail(tab, state.currentEntry || { sheetName: tab.sheetName, submitted: false, reviewStatus: '', feedback: '', submittedAt: '' });
+    };
+  }
   document.getElementById('logoutBtn').onclick = function () {
     if (!confirm('로그아웃할까요? 다시 쓰려면 학번과 학생코드를 입력해야 합니다.')) return;
     clearLogin();
     state.login = null;
-    renderLogin(tab);
+    if (state.globalMode) { state.myTabs = null; state.currentEntry = null; renderGlobalLogin(); }
+    else renderLogin(tab);
   };
 }
 
@@ -580,9 +801,20 @@ function renderSuccess(tab, message) {
     '<div class="center-pad"><div class="card" style="text-align:center;">' +
       '<div class="success-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#1F7A3D" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>' +
       '<div style="font-size:18px;font-weight:700;margin-bottom:6px;">제출 완료</div>' +
-      '<p style="color:var(--text2);font-size:14px;margin:0;">' + escapeHtml(message || '제출이 완료되었습니다.') + '</p>' +
+      '<p style="color:var(--text2);font-size:14px;margin:0 0 ' + (state.globalMode ? '18px' : '0') + ';">' + escapeHtml(message || '제출이 완료되었습니다.') + '</p>' +
+      (state.globalMode ? '<button class="btn" id="backTodayBtn">오늘의 과제로</button>' : '') +
     '</div></div>'
   );
+  const backTodayBtn = document.getElementById('backTodayBtn');
+  if (backTodayBtn) {
+    backTodayBtn.onclick = async function () {
+      render('<div class="loading">불러오는 중…</div>');
+      let res;
+      try { res = await api('getMySubmissions', { studentId: state.login.studentId, code: state.login.code }); } catch (e) {}
+      if (res && res.success) state.myTabs = res.tabs || [];
+      renderToday();
+    };
+  }
 }
 
 // ---------- OTP 입력칸 ----------
