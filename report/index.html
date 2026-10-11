@@ -107,7 +107,9 @@
   .assign-card { display: flex; align-items: center; gap: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 13px 14px; text-decoration: none; color: var(--text); }
   .assign-main { display: flex; flex-direction: column; gap: 4px; min-width: 0; flex-grow: 1; }
   .assign-title { font-weight: 700; font-size: 15px; }
+  .assign-sub { font-size: 12px; color: var(--text2); }
   .assign-time { font-size: 12px; color: var(--text3); }
+  .assign-chev { flex-shrink: 0; color: var(--text3); }
   .rpill { font-size: 11px; font-weight: 700; padding: 4px 9px; border-radius: 999px; white-space: nowrap; flex-shrink: 0; }
   .rpill.none { color: var(--text2); background: #EFEDE7; }
   .rpill.pending { color: var(--warn-text); background: var(--warn-bg); }
@@ -333,7 +335,10 @@ function renderGlobalLogin(errorMsg) {
           '<div class="field"><label>학생코드 <span style="color:var(--text3);font-weight:500;">(9자리)</span></label>' +
           '<div class="otp" id="otpCode">' + otpBoxesHtml(9, false) + '</div>' +
           '<span class="hint">선생님이 나눠준 학생코드를 입력하세요</span></div>' +
-          '<button class="btn" id="loginBtn">로그인</button>' +
+          '<button class="btn" id="loginBtn" style="display:flex;align-items:center;justify-content:center;gap:8px;">' +
+            '<span>로그인</span>' +
+            '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto;"><polyline points="9 18 15 12 9 6"></polyline></svg>' +
+          '</button>' +
         '</div>' +
       '</div>' +
       '<div style="flex-shrink:0;height:150px;position:relative;margin-top:18px;overflow:hidden;" aria-hidden="true">' +
@@ -415,6 +420,14 @@ function sportIcon_(name) {
   ];
   for (let i = 0; i < table.length; i++) { if (name.indexOf(table[i].kw) >= 0) return table[i]; }
   return { kind: 'ball', base: '#EFEDE7', seam: '#9AA79F' };
+}
+
+// 과제 제목에서 종목 키워드를 찾아 부제목으로 씁니다(교사가 입력한 실제 제목에서 뽑아낸 것일 뿐, 새로 지어내지 않습니다).
+function sportCategoryLabel_(name) {
+  name = String(name || '');
+  const keywords = ['발리볼', '베이스볼5', '베이스볼', '킨볼', '피클볼', '배드민턴', '줄넘기', '축구', '농구', '독서', '체력'];
+  for (let i = 0; i < keywords.length; i++) { if (name.indexOf(keywords[i]) >= 0) return keywords[i]; }
+  return '';
 }
 
 // sportIcon_()이 고른 종류로 42px짜리 아이콘을 그립니다: 실제 이모지 문자, 또는 같은 화풍의 커스텀 SVG.
@@ -560,13 +573,16 @@ function renderComingSoon_(active) {
 
 function renderToday() {
   const items = (state.myTabs || []).map(function (t) {
+    const sub = sportCategoryLabel_(t.sheetName);
+    const pillText = reviewLabel_(t) + (t.submittedAt ? ' · 제출 ' + escapeHtml(t.submittedAt) : '');
     return '<a class="assign-card" href="#" data-tab="' + escapeHtml(t.sheetName) + '">' +
       '<div class="sporticon">' + sportIconHtml_(t.sheetName) + '</div>' +
       '<div class="assign-main">' +
         '<span class="assign-title">' + escapeHtml(t.sheetName) + '</span>' +
-        (t.submittedAt ? '<span class="assign-time">제출 ' + escapeHtml(t.submittedAt) + '</span>' : '') +
+        (sub ? '<span class="assign-sub">' + escapeHtml(sub) + '</span>' : '') +
+        '<span class="rpill ' + reviewClass_(t) + '" style="align-self:flex-start;">' + pillText + '</span>' +
       '</div>' +
-      '<span class="rpill ' + reviewClass_(t) + '">' + reviewLabel_(t) + '</span>' +
+      '<svg class="assign-chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>' +
     '</a>';
   }).join('');
 
@@ -611,11 +627,17 @@ function renderAssignmentForm(tab, entry, notice) {
   const fieldsHtml = buildFieldsHtml(inputs, antiPaste);
   const teacherFile = tab.meta && tab.meta.teacherFile;
 
+  const sub = sportCategoryLabel_(tab.sheetName);
   render(
-    appbarHtml_(tab.sheetName, true) +
+    appbarHtml_('과제 상세', true) +
     '<div class="main" style="padding-top:16px;">' +
       (notice ? '<div class="msg error">' + escapeHtml(notice) + '</div>' : '') +
-      '<div class="info-row"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--text2)" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"></rect></svg>과제 유형 <b>' + escapeHtml(assignmentTypeLabel_(tab)) + '</b></div>' +
+      '<div class="detail-card" style="display:flex;align-items:center;gap:12px;">' +
+        '<div class="sporticon">' + sportIconHtml_(tab.sheetName) + '</div>' +
+        '<div><div style="font-weight:700;font-size:15px;">' + escapeHtml(tab.sheetName) + '</div>' +
+        (sub ? '<div class="assign-sub">' + escapeHtml(sub) + '</div>' : '') + '</div>' +
+      '</div>' +
+      '<div class="info-row"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--text2)" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>과제 유형 <b>' + escapeHtml(assignmentTypeLabel_(tab)) + '</b></div>' +
       (tab.description
         ? '<div class="detail-card"><div class="row-head"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path></svg><b>교사 안내</b></div><p style="margin:0;font-size:13px;line-height:1.6;color:var(--text);">' + escapeHtml(tab.description) + '</p></div>'
         : '') +
@@ -626,7 +648,10 @@ function renderAssignmentForm(tab, entry, notice) {
           '</div>'
         : '') +
       '<div class="card">' + fieldsHtml + '</div>' +
-      '<button class="btn" id="submitBtn" style="margin-bottom:10px;">' + (entry.submitted ? '수정 제출하기' : '제출하기') + '</button>' +
+      '<button class="btn" id="submitBtn" style="margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:8px;">' +
+        '<span>' + (entry.submitted ? '수정 제출하기' : '제출하기') + '</span>' +
+        '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto;"><polyline points="9 18 15 12 9 6"></polyline></svg>' +
+      '</button>' +
       '<p style="text-align:center;"><span class="hint">제출 시 ' + escapeHtml(state.login.studentId) + ' ' + escapeHtml(state.login.studentName) + ' 이름으로 기록됩니다</span></p>' +
     '</div>' +
     '<div class="footer"><span>Made by Eagle Teacher · 교육 목적</span></div>'
@@ -650,19 +675,24 @@ function renderSubmissionStatus(tab, entry) {
   const hasFeedback = !!entry.feedback;
   const btnLabel = hasFeedback ? '피드백 반영해 수정 제출' : '다시 제출하기';
 
+  const sub = sportCategoryLabel_(tab.sheetName);
   render(
     appbarHtml_('제출 현황', true) +
     '<div class="main" style="padding-top:16px;">' +
       '<div class="detail-card" style="display:flex;align-items:center;gap:12px;">' +
         '<div class="sporticon">' + sportIconHtml_(tab.sheetName) + '</div>' +
-        '<div style="font-weight:700;font-size:15px;">' + escapeHtml(tab.sheetName) + '</div>' +
+        '<div><div style="font-weight:700;font-size:15px;">' + escapeHtml(tab.sheetName) + '</div>' +
+        (sub ? '<div class="assign-sub">' + escapeHtml(sub) + '</div>' : '') + '</div>' +
       '</div>' +
       '<div class="info-row" style="justify-content:space-between;">' +
         '<span style="display:flex;align-items:center;gap:6px;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--text2)" stroke-width="2"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 3"></path></svg>제출 시간 <b>' + escapeHtml(entry.submittedAt) + '</b></span>' +
         '<span class="rpill ' + reviewClass_(entry) + '">' + reviewLabel_(entry) + '</span>' +
       '</div>' +
-      (hasFeedback ? '<div class="feedback-box"><b>선생님 피드백</b><p>' + escapeHtml(entry.feedback) + '</p></div>' : '') +
-      '<button class="btn" id="resubmitBtn">' + btnLabel + '</button>' +
+      (hasFeedback ? '<div class="feedback-box"><div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg><b style="margin:0;">선생님 피드백</b></div><p>' + escapeHtml(entry.feedback) + '</p></div>' : '') +
+      '<button class="btn" id="resubmitBtn" style="display:flex;align-items:center;justify-content:center;gap:8px;">' +
+        '<span>' + btnLabel + '</span>' +
+        '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto;">' + (hasFeedback ? '<polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>' : '<polyline points="9 18 15 12 9 6"></polyline>') + '</svg>' +
+      '</button>' +
       '<div id="submittedFileArea" style="margin-top:20px;"></div>' +
       '<div class="detail-card" style="margin-top:14px;"><b style="display:block;font-size:13px;margin-bottom:10px;">과제 정보</b>' +
         '<div class="rowbetween" style="font-size:13px;padding:6px 0;"><span style="color:var(--text2);">과제 유형</span><span style="font-weight:600;">' + escapeHtml(assignmentTypeLabel_(tab)) + '</span></div>' +
@@ -909,22 +939,32 @@ function fieldInputs(tab) {
 
 // renderForm(예전 흐름)과 renderAssignmentForm(오늘의 과제 흐름)이 함께 씁니다.
 function buildFieldsHtml(inputs, antiPaste) {
+  let sawText = false, sawFile = false;
+  const textHead = '<div style="display:flex;align-items:center;gap:8px;margin:0 0 10px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg><b style="font-size:14px;">과제 내용 작성</b></div>';
+  const fileHead = '<div style="display:flex;align-items:center;gap:8px;margin:20px 0 10px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg><b style="font-size:14px;">사진·영상 첨부</b></div>';
+
   return inputs.map(function (f, i) {
     const id = 'f_' + i;
+    let head = '';
+    if ((f.type === 'short' || f.type === 'long') && !sawText) { sawText = true; head = textHead; }
+    if (f.type === 'file' && !sawFile) { sawFile = true; head = fileHead; }
+
     if (f.type === 'short') {
-      return '<div class="field"><label for="' + id + '">' + escapeHtml(f.name) + '</label>' +
+      return head + '<div class="field"><label for="' + id + '">' + escapeHtml(f.name) + '</label>' +
         '<input id="' + id + '" type="text" data-field="' + i + '"></div>';
     }
     if (f.type === 'long') {
-      return '<div class="field"><label for="' + id + '">' + escapeHtml(f.name) + '</label>' +
+      return head + '<div class="field"><label for="' + id + '">' + escapeHtml(f.name) + '</label>' +
         '<textarea id="' + id + '" data-field="' + i + '" data-antipaste="' + (antiPaste ? '1' : '0') + '"></textarea>' +
         '<div class="rowbetween">' +
           (antiPaste ? '<span class="badge-anti">복사-붙여넣기 제한</span>' : '<span></span>') +
           '<span class="charcount" id="cc_' + id + '">0자</span>' +
         '</div></div>';
     }
-    return '<div class="field"><label>' + escapeHtml(f.name) + '</label>' +
-      '<label class="upload">사진 선택하기 (최대 8MB)<input id="' + id + '" type="file" data-field="' + i + '" accept="image/*,.pdf,.doc,.docx,.hwp,.hwpx"></label>' +
+    return head + '<div class="field">' +
+      '<label class="upload"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#C9C5BA" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="M21 15l-5-5L5 21"></path></svg>' +
+        '<span>' + escapeHtml(f.name) + '</span><span class="hint">(최대 8MB)</span>' +
+        '<input id="' + id + '" type="file" data-field="' + i + '" accept="image/*,.pdf,.doc,.docx,.hwp,.hwpx"></label>' +
       '<span class="hint" id="fn_' + id + '"></span></div>';
   }).join('');
 }
