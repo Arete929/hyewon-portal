@@ -318,17 +318,34 @@ async function tryGlobalAutoLogin(saved) {
   renderToday();
 }
 
+function loginStepperHtml_() {
+  function step(n, label, active) {
+    return '<div class="step"><div class="dot ' + (active ? 'active' : 'idle') + '">' + n + '</div>' +
+      '<span class="label ' + (active ? 'active' : 'idle') + '">' + label + '</span></div>';
+  }
+  return '<div class="stepper" style="padding:16px 18px 0;">' +
+    step(1, '로그인', true) + '<div class="bar"></div>' +
+    step(2, '과제 선택', false) + '<div class="bar"></div>' +
+    step(3, '제출', false) + '<div class="bar"></div>' +
+    step(4, '완료', false) +
+  '</div>';
+}
+
 function renderGlobalLogin(errorMsg) {
   render(
     '<div class="login-page">' +
-      '<div style="text-align:center;padding:44px 24px 0;flex-shrink:0;">' +
-        '<img src="../assets/logo.png" alt="혜원포털 로고" style="width:100px;height:100px;">' +
-        '<h1 class="dongle" style="font-size:34px;color:#0B6E76;margin-top:8px;">혜원포털</h1>' +
-        '<p style="margin:2px 0 0;font-size:14px;color:var(--text2);font-weight:600;">학생 로그인</p>' +
-        '<p style="margin:10px 0 0;font-size:12px;color:var(--text3);">건강한 신체에 건전한 정신이 깃든다</p>' +
+      '<div style="flex-shrink:0;background:var(--hyewon-emerald);border-radius:0 0 28px 28px;padding:18px 20px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;">' +
+        '<div style="display:flex;align-items:center;gap:10px;min-width:0;">' +
+          '<img src="../assets/logo.png" alt="" style="width:40px;height:40px;flex-shrink:0;">' +
+          '<span class="dongle" style="color:#fff;font-size:24px;white-space:nowrap;">혜원포털</span>' +
+        '</div>' +
+        '<p style="margin:0;color:#fff;font-size:12px;line-height:1.4;text-align:right;opacity:0.9;flex-shrink:0;">꿈을 향해<br>함께, 혜원 ♡</p>' +
       '</div>' +
-      '<div style="flex-grow:1;display:flex;flex-direction:column;justify-content:center;padding:16px 24px 0;">' +
+      loginStepperHtml_() +
+      '<div style="flex-grow:1;display:flex;flex-direction:column;padding:28px 24px 0;">' +
         '<div class="card">' +
+          '<h1 class="dongle" style="margin:0;font-size:30px;color:#0B6E76;text-align:center;">혜원 포털</h1>' +
+          '<p style="margin:2px 0 20px;font-size:14px;color:var(--text2);font-weight:600;text-align:center;">학생 로그인</p>' +
           (errorMsg ? '<div class="msg error">' + escapeHtml(errorMsg) + '</div>' : '') +
           '<div class="field"><label>학번 <span style="color:var(--text3);font-weight:500;">(4자리)</span></label>' +
           '<div class="otp" id="otpId">' + otpBoxesHtml(4, true) + '</div></div>' +
@@ -336,7 +353,7 @@ function renderGlobalLogin(errorMsg) {
           '<div class="otp" id="otpCode">' + otpBoxesHtml(9, false) + '</div>' +
           '<span class="hint">선생님이 나눠준 학생코드를 입력하세요</span></div>' +
           '<button class="btn" id="loginBtn" style="display:flex;align-items:center;justify-content:center;gap:8px;">' +
-            '<span>로그인</span>' +
+            '<span>로그인하기</span>' +
             '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto;"><polyline points="9 18 15 12 9 6"></polyline></svg>' +
           '</button>' +
         '</div>' +
