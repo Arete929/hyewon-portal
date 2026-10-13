@@ -101,10 +101,11 @@ function render(inner) {
   document.getElementById('app').innerHTML =
     '<div class="topbar"><span class="brand serif">혜원포털 관리자</span>' +
     (state.token
-      ? '<div class="nav"><a href="#" id="navDash">과제</a><a href="#" id="navNotice">공지</a><a href="#" id="navSettings">설정</a><button class="link" id="navLogout">로그아웃</button></div>'
+      ? '<div class="nav"><a href="#" id="navHome">현황</a><a href="#" id="navDash">과제</a><a href="#" id="navNotice">공지</a><a href="#" id="navSettings">설정</a><button class="link" id="navLogout">로그아웃</button></div>'
       : '') +
     '</div>' + inner;
   if (state.token) {
+    document.getElementById('navHome').onclick = function (e) { e.preventDefault(); renderPortal(); };
     document.getElementById('navDash').onclick = function (e) { e.preventDefault(); renderDashboard(); };
     document.getElementById('navNotice').onclick = function (e) { e.preventDefault(); renderNotice(); };
     document.getElementById('navSettings').onclick = function (e) { e.preventDefault(); renderSettings(); };
@@ -153,7 +154,7 @@ async function boot() {
     return;
   }
   try { state.token = localStorage.getItem(TOKEN_KEY) || ''; } catch (e) {}
-  if (state.token) { renderDashboard(); } else { renderLogin(); }
+  if (state.token) { renderPortal(); } else { renderLogin(); }
 }
 
 // ---------- 로그인 ----------
@@ -186,7 +187,7 @@ async function doLogin() {
   if (!res.success) { return renderLogin(res.message || '로그인에 실패했습니다.'); }
   state.token = res.token;
   if (remember) { try { localStorage.setItem(TOKEN_KEY, res.token); } catch (e) {} }
-  renderDashboard();
+  renderPortal();
 }
 
 function doLogout() {
@@ -568,6 +569,49 @@ async function renderLog(tab) {
     '<div class="tablewrap"><table><tr><th>시각</th><th>학번</th><th>이름</th><th>구분</th></tr>' +
       (rows || '<tr><td colspan="4" class="hint">기록이 없습니다.</td></tr>') +
     '</table></div>';
+}
+
+// ---------- 포털 현황 · 마스터코드 ----------
+
+async function renderPortal(notice) {
+  render('<div class="wrap"><h1 class="serif">혜원포털 관리</h1><p class="hint">불러오는 중…</p></div>');
+  let st;
+  try { st = await api('getPortalStatus'); } catch (e) { return; }
+  if (!st || !st.success) return render('<div class="wrap"><div class="msg error">현황을 불러오지 못했습니다. Apps Script를 최신 Code.gs로 다시 배포했는지 확인해주세요.</div></div>');
+  function row(k, v) { return '<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:14px;"><span style="color:var(--text2);">' + k + '</span><b>' + v + '</b></div>'; }
+  render(
+    '<div class="wrap">' +
+      '<h1 class="serif">혜원포털 관리</h1>' +
+      '<div class="card">' +
+        '<h2>현황</h2>' +
+        row('과제(탭) 수', st.tabCount) +
+        row('보낸 공지', st.noticeCount + '건') +
+        row('알림 켠 기기', st.tokenCount + '대') +
+        row('푸시 알림 서버 설정', st.pushReady ? '완료' : '안 됨 (FCM_SERVICE_ACCOUNT 필요)') +
+        row('서버 버전', st.serverVersion) +
+      '</div>' +
+      '<div class="card">' +
+        '<h2>마스터코드 <span class="hint">학번 + 마스터코드로 학생 화면 둘러보기 (제출은 안 됨)</span></h2>' +
+        (notice ? '<div class="msg ' + notice.type + '">' + escapeHtml(notice.text) + '</div>' : '') +
+        '<p style="font-size:14px;">현재 값: <b>' + escapeHtml(st.masterCode) + '</b>' + (st.masterCustom ? '' : ' <span class="hint">(기본값)</span>') + '</p>' +
+        '<div class="field"><label for="mcIn">새 마스터코드 (영문 대문자·숫자 4자 이상)</label><input id="mcIn" type="text" maxlength="12"></div>' +
+        '<button class="btn" id="mcSave">변경</button>' +
+      '</div>' +
+      '<div class="card"><h2>바로가기</h2>' +
+        '<p style="font-size:14px;line-height:2;"><a href="#" id="goTasks">과제 관리</a> · <a href="#" id="goNotice">공지 보내기</a> · <a href="../import/">명단 가져오기</a> · <a href="#" id="goSettings">설정</a></p>' +
+      '</div>' +
+    '</div>'
+  );
+  document.getElementById('mcSave').onclick = async function () {
+    const v = document.getElementById('mcIn').value.trim();
+    if (!v) return;
+    let r;
+    try { r = await api('setMasterCode', { code: v }); } catch (e) { return; }
+    renderPortal(r.success ? { type: 'ok', text: '마스터코드를 바꿨어요.' } : { type: 'error', text: r.message || '변경 실패' });
+  };
+  document.getElementById('goTasks').onclick = function (e) { e.preventDefault(); renderDashboard(); };
+  document.getElementById('goNotice').onclick = function (e) { e.preventDefault(); renderNotice(); };
+  document.getElementById('goSettings').onclick = function (e) { e.preventDefault(); renderSettings(); };
 }
 
 // ---------- 공지(푸시 알림) ----------
