@@ -577,7 +577,20 @@ async function renderPortal(notice) {
   render('<div class="wrap"><h1 class="serif">혜원포털 관리</h1><p class="hint">불러오는 중…</p></div>');
   let st;
   try { st = await api('getPortalStatus'); } catch (e) { return; }
-  if (!st || !st.success) return render('<div class="wrap"><div class="msg error">현황을 불러오지 못했습니다. Apps Script를 최신 Code.gs로 다시 배포했는지 확인해주세요.</div></div>');
+  if (!st || !st.success) {
+    render(
+      '<div class="wrap"><h1 class="serif">혜원포털 관리</h1>' +
+      '<div class="msg error">서버가 예전 버전이라 현황을 불러오지 못했어요. 과제 관리는 그대로 쓸 수 있어요.</div>' +
+      '<div class="card"><h2>최신 기능을 켜려면</h2>' +
+      '<p style="font-size:13px;line-height:1.8;margin:0;">1) Apps Script 편집기에 최신 <b>Code.gs</b>를 붙여넣고 저장<br>' +
+      '2) 배포 → <b>배포 관리</b> → 기존 배포의 연필(수정) → 버전 <b>새 버전</b> → 배포<br>' +
+      '<span class="hint">※ «새 배포»를 만들면 주소가 바뀌어요. 꼭 기존 배포를 새 버전으로 업데이트하세요.</span></p></div>' +
+      '<div class="card"><h2>바로가기</h2><p style="font-size:14px;line-height:2;"><a href="#" id="goTasks">과제 관리</a> · <a href="../import/">명단 가져오기</a> · <a href="#" id="goSettings">설정</a></p></div></div>'
+    );
+    document.getElementById('goTasks').onclick = function (e) { e.preventDefault(); renderDashboard(); };
+    document.getElementById('goSettings').onclick = function (e) { e.preventDefault(); renderSettings(); };
+    return;
+  }
   function row(k, v) { return '<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:14px;"><span style="color:var(--text2);">' + k + '</span><b>' + v + '</b></div>'; }
   render(
     '<div class="wrap">' +
