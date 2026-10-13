@@ -10,7 +10,7 @@
 <style>
   :root {
     --bg:#F6F5F1; --surface:#FFFFFF; --text:#1C1B1A; --text2:#6B6863; --text3:#A8A49A;
-    --border:#E3E0D8; --accent:#2F6FED; --accent-dark:#1F52BE;
+    --border:#E3E0D8; --accent:#087A55; --accent-dark:#065F44;
     --success-bg:#E7F6EC; --success-text:#1F7A3D;
     --error-bg:#FDEBEB; --error-text:#C22B2B;
     --warn-bg:#FFF4E0; --warn-text:#9A6400;
@@ -18,12 +18,37 @@
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--text); font-family: 'Noto Sans KR', sans-serif; }
   .serif { font-family: 'Noto Serif KR', serif; }
-  #app { max-width: 900px; margin: 0 auto; min-height: 100vh; padding-bottom: 60px; }
-  .topbar { display: flex; justify-content: space-between; align-items: center; padding: 18px 20px; border-bottom: 1px solid var(--border); background: var(--surface); }
-  .topbar .brand { font-weight: 700; font-size: 15px; }
-  .topbar .nav { display: flex; gap: 14px; align-items: center; }
-  .topbar a, .topbar button.link { font-size: 13px; color: var(--text2); text-decoration: none; background: none; border: none; cursor: pointer; font-family: inherit; padding: 0; }
-  .wrap { padding: 24px 20px; }
+  #app { min-height: 100vh; }
+  .shell { display: flex; min-height: 100vh; }
+  .side { width: 220px; flex-shrink: 0; background: #10342B; color: #A9C4B9; padding: 20px 12px; display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh; }
+  .side .brandbox { display: flex; align-items: center; gap: 10px; margin: 4px 6px 26px; }
+  .side .brandbox img { width: 34px; height: 34px; border-radius: 10px; background: #fff; flex: none; }
+  .side .brandbox b { color: #fff; font-size: 15px; line-height: 1.25; }
+  .side .brandbox small { display: block; color: #7FA596; font-size: 11px; font-weight: 500; }
+  .side button.nav, .side a.nav { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; background: none; border: none; color: #A9C4B9; font-family: inherit; font-size: 14px; font-weight: 600; padding: 11px 12px; border-radius: 10px; cursor: pointer; text-decoration: none; margin-bottom: 4px; }
+  .side button.nav:hover, .side a.nav:hover { background: #1B4A3E; color: #fff; }
+  .side button.nav.on { background: #087A55; color: #fff; }
+  .side .spacer { flex: 1; }
+  .side .divider { border-top: 1px solid #25483D; margin: 10px 6px; }
+  .main { flex: 1; min-width: 0; }
+  .main .wrap { max-width: 1000px; }
+  .wrap { padding: 28px 28px 60px; }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 18px; }
+  .stat { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px 18px; }
+  .stat span { display: block; font-size: 12px; color: var(--text2); font-weight: 600; margin-bottom: 6px; }
+  .stat b { font-size: 26px; }
+  .stat b.small { font-size: 15px; }
+  .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; align-items: start; }
+  .grid2 .card { max-width: none; margin-bottom: 0; }
+  @media (max-width: 760px) {
+    .shell { flex-direction: column; }
+    .side { width: 100%; height: auto; position: static; flex-direction: row; align-items: center; gap: 4px; overflow-x: auto; padding: 10px 10px; }
+    .side .brandbox { margin: 0 8px 0 0; flex: none; }
+    .side .brandbox b, .side .brandbox small { display: none; }
+    .side button.nav, .side a.nav { width: auto; white-space: nowrap; flex: none; margin: 0; font-size: 13px; padding: 8px 12px; border-radius: 999px; }
+    .side .spacer, .side .divider { display: none; }
+    .wrap { padding: 20px 16px 60px; }
+  }
   .center-pad { min-height: 80vh; display: flex; flex-direction: column; justify-content: center; padding: 0 20px; }
   h1 { font-size: 22px; font-weight: 700; margin: 0 0 4px; }
   h2 { font-size: 17px; font-weight: 700; margin: 0 0 12px; }
@@ -36,11 +61,11 @@
   label { font-size: 13px; font-weight: 600; color: var(--text2); }
   input[type=text], input[type=password], select, textarea { width: 100%; box-sizing: border-box; padding: 11px 13px; font-size: 14px; border: 1px solid var(--border); border-radius: 9px; background: #FCFCFB; font-family: inherit; color: var(--text); }
   textarea { min-height: 160px; font-family: ui-monospace, Menlo, monospace; font-size: 13px; line-height: 1.6; }
-  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(47,111,237,0.12); }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(8,122,85,0.14); }
   .btn { display: inline-flex; align-items: center; gap: 6px; text-align: center; text-decoration: none; background: var(--accent); color: #fff; font-size: 14px; font-weight: 600; padding: 10px 18px; border-radius: 9px; border: none; cursor: pointer; font-family: inherit; }
   .btn:hover { background: var(--accent-dark); }
   .btn:disabled { opacity: 0.5; cursor: default; }
-  .btn-outline { display: inline-flex; align-items: center; gap: 6px; background: #fff; color: var(--text); font-size: 13px; font-weight: 600; padding: 9px 14px; border-radius: 9px; border: 1px solid var(--border); cursor: pointer; font-family: inherit; }
+  .btn-outline { white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; background: #fff; color: var(--text); font-size: 13px; font-weight: 600; padding: 9px 14px; border-radius: 9px; border: 1px solid var(--border); cursor: pointer; font-family: inherit; }
   .btn-danger { color: var(--error-text); border-color: rgba(194,43,43,.35); }
   .btn-sm { padding: 6px 10px; font-size: 12px; }
   .hint { font-size: 12px; color: var(--text3); }
@@ -75,7 +100,7 @@
 
 <script>
 const TOKEN_KEY = 'hyewon_admin_token';
-const state = { exec: '', token: '', config: null, currentTab: '', detailView: 'roster' };
+const state = { exec: '', token: '', config: null, currentTab: '', detailView: 'roster', nav: 'home' };
 
 function qs(name) { return new URLSearchParams(location.search).get(name) || ''; }
 function escapeHtml(s) {
@@ -98,19 +123,34 @@ function fileSizeLabel(bytes) {
   return (bytes / (1024 * 1024)).toFixed(1) + 'MB';
 }
 function render(inner) {
+  if (!state.token) { document.getElementById('app').innerHTML = inner; return; }
+  const items = [
+    ['home', '현황', '<path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/>'],
+    ['tasks', '과제', '<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 9h8M8 13h8M8 17h5"/>'],
+    ['roster', '명단', '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 3-6 6.5-6s6.5 2.4 6.5 6"/><path d="M17 5.5a3 3 0 0 1 0 5.5M18.5 14.2c2 .7 3 2.5 3 5.8"/>'],
+    ['notice', '공지', '<path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>'],
+    ['settings', '설정', '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>']
+  ];
+  const nav = items.map(function (it) {
+    return '<button class="nav' + (state.nav === it[0] ? ' on' : '') + '" data-nav="' + it[0] + '">' +
+      '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + it[2] + '</svg>' + it[1] + '</button>';
+  }).join('');
   document.getElementById('app').innerHTML =
-    '<div class="topbar"><span class="brand serif">혜원포털 관리자</span>' +
-    (state.token
-      ? '<div class="nav"><a href="#" id="navHome">현황</a><a href="#" id="navDash">과제</a><a href="#" id="navNotice">공지</a><a href="#" id="navSettings">설정</a><button class="link" id="navLogout">로그아웃</button></div>'
-      : '') +
-    '</div>' + inner;
-  if (state.token) {
-    document.getElementById('navHome').onclick = function (e) { e.preventDefault(); renderPortal(); };
-    document.getElementById('navDash').onclick = function (e) { e.preventDefault(); renderDashboard(); };
-    document.getElementById('navNotice').onclick = function (e) { e.preventDefault(); renderNotice(); };
-    document.getElementById('navSettings').onclick = function (e) { e.preventDefault(); renderSettings(); };
-    document.getElementById('navLogout').onclick = doLogout;
-  }
+    '<div class="shell"><aside class="side">' +
+      '<div class="brandbox"><img src="../assets/logo.png" alt=""><b>혜원포털<small>관리자</small></b></div>' +
+      nav +
+      '<div class="spacer"></div><div class="divider"></div>' +
+      '<a class="nav" href="../report/" target="_blank" rel="noopener">학생 화면 보기</a>' +
+      '<button class="nav" id="navLogout">로그아웃</button>' +
+    '</aside><main class="main">' + inner + '</main></div>';
+  document.querySelectorAll('[data-nav]').forEach(function (b) {
+    b.onclick = function () {
+      const k = b.getAttribute('data-nav');
+      if (k === 'home') renderPortal(); else if (k === 'tasks') renderDashboard();
+      else if (k === 'roster') renderRoster(); else if (k === 'notice') renderNotice(); else renderSettings();
+    };
+  });
+  document.getElementById('navLogout').onclick = doLogout;
 }
 
 async function api(action, data, opts) {
@@ -200,6 +240,7 @@ function doLogout() {
 // ---------- 대시보드(과제 목록) ----------
 
 async function renderDashboard() {
+  state.nav = 'tasks';
   render('<div class="wrap"><div class="loading">불러오는 중…</div></div>');
   let cfg;
   try { cfg = await apiGet('getConfig'); } catch (e) { return render('<div class="wrap"><div class="msg error">서버에 연결할 수 없습니다.</div></div>'); }
@@ -228,6 +269,7 @@ async function renderDashboard() {
 // ---------- 새 과제 만들기 ----------
 
 function renderNewTab(notice) {
+  state.nav = 'tasks';
   render(
     '<div class="wrap">' +
       '<h1 class="serif">새 과제 만들기</h1>' +
@@ -285,6 +327,7 @@ async function doCreateTab() {
 // ---------- 과제 상세 ----------
 
 async function renderDetail(tabName) {
+  state.nav = 'tasks';
   state.currentTab = tabName;
   render('<div class="wrap"><div class="loading">불러오는 중…</div></div>');
   let cfg;
@@ -571,47 +614,50 @@ async function renderLog(tab) {
     '</table></div>';
 }
 
-// ---------- 포털 현황 · 마스터코드 ----------
+// ---------- 현황(대시보드) · 마스터코드 ----------
 
 async function renderPortal(notice) {
-  render('<div class="wrap"><h1 class="serif">혜원포털 관리</h1><p class="hint">불러오는 중…</p></div>');
+  state.nav = 'home';
+  render('<div class="wrap"><h1 class="serif">현황</h1><p class="hint">불러오는 중…</p></div>');
   let st;
   try { st = await api('getPortalStatus'); } catch (e) { return; }
   if (!st || !st.success) {
     render(
-      '<div class="wrap"><h1 class="serif">혜원포털 관리</h1>' +
-      '<div class="msg error">서버가 예전 버전이라 현황을 불러오지 못했어요. 과제 관리는 그대로 쓸 수 있어요.</div>' +
+      '<div class="wrap"><h1 class="serif">현황</h1>' +
+      '<div class="msg error">서버가 예전 버전이라 현황을 불러오지 못했어요. 과제·명단 관리는 그대로 쓸 수 있어요.</div>' +
       '<div class="card"><h2>최신 기능을 켜려면</h2>' +
       '<p style="font-size:13px;line-height:1.8;margin:0;">1) Apps Script 편집기에 최신 <b>Code.gs</b>를 붙여넣고 저장<br>' +
       '2) 배포 → <b>배포 관리</b> → 기존 배포의 연필(수정) → 버전 <b>새 버전</b> → 배포<br>' +
-      '<span class="hint">※ «새 배포»를 만들면 주소가 바뀌어요. 꼭 기존 배포를 새 버전으로 업데이트하세요.</span></p></div>' +
-      '<div class="card"><h2>바로가기</h2><p style="font-size:14px;line-height:2;"><a href="#" id="goTasks">과제 관리</a> · <a href="../import/">명단 가져오기</a> · <a href="#" id="goSettings">설정</a></p></div></div>'
+      '<span class="hint">※ «새 배포»를 만들면 주소가 바뀌어요. 꼭 기존 배포를 새 버전으로 업데이트하세요.</span></p></div></div>'
     );
-    document.getElementById('goTasks').onclick = function (e) { e.preventDefault(); renderDashboard(); };
-    document.getElementById('goSettings').onclick = function (e) { e.preventDefault(); renderSettings(); };
     return;
   }
-  function row(k, v) { return '<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:14px;"><span style="color:var(--text2);">' + k + '</span><b>' + v + '</b></div>'; }
+  const studentUrl = new URL('../report/', location.href).href;
   render(
     '<div class="wrap">' +
-      '<h1 class="serif">혜원포털 관리</h1>' +
-      '<div class="card">' +
-        '<h2>현황</h2>' +
-        row('과제(탭) 수', st.tabCount) +
-        row('보낸 공지', st.noticeCount + '건') +
-        row('알림 켠 기기', st.tokenCount + '대') +
-        row('푸시 알림 서버 설정', st.pushReady ? '완료' : '안 됨 (FCM_SERVICE_ACCOUNT 필요)') +
-        row('서버 버전', st.serverVersion) +
+      '<h1 class="serif">현황</h1>' +
+      '<p class="lead">혜원포털 한눈에 보기</p>' +
+      '<div class="stats">' +
+        '<div class="stat"><span>과제</span><b>' + st.tabCount + '</b></div>' +
+        '<div class="stat"><span>보낸 공지</span><b>' + st.noticeCount + '</b></div>' +
+        '<div class="stat"><span>알림 켠 기기</span><b>' + st.tokenCount + '</b></div>' +
+        '<div class="stat"><span>푸시 알림 서버</span><b class="small" style="color:' + (st.pushReady ? 'var(--success-text)' : 'var(--text3)') + ';">' + (st.pushReady ? '설정됨' : '미설정') + '</b></div>' +
+        '<div class="stat"><span>서버 버전</span><b>' + st.serverVersion + '</b></div>' +
       '</div>' +
-      '<div class="card">' +
-        '<h2>마스터코드 <span class="hint">학번 + 마스터코드로 학생 화면 둘러보기 (제출은 안 됨)</span></h2>' +
-        (notice ? '<div class="msg ' + notice.type + '">' + escapeHtml(notice.text) + '</div>' : '') +
-        '<p style="font-size:14px;">현재 값: <b>' + escapeHtml(st.masterCode) + '</b>' + (st.masterCustom ? '' : ' <span class="hint">(기본값)</span>') + '</p>' +
-        '<div class="field"><label for="mcIn">새 마스터코드 (영문 대문자·숫자 4자 이상)</label><input id="mcIn" type="text" maxlength="12"></div>' +
-        '<button class="btn" id="mcSave">변경</button>' +
-      '</div>' +
-      '<div class="card"><h2>바로가기</h2>' +
-        '<p style="font-size:14px;line-height:2;"><a href="#" id="goTasks">과제 관리</a> · <a href="#" id="goNotice">공지 보내기</a> · <a href="../import/">명단 가져오기</a> · <a href="#" id="goSettings">설정</a></p>' +
+      (notice ? '<div class="msg ' + notice.type + '">' + escapeHtml(notice.text) + '</div>' : '') +
+      '<div class="grid2">' +
+        '<div class="card">' +
+          '<h2>마스터코드</h2>' +
+          '<p class="hint" style="margin:0 0 10px;">학번 + 마스터코드로 어느 학생 화면이든 둘러볼 수 있어요 (제출은 안 됨)</p>' +
+          '<p style="font-size:14px;margin:0 0 12px;">현재 값: <b>' + escapeHtml(st.masterCode) + '</b>' + (st.masterCustom ? '' : ' <span class="hint">(기본값)</span>') + '</p>' +
+          '<div class="field"><label for="mcIn">새 마스터코드 (영문 대문자·숫자 4자 이상)</label><input id="mcIn" type="text" maxlength="12"></div>' +
+          '<button class="btn" id="mcSave">변경</button>' +
+        '</div>' +
+        '<div class="card">' +
+          '<h2>학생 접속 주소</h2>' +
+          '<p class="hint" style="margin:0 0 10px;">학생은 이 주소 하나로 학번 + 학생코드로 로그인해요</p>' +
+          '<div class="row"><input type="text" readonly id="stuUrl" value="' + escapeHtml(studentUrl) + '"><button class="btn-outline" id="copyStu">복사</button></div>' +
+        '</div>' +
       '</div>' +
     '</div>'
   );
@@ -622,14 +668,80 @@ async function renderPortal(notice) {
     try { r = await api('setMasterCode', { code: v }); } catch (e) { return; }
     renderPortal(r.success ? { type: 'ok', text: '마스터코드를 바꿨어요.' } : { type: 'error', text: r.message || '변경 실패' });
   };
-  document.getElementById('goTasks').onclick = function (e) { e.preventDefault(); renderDashboard(); };
-  document.getElementById('goNotice').onclick = function (e) { e.preventDefault(); renderNotice(); };
-  document.getElementById('goSettings').onclick = function (e) { e.preventDefault(); renderSettings(); };
+  document.getElementById('copyStu').onclick = function () {
+    const el = document.getElementById('stuUrl'); el.select();
+    try { navigator.clipboard.writeText(el.value); } catch (e) { document.execCommand('copy'); }
+    this.textContent = '복사됨';
+  };
+}
+
+// ---------- 명단 가져오기(기존 학생코드를 그대로 유지) ----------
+
+const rosterState = { parsed: [], skipped: [] };
+
+async function renderRoster(notice) {
+  state.nav = 'roster';
+  let cfg = state.config;
+  if (!cfg) { try { cfg = await apiGet('getConfig'); state.config = cfg; } catch (e) {} }
+  const names = ((cfg && cfg.tabs) || []).map(function (t) { return '<option value="' + escapeHtml(t.sheetName) + '"></option>'; }).join('');
+  render(
+    '<div class="wrap">' +
+      '<h1 class="serif">명단 가져오기</h1>' +
+      '<p class="lead">학번 / 이름 / 학생코드를 탭이나 쉼표로 구분해 그대로 붙여넣으세요. 이미 발급된 학생코드가 그대로 유지돼요. 헤더 줄이나 «전출»·«유학» 같은 상태 표시는 자동으로 걸러져요.</p>' +
+      '<div class="card wide">' +
+        (notice ? '<div class="msg ' + notice.type + '">' + escapeHtml(notice.text) + '</div>' : '') +
+        '<div class="field"><label for="rsTab">과제 이름(탭 이름)</label>' +
+        '<input id="rsTab" type="text" list="rsTabs" placeholder="예: 2학년"><datalist id="rsTabs">' + names + '</datalist>' +
+        '<span class="hint">이미 있는 과제를 고르거나 새 이름을 적으세요. 나중에 같은 이름으로 과제를 만들면 이 명단이 그대로 이어져요.</span></div>' +
+        '<div class="field"><label for="rsRaw">붙여넣기</label><textarea id="rsRaw" placeholder="3101&#9;강승주&#9;LX85P5I25"></textarea></div>' +
+        '<button class="btn" id="rsParse">미리보기</button>' +
+      '</div>' +
+      '<div id="rsPreview"></div>' +
+    '</div>'
+  );
+  document.getElementById('rsParse').onclick = doRosterParse;
+}
+
+function doRosterParse() {
+  const tabName = document.getElementById('rsTab').value.trim();
+  const raw = document.getElementById('rsRaw').value;
+  const parsed = [], skipped = [];
+  raw.split('\n').forEach(function (line) {
+    const t = line.trim();
+    if (!t) return;
+    const cols = (t.indexOf('\t') >= 0 ? t.split('\t') : t.split(',')).map(function (c) { return c.trim(); });
+    const id = cols[0] || '', name = cols[1] || '', code = (cols[2] || '').toUpperCase();
+    if (!/^\d{4,10}$/.test(id)) { if (id && id !== '학번') skipped.push(t + '  (학번 형식 아님)'); return; }
+    if (!name) { skipped.push(t + '  (이름 없음)'); return; }
+    if (!/^[A-Z0-9]+$/.test(code)) { skipped.push(id + ' ' + name + '  (코드 없음/상태표시: ' + (cols[2] || '') + ')'); return; }
+    parsed.push({ studentId: id, name: name, code: code });
+  });
+  rosterState.parsed = parsed; rosterState.skipped = skipped;
+  const rows = parsed.map(function (e) { return '<tr><td>' + escapeHtml(e.studentId) + '</td><td>' + escapeHtml(e.name) + '</td><td><span class="code">' + escapeHtml(e.code) + '</span></td></tr>'; }).join('');
+  document.getElementById('rsPreview').innerHTML =
+    '<div class="card wide">' +
+      '<div class="msg ' + (parsed.length ? 'ok' : 'warn') + '">' + parsed.length + '명 인식됨' + (tabName ? ' · 과제: ' + escapeHtml(tabName) : ' · 과제 이름을 입력해주세요') + '</div>' +
+      (skipped.length ? '<p class="hint">제외됨 (' + skipped.length + '건): ' + skipped.map(escapeHtml).join(' · ') + '</p>' : '') +
+      '<div class="tablewrap"><table><tr><th>학번</th><th>이름</th><th>학생코드</th></tr>' + rows + '</table></div>' +
+      '<button class="btn" id="rsSave"' + (parsed.length && tabName ? '' : ' disabled') + '>이 ' + parsed.length + '명 명단에 저장</button>' +
+    '</div>';
+  const b = document.getElementById('rsSave');
+  if (b) b.onclick = function () { doRosterSave(tabName); };
+}
+
+async function doRosterSave(tabName) {
+  const b = document.getElementById('rsSave');
+  b.disabled = true; b.textContent = '저장 중…';
+  let res;
+  try { res = await api('saveRoster', { tabName: tabName, entries: rosterState.parsed }); } catch (e) { return; }
+  state.config = null;
+  renderRoster(res && res.success ? { type: 'ok', text: res.message || '저장되었습니다.' } : { type: 'error', text: (res && res.message) || '저장에 실패했습니다.' });
 }
 
 // ---------- 공지(푸시 알림) ----------
 
 function renderNotice(notice) {
+  state.nav = 'notice';
   render(
     '<div class="wrap">' +
       '<h1 class="serif">공지 보내기</h1>' +
@@ -661,6 +773,7 @@ async function doSendNotice() {
 // ---------- 설정 ----------
 
 function renderSettings(notice) {
+  state.nav = 'settings';
   render(
     '<div class="wrap">' +
       '<h1 class="serif">설정</h1>' +
