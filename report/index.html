@@ -3,7 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-<title>과제 제출</title>
+<title>혜원포털</title>
+<link rel="manifest" href="./manifest.webmanifest">
+<meta name="theme-color" content="#087A55">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="혜원포털">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="icon" type="image/png" sizes="32x32" href="../assets/favicon-32.png">
 <link rel="apple-touch-icon" sizes="180x180" href="../assets/favicon-180.png">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dongle:wght@700&family=Noto+Sans+KR:wght@400;500;600;700&family=Noto+Serif+KR:wght@600;700&display=swap">
@@ -80,6 +86,15 @@
   .tagline { text-align: center; font-size: 12px; color: var(--text3); margin-top: 18px; }
 
   /* 상단 앱바 · 하단 탭바 (레퍼런스 반영) */
+  .notice-box { background: #FFFBEA; border: 1px solid #F0DFA8; border-radius: 14px; padding: 12px 14px; margin: 0 20px 12px; }
+  .notice-box b { display: block; font-size: 13px; color: #6A5A14; margin-bottom: 4px; }
+  .notice-box p { margin: 0; font-size: 13px; line-height: 1.6; color: #5A4A12; white-space: pre-wrap; }
+  .notice-box small { display: block; margin-top: 6px; font-size: 11px; color: #A8913A; }
+  .extras { margin: 16px 20px 0; display: flex; flex-direction: column; gap: 8px; }
+  .extras button { width: 100%; padding: 12px; border-radius: 12px; border: 1px solid var(--border); background: #fff; color: var(--text); font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; }
+  .extras button.on { background: var(--hyewon-mint); color: var(--hyewon-emerald); border-color: transparent; }
+  .extras .hint { text-align: center; }
+  .peekbar { background: #4B3BB5; color: #fff; font-size: 12.5px; font-weight: 700; text-align: center; padding: 6px 10px; flex-shrink: 0; }
   .appbar { flex-shrink: 0; background: var(--hyewon-emerald); padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; }
   .appbar .brand { display: flex; align-items: center; gap: 8px; color: #fff; font-weight: 800; font-size: 16px; }
   .appbar .brand img { width: 26px; height: 26px; }
@@ -298,7 +313,7 @@ async function tryAutoLogin(tab, saved) {
   }
   if (!res.success) { clearLogin(); return renderLogin(tab); }
 
-  state.login = { studentId: saved.studentId, studentName: res.studentName, code: saved.code };
+  state.login = { studentId: saved.studentId, studentName: res.studentName, code: saved.code, master: !!res.master };
   renderForm(tab);
 }
 
@@ -313,7 +328,7 @@ async function tryGlobalAutoLogin(saved) {
     return renderGlobalLogin();
   }
   if (!res.success) { clearLogin(); return renderGlobalLogin(); }
-  state.login = { studentId: saved.studentId, studentName: res.studentName, code: saved.code };
+  state.login = { studentId: saved.studentId, studentName: res.studentName, code: saved.code, master: !!res.master };
   state.myTabs = res.tabs || [];
   renderToday();
 }
@@ -390,7 +405,7 @@ async function doGlobalLogin() {
   }
   if (!res.success) { return renderGlobalLogin(res.message || '로그인에 실패했습니다.'); }
 
-  state.login = { studentId: studentId, studentName: res.studentName, code: code };
+  state.login = { studentId: studentId, studentName: res.studentName, code: code, master: !!res.master };
   state.myTabs = res.tabs || [];
   saveLogin(studentId, code);
   renderToday();
@@ -537,7 +552,13 @@ function appbarHtml_(title, withBack) {
       '<button id="profileBtn2" aria-label="로그아웃" style="width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,0.25);">' +
         '<svg width="14" height="14" viewBox="0 0 24 24" fill="#fff" style="margin:auto;"><circle cx="12" cy="8" r="4"></circle><path d="M4 20c0-4 4-6 8-6s8 2 8 6"></path></svg>' +
       '</button>';
-  return '<div class="appbar">' + left + '<div class="icons">' + right + '</div></div>';
+  return peekBarHtml_() + '<div class="appbar">' + left + '<div class="icons">' + right + '</div></div>';
+}
+
+// 마스터코드로 들어온 선생님 확인용 둘러보기 — 제출은 막힙니다(서버도 거절).
+function isPeek_() { return !!(state.login && state.login.master); }
+function peekBarHtml_() {
+  return isPeek_() ? '<div class="peekbar">마스터코드로 보는 중 · 제출은 되지 않아요</div>' : '';
 }
 
 function bottombarHtml_(active) {
@@ -609,10 +630,12 @@ function renderToday() {
       '<h1 style="margin:0;font-size:21px;font-weight:800;">오늘의 과제</h1>' +
       '<span style="font-size:13px;color:var(--text2);">' + todayLabel_() + '</span>' +
     '</div>' +
+    '<div id="noticeArea" style="padding-top:12px;"></div>' +
     stepperHtml_() +
     '<div class="main"><div class="assign-list">' +
       (items || '<p class="hint">표시할 과제가 없습니다.</p>') +
     '</div></div>' +
+    '<div class="extras" id="extras"></div>' +
     '<div class="footer"><span>Made by Eagle Teacher · 교육 목적</span></div>' +
     bottombarHtml_('home')
   );
@@ -625,6 +648,8 @@ function renderToday() {
     };
   });
   wireChrome_();
+  loadNotices_();
+  paintExtras_();
 }
 
 function openAssignment(entry) {
@@ -941,7 +966,7 @@ async function doLogin(tab) {
   }
   if (!res.success) { return renderLogin(tab, res.message || '로그인에 실패했습니다.'); }
 
-  state.login = { studentId: studentId, studentName: res.studentName, code: code };
+  state.login = { studentId: studentId, studentName: res.studentName, code: code, master: !!res.master };
   saveLogin(studentId, code);
   renderForm(tab);
 }
@@ -1022,6 +1047,7 @@ function renderForm(tab, notice) {
   const fieldsHtml = buildFieldsHtml(inputs, antiPaste);
 
   render(
+    peekBarHtml_() +
     '<div class="topbar"><span class="brand">' + escapeHtml(brandLabel()) + '</span>' +
       '<span class="pill ' + status + '">' + statusLabel(status) + '</span></div>' +
     '<div class="head"><h1 class="serif">' + escapeHtml(tab.sheetName) + '</h1>' +
@@ -1052,6 +1078,7 @@ function renderForm(tab, notice) {
 }
 
 async function doSubmit(tab, confirmOverwrite) {
+  if (isPeek_()) { return renderCurrentForm(tab, '마스터코드로는 둘러볼 수만 있어요. 제출은 학생 본인 코드로 해주세요.'); }
   const inputs = fieldInputs(tab);
   const values = tab.fields.map(function () { return ''; });
   values[0] = state.login.studentId;
@@ -1194,6 +1221,119 @@ document.addEventListener('click', function (e) {
     setTimeout(function () { btn.textContent = old; }, 1500);
   });
 });
+
+// ---------- PWA 설치 · 푸시 알림(FCM) · 공지 ----------
+
+/* 파이어베이스 콘솔 «프로젝트 설정 → 일반 → 내 앱(웹)» 값. 비어 있으면 «알림 받기» 버튼은 숨겨집니다.
+   sw.js 맨 위 FCM_CONFIG 에도 «똑같이» 채워야 합니다(앱이 닫혀 있을 때의 수신은 서비스워커가 처리). */
+const FCM_CONFIG = { apiKey: '', authDomain: '', projectId: '', storageBucket: '', messagingSenderId: '', appId: '' };
+const FCM_VAPID_KEY = '';
+const NOTI_KEY = 'hyewon_noti_on';
+
+let deferredInstall = null;
+window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); deferredInstall = e; paintExtras_(); });
+window.addEventListener('appinstalled', function () { deferredInstall = null; paintExtras_(); });
+
+function isStandalone_() {
+  return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+}
+function isIOS_() { return /iphone|ipad|ipod/i.test(navigator.userAgent); }
+function notiOn_() {
+  try { return window.Notification && Notification.permission === 'granted' && localStorage.getItem(NOTI_KEY) === '1'; } catch (e) { return false; }
+}
+function pushSupported_() {
+  return !!(FCM_CONFIG.apiKey && FCM_VAPID_KEY && 'serviceWorker' in navigator && 'Notification' in window);
+}
+
+function paintExtras_() {
+  const box = document.getElementById('extras');
+  if (!box) return;
+  let html = '';
+  if (!isStandalone_()) {
+    if (deferredInstall) html += '<button id="installBtn">홈 화면에 앱 설치하기</button>';
+    else if (isIOS_()) html += '<p class="hint">아이폰: 공유 버튼 → «홈 화면에 추가»를 누르면 앱처럼 쓸 수 있어요.</p>';
+  }
+  if (pushSupported_() && !isPeek_()) {
+    const on = notiOn_();
+    html += '<button id="notiBtn" class="' + (on ? 'on' : '') + '">' + (on ? '알림 받는 중 (끄려면 누르세요)' : '알림 받기') + '</button>';
+    html += '<p class="hint">' + (Notification.permission === 'denied'
+      ? '알림이 차단돼 있어요 — 브라우저 설정에서 이 앱의 알림을 허용해 주세요.'
+      : (isStandalone_() || !isIOS_() ? '켜 두면 앱을 닫아도 선생님 공지가 휴대폰에 떠요.' : '알림은 홈 화면에 설치한 뒤에 켤 수 있어요.')) + '</p>';
+  }
+  box.innerHTML = html;
+  const ib = document.getElementById('installBtn');
+  if (ib) ib.onclick = function () {
+    if (!deferredInstall) return;
+    deferredInstall.prompt();
+    deferredInstall.userChoice.finally(function () { deferredInstall = null; paintExtras_(); });
+  };
+  const nb = document.getElementById('notiBtn');
+  if (nb) nb.onclick = function () { notiOn_() ? notiDisable_() : notiEnable_(); };
+}
+
+function loadScript_(src) {
+  return new Promise(function (res, rej) {
+    if (document.querySelector('script[src="' + src + '"]')) return res();
+    const s = document.createElement('script');
+    s.src = src; s.onload = function () { res(); }; s.onerror = function () { rej(new Error('load ' + src)); };
+    document.head.appendChild(s);
+  });
+}
+
+async function notiEnable_() {
+  if (isIOS_() && !isStandalone_()) { alert('아이폰은 먼저 홈 화면에 앱을 설치해야 알림을 켤 수 있어요.'); return; }
+  const nb = document.getElementById('notiBtn');
+  if (nb) nb.disabled = true;
+  try {
+    if (!window.firebase || !firebase.messaging) {
+      await loadScript_('https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js');
+      await loadScript_('https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js');
+    }
+    const perm = Notification.permission === 'granted' ? 'granted' : await Notification.requestPermission();
+    if (perm !== 'granted') { alert('알림 창에서 «허용»을 눌러야 켜져요.'); return; }
+    if (!firebase.apps || !firebase.apps.length) firebase.initializeApp(FCM_CONFIG);
+    const reg = await navigator.serviceWorker.ready;
+    const token = await firebase.messaging().getToken({ vapidKey: FCM_VAPID_KEY, serviceWorkerRegistration: reg });
+    if (!token) throw new Error('토큰 없음');
+    const r = await api('saveNotiToken', { studentId: state.login.studentId, code: state.login.code, token: token, ua: navigator.userAgent });
+    if (!r.success) { alert(r.message || '알림을 켜지 못했어요.'); return; }
+    localStorage.setItem(NOTI_KEY, '1');
+  } catch (e) {
+    console.warn('알림 켜기 실패', e);
+    alert('알림을 켜지 못했어요. 잠시 후 다시 시도해 주세요.');
+  } finally {
+    paintExtras_();
+  }
+}
+
+async function notiDisable_() {
+  try { localStorage.setItem(NOTI_KEY, '0'); } catch (e) {}
+  try {
+    if (window.firebase && firebase.apps && firebase.apps.length) {
+      const token = await firebase.messaging().getToken({ vapidKey: FCM_VAPID_KEY });
+      if (token) { api('removeNotiToken', { token: token }); firebase.messaging().deleteToken().catch(function () {}); }
+    }
+  } catch (e) {}
+  paintExtras_();
+}
+
+async function loadNotices_() {
+  const area = document.getElementById('noticeArea');
+  if (!area || !state.login || isPeek_()) return;
+  try {
+    const r = await api('getNotices', { studentId: state.login.studentId, code: state.login.code });
+    if (!r || !r.success || !r.notices || !r.notices.length) return;
+    const n = r.notices[0];
+    area.innerHTML = '<div class="notice-box"><b>' + escapeHtml(n.title) + '</b>' +
+      (n.body ? '<p>' + escapeHtml(n.body) + '</p>' : '') + '<small>' + escapeHtml(n.at) + '</small></div>';
+  } catch (e) {}
+}
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('./sw.js').catch(function () {});
+  });
+}
 
 boot();
 </script>

@@ -101,11 +101,12 @@ function render(inner) {
   document.getElementById('app').innerHTML =
     '<div class="topbar"><span class="brand serif">혜원포털 관리자</span>' +
     (state.token
-      ? '<div class="nav"><a href="#" id="navDash">과제</a><a href="#" id="navSettings">설정</a><button class="link" id="navLogout">로그아웃</button></div>'
+      ? '<div class="nav"><a href="#" id="navDash">과제</a><a href="#" id="navNotice">공지</a><a href="#" id="navSettings">설정</a><button class="link" id="navLogout">로그아웃</button></div>'
       : '') +
     '</div>' + inner;
   if (state.token) {
     document.getElementById('navDash').onclick = function (e) { e.preventDefault(); renderDashboard(); };
+    document.getElementById('navNotice').onclick = function (e) { e.preventDefault(); renderNotice(); };
     document.getElementById('navSettings').onclick = function (e) { e.preventDefault(); renderSettings(); };
     document.getElementById('navLogout').onclick = doLogout;
   }
@@ -567,6 +568,37 @@ async function renderLog(tab) {
     '<div class="tablewrap"><table><tr><th>시각</th><th>학번</th><th>이름</th><th>구분</th></tr>' +
       (rows || '<tr><td colspan="4" class="hint">기록이 없습니다.</td></tr>') +
     '</table></div>';
+}
+
+// ---------- 공지(푸시 알림) ----------
+
+function renderNotice(notice) {
+  render(
+    '<div class="wrap">' +
+      '<h1 class="serif">공지 보내기</h1>' +
+      '<div class="card">' +
+        (notice ? '<div class="msg ' + notice.type + '">' + escapeHtml(notice.text) + '</div>' : '') +
+        '<div class="field"><label for="ntTitle">제목</label><input id="ntTitle" type="text" maxlength="60" placeholder="예: 내일 체육복 지참"></div>' +
+        '<div class="field"><label for="ntBody">내용</label><textarea id="ntBody" rows="5" maxlength="500"></textarea></div>' +
+        '<button class="btn" id="sendNoticeBtn">공지 보내기</button>' +
+        '<p class="hint" style="margin-top:10px;">보내면 학생 앱 첫 화면에 뜨고, 알림을 켠 학생 휴대폰에는 푸시 알림이 갑니다.</p>' +
+      '</div>' +
+    '</div>'
+  );
+  document.getElementById('sendNoticeBtn').onclick = doSendNotice;
+}
+
+async function doSendNotice() {
+  const title = document.getElementById('ntTitle').value.trim();
+  const body = document.getElementById('ntBody').value.trim();
+  if (!title && !body) return;
+  if (!confirm('이 공지를 학생들에게 보낼까요?')) return;
+  const btn = document.getElementById('sendNoticeBtn');
+  btn.disabled = true; btn.textContent = '보내는 중…';
+  let res;
+  try { res = await api('sendNotice', { title: title, body: body }); } catch (e) { return; }
+  if (!res.success) return renderNotice({ type: 'error', text: res.message || '보내지 못했습니다.' });
+  renderNotice({ type: res.pushReady && res.sent ? 'ok' : 'warn', text: res.message || '공지를 저장했어요.' });
 }
 
 // ---------- 설정 ----------
