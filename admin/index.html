@@ -675,31 +675,162 @@ async function renderPortal(notice) {
   };
 }
 
-// ---------- 명단 가져오기(기존 학생코드를 그대로 유지) ----------
+// ---------- 명단: 학생명단 시트에서 가져오기 ----------
 
 const rosterState = { parsed: [], skipped: [] };
+const srcState = { students: [], title: '', codes: {}, tabs: [] };
+
+function gradeOfTab_(name) { const m = String(name).match(/^\s*([123])\s*학년/); return m ? Number(m[1]) : 0; }
+function targetsFor_(tabName) {
+  const g = gradeOfTab_(tabName);
+  return srcState.students.filter(function (s) { return !g || s.grade === g; });
+}
 
 async function renderRoster(notice) {
   state.nav = 'roster';
-  let cfg = state.config;
-  if (!cfg) { try { cfg = await apiGet('getConfig'); state.config = cfg; } catch (e) {} }
-  const names = ((cfg && cfg.tabs) || []).map(function (t) { return '<option value="' + escapeHtml(t.sheetName) + '"></option>'; }).join('');
+  render('<div class="wrap"><h1 class="serif">명단</h1><p class="hint">학생명단 시트를 읽는 중…</p></div>');
+  let src, cfg;
+  try { src = await api('getSourceRoster'); } catch (e) { return; }
+  try { cfg = await apiGet('getConfig'); state.config = cfg; } catch (e) {}
+  srcState.tabs = (cfg && cfg.tabs) || [];
+
+  const legacy =
+    '<details class="card wide" style="margin-top:16px;"><summary style="cursor:pointer;font-weight:700;">직접 붙여넣어서 가져오기 (시트 없이)</summary>' +
+      '<p class="lead" style="margin-top:10px;">학번 / 이름 / 학생코드를 탭이나 쉼표로 구분해 붙여넣으세요. «전출»·«유학» 같은 상태 표시는 자동으로 걸러져요.</p>' +
+      '<div class="field"><label for="rsTab">과제 이름(탭 이름)</label><input id="rsTab" type="text" placeholder="예: 2학년 킨볼"></div>' +
+      '<div class="field"><label for="rsRaw">붙여넣기</label><textarea id="rsRaw" placeholder="3101&#9;이름&#9;LX85P5I25"></textarea></div>' +
+      '<button class="btn" id="rsParse">미리보기</button><div id="rsPreview" style="margin-top:14px;"></div>' +
+    '</details>';
+
+  if (!src || !src.success) {
+    render(
+      '<div class="wrap"><h1 class="serif">명단</h1>' +
+      '<div class="msg error">' + escapeHtml((src && src.message) || '학생명단 시트를 읽지 못했어요.') + '</div>' +
+      '<div class="card wide"><h2>학생명단 시트 연결</h2>' +
+        '<div class="field"><label for="srcId">시트 주소 또는 ID</label><input id="srcId" type="text" placeholder="https://docs.google.com/spreadsheets/d/…"></div>' +
+        '<button class="btn" id="srcSave">연결</button></div>' + legacy + '</div>'
+    );
+    document.getElementById('srcSave').onclick = saveRosterSource;
+    document.getElementById('rsParse').onclick = doRosterParse;
+    return;
+  }
+
+  srcState.students = src.students || [];
+  srcState.title = src.title || '';
+  const byGrade = {};
+  srcState.students.forEach(function (s) { byGrade[s.grade] = (byGrade[s.grade] || 0) + 1; });
+
+  const tiles = [1, 2, 3].filter(function (g) { return byGrade[g]; }).map(function (g) {
+    return '<div class="stat"><span>' + g + '학년</span><b>' + byGrade[g] + '명</b></div>';
+  }).join('') + '<div class="stat"><span>전체</span><b>' + srcState.students.length + '명</b></div>';
+
+  const taskRows = srcState.tabs.map(function (t, i) {
+    const g = gradeOfTab_(t.sheetName);
+    const n = targetsFor_(t.sheetName).length;
+    return '<label style="display:flex;gap:8px;align-items:center;font-weight:500;color:var(--text);font-size:14px;padding:6px 0;">' +
+      '<input type="checkbox" class="rsPick" data-i="' + i + '" style="width:auto;"> ' + escapeHtml(t.sheetName) +
+      ' <span class="hint">(' + (g ? g + '학년 ' : '전체 ') + n + '명)</span></label>';
+  }).join('');
+
   render(
     '<div class="wrap">' +
-      '<h1 class="serif">명단 가져오기</h1>' +
-      '<p class="lead">학번 / 이름 / 학생코드를 탭이나 쉼표로 구분해 그대로 붙여넣으세요. 이미 발급된 학생코드가 그대로 유지돼요. 헤더 줄이나 «전출»·«유학» 같은 상태 표시는 자동으로 걸러져요.</p>' +
-      '<div class="card wide">' +
-        (notice ? '<div class="msg ' + notice.type + '">' + escapeHtml(notice.text) + '</div>' : '') +
-        '<div class="field"><label for="rsTab">과제 이름(탭 이름)</label>' +
-        '<input id="rsTab" type="text" list="rsTabs" placeholder="예: 2학년"><datalist id="rsTabs">' + names + '</datalist>' +
-        '<span class="hint">이미 있는 과제를 고르거나 새 이름을 적으세요. 나중에 같은 이름으로 과제를 만들면 이 명단이 그대로 이어져요.</span></div>' +
-        '<div class="field"><label for="rsRaw">붙여넣기</label><textarea id="rsRaw" placeholder="3101&#9;강승주&#9;LX85P5I25"></textarea></div>' +
-        '<button class="btn" id="rsParse">미리보기</button>' +
+      '<h1 class="serif">명단</h1>' +
+      '<p class="lead">학생명단 시트에서 학번·이름을 가져와요. 학생코드는 아래에 붙여넣은 기존 코드를 쓰고, 없는 학생만 새로 발급해요.</p>' +
+      (notice ? '<div class="msg ' + notice.type + '">' + escapeHtml(notice.text) + '</div>' : '') +
+      '<div class="card wide"><h2>1. 학생명단 시트 <span class="pill open">연결됨</span></h2>' +
+        '<p style="font-size:13px;margin:0 0 6px;">' + escapeHtml(srcState.title) + ' · 시트 «삭제금지» (학년 / 반 / 번호 / 성명)</p>' +
+        '<p class="hint" style="margin:0 0 10px;">학번은 <b>학년 + 반(1자리) + 번호(2자리)</b>로 만들어요. 예) 3학년 1반 1번 → 3101</p>' +
+        '<div class="stats" style="margin:0;">' + tiles + '</div>' +
+        '<p style="margin:12px 0 0;"><a href="#" id="srcChange" class="hint">다른 시트로 바꾸기</a></p>' +
       '</div>' +
-      '<div id="rsPreview"></div>' +
+      '<div class="card wide"><h2>2. 기존 학생코드 (선택)</h2>' +
+        '<p class="hint" style="margin:0 0 8px;">혜원핏 등에서 쓰던 코드를 «학번  코드» 한 줄씩(탭·쉼표·공백 구분) 붙여넣으세요. 이름 열이 끼어 있어도 돼요. 비워두면 이미 서버에 있는 코드는 유지하고 없는 학생만 새로 발급해요.</p>' +
+        '<textarea id="codeRaw" placeholder="3101&#9;LX85P5I25"></textarea>' +
+        '<div style="margin-top:10px;"><button class="btn-outline" id="codeCheck">코드 확인</button></div>' +
+        '<div id="codeSummary" style="margin-top:10px;"></div>' +
+      '</div>' +
+      '<div class="card wide"><h2>3. 적용할 과제</h2>' +
+        (taskRows || '<p class="hint">아직 과제가 없어요. 먼저 «과제» 메뉴에서 과제를 만들어주세요.</p>') +
+        '<div style="margin-top:12px;"><button class="btn" id="rsApply"' + (taskRows ? '' : ' disabled') + '>명단 가져오기</button></div>' +
+      '</div>' +
+      legacy +
     '</div>'
   );
+  document.getElementById('srcChange').onclick = function (e) { e.preventDefault(); changeRosterSource(); };
+  document.getElementById('codeCheck').onclick = checkCodes;
+  document.getElementById('rsApply').onclick = applyRoster;
   document.getElementById('rsParse').onclick = doRosterParse;
+}
+
+async function changeRosterSource() {
+  const v = prompt('새 학생명단 시트의 주소 또는 ID를 붙여넣으세요');
+  if (!v) return;
+  let r;
+  try { r = await api('setRosterSource', { id: v }); } catch (e) { return; }
+  renderRoster(r.success ? { type: 'ok', text: '시트를 바꿨어요.' } : { type: 'error', text: r.message || '바꾸지 못했어요.' });
+}
+async function saveRosterSource() {
+  const v = document.getElementById('srcId').value.trim();
+  if (!v) return;
+  let r;
+  try { r = await api('setRosterSource', { id: v }); } catch (e) { return; }
+  renderRoster(r.success ? { type: 'ok', text: '시트를 연결했어요.' } : { type: 'error', text: r.message || '연결하지 못했어요.' });
+}
+
+function parseCodes_() {
+  const map = {}, bad = [];
+  document.getElementById('codeRaw').value.split('\n').forEach(function (line) {
+    const t = line.trim();
+    if (!t) return;
+    const toks = t.split(/[\t, ]+/).filter(Boolean);
+    const id = toks.find(function (x) { return /^\d{4}$/.test(x); });
+    const code = toks.slice().reverse().find(function (x) { return /^[A-Za-z0-9]{4,}$/.test(x) && !/^\d{4}$/.test(x); });
+    if (!id || !code) { bad.push(t); return; }
+    map[id] = code.toUpperCase();
+  });
+  srcState.codes = map;
+  return { map: map, bad: bad };
+}
+
+function checkCodes() {
+  const r = parseCodes_();
+  const ids = {}; srcState.students.forEach(function (s) { ids[s.studentId] = 1; });
+  const linked = srcState.students.filter(function (s) { return r.map[s.studentId]; }).length;
+  const onlyCode = Object.keys(r.map).filter(function (k) { return !ids[k]; });
+  const fresh = srcState.students.length - linked;
+  document.getElementById('codeSummary').innerHTML =
+    '<div class="msg ok" style="margin:0 0 8px;">기존 코드 연결 <b>' + linked + '명</b> · 코드 없음(서버에 있으면 유지, 없으면 새 발급) <b>' + fresh + '명</b></div>' +
+    (onlyCode.length ? '<div class="msg warn" style="margin:0 0 8px;">코드표에만 있고 명렬표에는 없는 학번 ' + onlyCode.length + '개: ' + escapeHtml(onlyCode.slice(0, 15).join(', ')) + (onlyCode.length > 15 ? ' …' : '') + '</div>' : '') +
+    (r.bad.length ? '<div class="msg warn" style="margin:0;">읽지 못한 줄 ' + r.bad.length + '개</div>' : '');
+}
+
+async function applyRoster() {
+  const picks = Array.prototype.slice.call(document.querySelectorAll('.rsPick:checked')).map(function (c) { return srcState.tabs[Number(c.getAttribute('data-i'))].sheetName; });
+  if (!picks.length) { alert('적용할 과제를 하나 이상 골라주세요.'); return; }
+  parseCodes_();
+
+  const removedInfo = [];
+  for (const tab of picks) {
+    let cur;
+    try { cur = await api('getRoster', { tabName: tab }); } catch (e) { return; }
+    const keep = {}; targetsFor_(tab).forEach(function (s) { keep[s.studentId] = 1; });
+    const removed = ((cur && cur.entries) || []).filter(function (e) { return !keep[e.studentId]; });
+    if (removed.length) removedInfo.push(tab + ': 명렬표에 없어서 빠지는 학생 ' + removed.length + '명');
+  }
+  const summary = picks.map(function (t) { return t + ' (' + targetsFor_(t).length + '명)'; }).join('\n');
+  if (!confirm('아래 과제의 명단을 시트 기준으로 바꿀까요?\n\n' + summary + (removedInfo.length ? '\n\n※ ' + removedInfo.join('\n※ ') : ''))) return;
+
+  const btn = document.getElementById('rsApply');
+  btn.disabled = true; btn.textContent = '가져오는 중…';
+  const done = [];
+  for (const tab of picks) {
+    const entries = targetsFor_(tab).map(function (s) { return { studentId: s.studentId, name: s.name, code: srcState.codes[s.studentId] || '' }; });
+    let r;
+    try { r = await api('saveRoster', { tabName: tab, entries: entries }); } catch (e) { return; }
+    if (!r || !r.success) return renderRoster({ type: 'error', text: tab + ': ' + ((r && r.message) || '저장에 실패했어요.') });
+    done.push(tab + ' ' + entries.length + '명');
+  }
+  renderRoster({ type: 'ok', text: '가져왔어요 — ' + done.join(' · ') });
 }
 
 function doRosterParse() {
