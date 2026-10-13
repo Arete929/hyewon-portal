@@ -659,8 +659,33 @@ async function renderPortal(notice) {
           '<div class="row"><input type="text" readonly id="stuUrl" value="' + escapeHtml(studentUrl) + '"><button class="btn-outline" id="copyStu">복사</button></div>' +
         '</div>' +
       '</div>' +
+      '<div class="card">' +
+        '<h2>성적 조회 연결</h2>' +
+        '<p class="hint" style="margin:0 0 10px;">학생 화면의 «성적» 탭이 읽는 점수 시트예요. 연결이 잘 됐는지 확인해보세요.</p>' +
+        '<button class="btn-outline" id="scChk" style="width:auto;">연결 확인</button>' +
+        '<div id="scOut" style="margin-top:12px;font-size:13px;line-height:1.8;"></div>' +
+      '</div>' +
     '</div>'
   );
+  document.getElementById('scChk').onclick = async function () {
+    const out = document.getElementById('scOut');
+    out.innerHTML = '<span class="hint">확인 중…</span>';
+    let r;
+    try { r = await api('getScoreStatus'); } catch (e) { out.innerHTML = '<div class="msg error">서버에 연결하지 못했어요.</div>'; return; }
+    if (!r || r.success === false || r.error) {
+      out.innerHTML = '<div class="msg error">' + escapeHtml((r && r.message) || '확인하지 못했어요. 서버(Code.gs)를 최신으로 올렸는지 확인해주세요.') + '</div>';
+      return;
+    }
+    const cats = (r.categories || []).map(function (c) { return escapeHtml(c.category) + ' <span class="hint">(' + c.count + '칸)</span>'; }).join(' · ');
+    const crit = (r.criteria || []).map(function (c) { return escapeHtml(c.grade) + ' ' + escapeHtml(c.desc); }).join(' / ');
+    out.innerHTML =
+      '<div class="msg ' + (r.students ? 'ok' : 'error') + '" style="margin-bottom:10px;">' + (r.students ? '연결됐어요' : escapeHtml(r.message || '학생 줄을 찾지 못했어요')) + '</div>' +
+      '<div>파일: <b>' + escapeHtml(r.fileTitle || '') + '</b> › 시트 <b>' + escapeHtml(r.sheetName) + '</b></div>' +
+      '<div>학생 줄: <b>' + r.students + '</b>명 · 포털 명단과 겹침: <b>' + r.matched + '</b>명</div>' +
+      '<div>종목: ' + (cats || '<span class="hint">찾지 못함</span>') + '</div>' +
+      '<div>등급 기준: ' + (crit || '<span class="hint">«급간설정» 시트 없음</span>') + '</div>' +
+      (r.firstId ? '<div class="hint">첫 학생 ' + escapeHtml(r.firstId) + ' · 총점 ' + escapeHtml(r.sampleScore || '-') + '</div>' : '');
+  };
   document.getElementById('mcSave').onclick = async function () {
     const v = document.getElementById('mcIn').value.trim();
     if (!v) return;
