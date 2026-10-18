@@ -140,7 +140,7 @@ function render(inner) {
       '<div class="brandbox"><img src="../assets/logo.png" alt=""><b>혜원포털<small>관리자</small></b></div>' +
       nav +
       '<div class="spacer"></div><div class="divider"></div>' +
-      '<a class="nav" href="../report/" target="_blank" rel="noopener">학생 화면 보기</a>' +
+      '<a class="nav" id="navStudentView" href="../report/" target="_blank" rel="noopener">학생 화면 보기</a>' +
       '<button class="nav" id="navLogout">로그아웃</button>' +
     '</aside><main class="main">' + inner + '</main></div>';
   document.querySelectorAll('[data-nav]').forEach(function (b) {
@@ -151,6 +151,18 @@ function render(inner) {
     };
   });
   document.getElementById('navLogout').onclick = doLogout;
+  document.getElementById('navStudentView').onclick = openStudentPreview;
+}
+
+// 학생 화면을 폰 크기의 작은 새 창으로 엽니다. 이미 열려 있으면 그 창을 다시 앞으로 가져옵니다.
+// (창을 못 열면 링크 기본 동작인 새 탭으로 열립니다.)
+function openStudentPreview(e) {
+  const url = new URL('../report/', location.href).href;
+  const w = 420, h = Math.min(900, Math.max(640, (screen.availHeight || 900) - 80));
+  const left = Math.max(0, Math.round(((screen.availWidth || 1200) - w) / 2));
+  const win = window.open(url, 'hyewonStudentPreview',
+    'popup=yes,width=' + w + ',height=' + h + ',left=' + left + ',top=40,resizable=yes,scrollbars=yes');
+  if (win) { if (e && e.preventDefault) e.preventDefault(); try { win.focus(); } catch (err) {} }
 }
 
 async function api(action, data, opts) {
