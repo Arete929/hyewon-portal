@@ -1,7 +1,7 @@
 /* 혜원포털 서비스워커 — 홈 화면 설치(PWA) + 푸시 알림(FCM).
    ★ FCM_CONFIG 는 index.html 위쪽의 FCM_CONFIG 와 «똑같이» 채운다(비어 있으면 푸시는 조용히 꺼져 있다). */
 var CACHE = 'hyewon-report-v1';
-var FCM_CONFIG = { apiKey: '', authDomain: '', projectId: '', storageBucket: '', messagingSenderId: '', appId: '' };
+var FCM_CONFIG = { apiKey: 'AIzaSyBtpG79Dr6u-pLz3FiwebWf3v8Qq16OXv8', authDomain: 'hyewon-portal.firebaseapp.com', projectId: 'hyewon-portal', storageBucket: 'hyewon-portal.firebasestorage.app', messagingSenderId: '926603414719', appId: '1:926603414719:web:a068b0a313ca0986834a0a' };
 
 try {
   if (FCM_CONFIG.apiKey) {
