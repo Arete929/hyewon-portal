@@ -32,6 +32,8 @@
   .side .divider { border-top: 1px solid #25483D; margin: 10px 6px; }
   .verbox { margin: 10px 6px 0; font-size: 11px; line-height: 1.6; color: #7FA596; }
   .verbox b { color: #A9C4B9; font-weight: 600; }
+  .verfoot { display: none; font-size: 11px; line-height: 1.7; color: var(--text3); padding: 0 16px 28px; }
+  .verfoot b { color: var(--text2); font-weight: 600; }
   .main { flex: 1; min-width: 0; }
   .main .wrap { max-width: 1000px; }
   .wrap { padding: 28px 28px 60px; }
@@ -49,6 +51,7 @@
     .side .brandbox b, .side .brandbox small { display: none; }
     .side button.nav, .side a.nav { width: auto; white-space: nowrap; flex: none; margin: 0; font-size: 13px; padding: 8px 12px; border-radius: 999px; }
     .side .spacer, .side .divider, .verbox { display: none; }
+    .verfoot { display: block; }
     .wrap { padding: 20px 16px 60px; }
   }
   .center-pad { min-height: 80vh; display: flex; flex-direction: column; justify-content: center; padding: 0 20px; }
@@ -145,7 +148,7 @@ function render(inner) {
       '<a class="nav" id="navStudentView" href="../report/" target="_blank" rel="noopener">학생 화면 보기</a>' +
       '<button class="nav" id="navLogout">로그아웃</button>' +
       '<div class="verbox" id="verBox"></div>' +
-    '</aside><main class="main">' + inner + '</main></div>';
+    '</aside><main class="main">' + inner + '<div class="verfoot" id="verFoot"></div></main></div>';
   document.querySelectorAll('[data-nav]').forEach(function (b) {
     b.onclick = function () {
       const k = b.getAttribute('data-nav');
@@ -190,6 +193,8 @@ function verHtml_(sep) {
 function paintVer_() {
   const box = document.getElementById('verBox');
   if (box) box.innerHTML = verHtml_('<br>');
+  const foot = document.getElementById('verFoot');
+  if (foot) foot.innerHTML = verHtml_(' &nbsp;·&nbsp; ');
   const line = document.getElementById('verLine');
   if (line) line.innerHTML = verHtml_(' &nbsp;·&nbsp; ');
 }
