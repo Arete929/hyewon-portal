@@ -743,6 +743,53 @@ function targetsFor_(tabName) {
   return srcState.students.filter(function (s) { return !g || s.grade === g; });
 }
 
+// ---------- 혜원핏 명렬로 명단 자동 만들기 ----------
+
+function autoRosterCardHtml_() {
+  return '<div class="card wide"><h2>혜원핏 명렬로 한 번에 만들기</h2>' +
+    '<p class="hint" style="margin:0 0 10px;">혜원핏 데이터의 «명렬» 탭(학번·이름·학생코드)을 서버가 직접 읽어서 과제의 명단을 만들어요. 복사·붙여넣기가 필요 없고, 학생코드는 화면에 나오지 않아요. 생년월일은 읽지 않아요.</p>' +
+    '<div class="field"><label for="arTab">과제 이름 (없으면 새로 만들어요 · 새 과제는 «대기» 상태라 학생에게 안 보여요)</label>' +
+    '<input id="arTab" type="text" value="3학년 시험 과제"></div>' +
+    '<button class="btn-outline" id="arCheck" style="width:auto;">미리 확인</button>' +
+    '<div id="arOut" style="margin-top:12px;font-size:13px;line-height:1.8;"></div></div>';
+}
+
+function wireAutoRoster_() {
+  const btn = document.getElementById('arCheck');
+  if (!btn) return;
+  btn.onclick = async function () {
+    const out = document.getElementById('arOut');
+    const tabName = document.getElementById('arTab').value.trim();
+    if (!tabName) { out.innerHTML = '<div class="msg error">과제 이름을 입력해주세요.</div>'; return; }
+    out.innerHTML = '<span class="hint">혜원핏 명렬을 읽는 중…</span>';
+    let r;
+    try { r = await api('autoRoster', { tabName: tabName, apply: false }); } catch (e) { out.innerHTML = '<div class="msg error">서버에 연결하지 못했어요.</div>'; return; }
+    if (!r || r.success !== true) {
+      out.innerHTML = '<div class="msg error">' + escapeHtml((r && r.message) || '읽지 못했어요. 서버(Code.gs)가 버전 21 이상인지 확인해주세요.') + '</div>';
+      return;
+    }
+    out.innerHTML =
+      '<div class="msg ok" style="margin-bottom:10px;">읽었어요 · <b>' + r.students + '명</b></div>' +
+      '<div>파일: <b>' + escapeHtml(r.source || '') + '</b></div>' +
+      '<div>학생코드 연결 <b>' + r.withCode + '명</b> · 코드 없음(새로 발급) <b>' + r.withoutCode + '명</b>' +
+        (r.duplicates ? ' · 중복 학번 건너뜀 ' + r.duplicates : '') + (r.skipped ? ' · 읽지 못한 줄 ' + r.skipped : '') + '</div>' +
+      '<div>과제 «' + escapeHtml(r.tabName) + '»: ' + (r.tabExists ? '<b>이미 있어요</b> (명단을 이 학생들로 바꿔요)' : '<b>새로 만들어요</b>') + '</div>' +
+      '<div style="margin-top:10px;"><button class="btn" id="arApply" style="width:auto;">이 명단으로 만들기</button></div>';
+    document.getElementById('arApply').onclick = async function () {
+      if (!confirm('«' + r.tabName + '» 과제의 명단을 혜원핏 명렬 ' + r.students + '명으로 만들까요?' + (r.tabExists ? '\n\n※ 이미 있는 과제라서 그 과제의 명단이 이 학생들로 바뀌어요.' : '\n\n※ 과제가 없어서 새로 만들어요.'))) return;
+      const ap = document.getElementById('arApply');
+      ap.disabled = true; ap.textContent = '만드는 중…';
+      let r2;
+      try { r2 = await api('autoRoster', { tabName: r.tabName, apply: true }); } catch (e) { ap.disabled = false; ap.textContent = '이 명단으로 만들기'; return; }
+      if (!r2 || r2.success !== true || !r2.applied) {
+        out.innerHTML = '<div class="msg error">' + escapeHtml((r2 && r2.message) || '만들지 못했어요.') + '</div>';
+        return;
+      }
+      renderRoster({ type: 'ok', text: '«' + r2.tabName + '» 명단을 만들었어요 · ' + r2.students + '명 (코드 연결 ' + r2.withCode + '명 · 새 발급 ' + r2.withoutCode + '명)' + (r2.tabCreated ? ' · 과제도 새로 만들었어요' : '') });
+    };
+  };
+}
+
 async function renderRoster(notice) {
   state.nav = 'roster';
   render('<div class="wrap"><h1 class="serif">명단</h1><p class="hint">학생명단 시트를 읽는 중…</p></div>');
@@ -763,12 +810,14 @@ async function renderRoster(notice) {
     render(
       '<div class="wrap"><h1 class="serif">명단</h1>' +
       '<div class="msg error">' + escapeHtml((src && src.message) || '학생명단 시트를 읽지 못했어요.') + '</div>' +
+      autoRosterCardHtml_() +
       '<div class="card wide"><h2>학생명단 시트 연결</h2>' +
         '<div class="field"><label for="srcId">시트 주소 또는 ID</label><input id="srcId" type="text" placeholder="https://docs.google.com/spreadsheets/d/…"></div>' +
         '<button class="btn" id="srcSave">연결</button></div>' + legacy + '</div>'
     );
     document.getElementById('srcSave').onclick = saveRosterSource;
     document.getElementById('rsParse').onclick = doRosterParse;
+    wireAutoRoster_();
     return;
   }
 
@@ -794,6 +843,7 @@ async function renderRoster(notice) {
       '<h1 class="serif">명단</h1>' +
       '<p class="lead">학생명단 시트에서 학번·이름을 가져와요. 학생코드는 아래에 붙여넣은 기존 코드를 쓰고, 없는 학생만 새로 발급해요.</p>' +
       (notice ? '<div class="msg ' + notice.type + '">' + escapeHtml(notice.text) + '</div>' : '') +
+      autoRosterCardHtml_() +
       '<div class="card wide"><h2>1. 학생명단 시트 <span class="pill open">연결됨</span></h2>' +
         '<p style="font-size:13px;margin:0 0 6px;">' + escapeHtml(srcState.title) + ' · 시트 «삭제금지» (학년 / 반 / 번호 / 성명)</p>' +
         '<p class="hint" style="margin:0 0 10px;">학번은 <b>학년 + 반(1자리) + 번호(2자리)</b>로 만들어요. 예) 3학년 1반 1번 → 3101</p>' +
@@ -817,6 +867,7 @@ async function renderRoster(notice) {
   document.getElementById('codeCheck').onclick = checkCodes;
   document.getElementById('rsApply').onclick = applyRoster;
   document.getElementById('rsParse').onclick = doRosterParse;
+  wireAutoRoster_();
 }
 
 async function changeRosterSource() {
