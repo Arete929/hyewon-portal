@@ -751,10 +751,46 @@ function autoRosterCardHtml_() {
     '<div class="field"><label for="arTab">과제 이름 (없으면 새로 만들어요 · 새 과제는 «대기» 상태라 학생에게 안 보여요)</label>' +
     '<input id="arTab" type="text" value="3학년 시험 과제"></div>' +
     '<button class="btn-outline" id="arCheck" style="width:auto;">미리 확인</button>' +
-    '<div id="arOut" style="margin-top:12px;font-size:13px;line-height:1.8;"></div></div>';
+    '<div id="arOut" style="margin-top:12px;font-size:13px;line-height:1.8;"></div></div>' +
+    '<div class="card wide"><h2>시험 계정 추가</h2>' +
+    '<p class="hint" style="margin:0 0 10px;">과제 명단에 학생 한 명을 더해요. 다른 학생은 그대로예요. 학생코드를 <b>마스터코드와 같게</b> 넣으면 마스터코드로 로그인해서 제출·알림 켜기까지 시험할 수 있어요.</p>' +
+    '<div class="field"><label for="taTab">과제 이름</label><input id="taTab" type="text" value="3학년 시험 과제"></div>' +
+    '<div class="row"><div class="field" style="flex:1;"><label for="taId">학번</label><input id="taId" type="text" inputmode="numeric" maxlength="4" value="3277"></div>' +
+    '<div class="field" style="flex:2;"><label for="taName">이름</label><input id="taName" type="text" value="김체육"></div></div>' +
+    '<label style="display:flex;gap:8px;align-items:center;font-weight:500;color:var(--text);font-size:14px;margin-bottom:12px;"><input type="checkbox" id="taMaster" checked style="width:auto;"> 학생코드를 마스터코드와 같게 (체크 해제하면 새 코드를 발급해요)</label>' +
+    '<button class="btn" id="taAdd" style="width:auto;">추가</button>' +
+    '<div id="taOut" style="margin-top:12px;font-size:13px;line-height:1.8;"></div></div>';
+}
+
+function wireTestAccount_() {
+  const add = document.getElementById('taAdd');
+  if (!add) return;
+  add.onclick = async function () {
+    const out = document.getElementById('taOut');
+    const payload = {
+      tabName: document.getElementById('taTab').value.trim(),
+      studentId: document.getElementById('taId').value.trim(),
+      name: document.getElementById('taName').value.trim(),
+      codeMode: document.getElementById('taMaster').checked ? 'master' : 'new'
+    };
+    if (!payload.tabName || !payload.studentId || !payload.name) { out.innerHTML = '<div class="msg error">과제 이름·학번·이름을 모두 입력해주세요.</div>'; return; }
+    add.disabled = true; out.innerHTML = '<span class="hint">추가하는 중…</span>';
+    let r;
+    try { r = await api('addRosterStudent', payload); } catch (e) { add.disabled = false; out.innerHTML = '<div class="msg error">서버에 연결하지 못했어요.</div>'; return; }
+    add.disabled = false;
+    if (!r || r.success !== true) {
+      out.innerHTML = '<div class="msg error">' + escapeHtml((r && r.message) || '추가하지 못했어요. 서버(Code.gs)가 버전 22 이상인지 확인해주세요.') + '</div>';
+      return;
+    }
+    out.innerHTML = '<div class="msg ok">추가했어요 · «' + escapeHtml(r.tabName) + '» ' + escapeHtml(r.studentId) + ' ' + escapeHtml(r.name) +
+      ' (이 과제 명단 ' + r.total + '명)</div>' +
+      '<div>' + (r.codeIsMaster ? '학생코드는 <b>마스터코드와 같아요</b>. 학번 ' + escapeHtml(r.studentId) + ' + 마스터코드로 로그인하면 돼요.' : '학생코드를 새로 발급했어요.') + '</div>' +
+      '<div class="hint">그 과제가 «대기» 상태면 학생 화면에 안 보여요. 시험하려면 과제 상세에서 «진행중»으로 바꿔주세요.</div>';
+  };
 }
 
 function wireAutoRoster_() {
+  wireTestAccount_();
   const btn = document.getElementById('arCheck');
   if (!btn) return;
   btn.onclick = async function () {
