@@ -147,7 +147,7 @@ function render(inner) {
     b.onclick = function () {
       const k = b.getAttribute('data-nav');
       if (k === 'home') renderPortal(); else if (k === 'tasks') renderDashboard();
-      else if (k === 'roster') renderRoster(); else if (k === 'notice') renderNotice(); else renderSettings();
+      else if (k === 'roster') renderRosterImport(); else if (k === 'notice') renderNotice(); else renderSettings();
     };
   });
   document.getElementById('navLogout').onclick = doLogout;
@@ -821,12 +821,12 @@ function wireAutoRoster_() {
         out.innerHTML = '<div class="msg error">' + escapeHtml((r2 && r2.message) || '만들지 못했어요.') + '</div>';
         return;
       }
-      renderRoster({ type: 'ok', text: '«' + r2.tabName + '» 명단을 만들었어요 · ' + r2.students + '명 (코드 연결 ' + r2.withCode + '명 · 새 발급 ' + r2.withoutCode + '명)' + (r2.tabCreated ? ' · 과제도 새로 만들었어요' : '') });
+      renderRosterImport({ type: 'ok', text: '«' + r2.tabName + '» 명단을 만들었어요 · ' + r2.students + '명 (코드 연결 ' + r2.withCode + '명 · 새 발급 ' + r2.withoutCode + '명)' + (r2.tabCreated ? ' · 과제도 새로 만들었어요' : '') });
     };
   };
 }
 
-async function renderRoster(notice) {
+async function renderRosterImport(notice) {
   state.nav = 'roster';
   render('<div class="wrap"><h1 class="serif">명단</h1><p class="hint">학생명단 시트를 읽는 중…</p></div>');
   let src, cfg;
@@ -911,14 +911,14 @@ async function changeRosterSource() {
   if (!v) return;
   let r;
   try { r = await api('setRosterSource', { id: v }); } catch (e) { return; }
-  renderRoster(r.success ? { type: 'ok', text: '시트를 바꿨어요.' } : { type: 'error', text: r.message || '바꾸지 못했어요.' });
+  renderRosterImport(r.success ? { type: 'ok', text: '시트를 바꿨어요.' } : { type: 'error', text: r.message || '바꾸지 못했어요.' });
 }
 async function saveRosterSource() {
   const v = document.getElementById('srcId').value.trim();
   if (!v) return;
   let r;
   try { r = await api('setRosterSource', { id: v }); } catch (e) { return; }
-  renderRoster(r.success ? { type: 'ok', text: '시트를 연결했어요.' } : { type: 'error', text: r.message || '연결하지 못했어요.' });
+  renderRosterImport(r.success ? { type: 'ok', text: '시트를 연결했어요.' } : { type: 'error', text: r.message || '연결하지 못했어요.' });
 }
 
 function parseCodes_() {
@@ -971,10 +971,10 @@ async function applyRoster() {
     const entries = targetsFor_(tab).map(function (s) { return { studentId: s.studentId, name: s.name, code: srcState.codes[s.studentId] || '' }; });
     let r;
     try { r = await api('saveRoster', { tabName: tab, entries: entries }); } catch (e) { return; }
-    if (!r || !r.success) return renderRoster({ type: 'error', text: tab + ': ' + ((r && r.message) || '저장에 실패했어요.') });
+    if (!r || !r.success) return renderRosterImport({ type: 'error', text: tab + ': ' + ((r && r.message) || '저장에 실패했어요.') });
     done.push(tab + ' ' + entries.length + '명');
   }
-  renderRoster({ type: 'ok', text: '가져왔어요 — ' + done.join(' · ') });
+  renderRosterImport({ type: 'ok', text: '가져왔어요 — ' + done.join(' · ') });
 }
 
 function doRosterParse() {
@@ -1010,7 +1010,7 @@ async function doRosterSave(tabName) {
   let res;
   try { res = await api('saveRoster', { tabName: tabName, entries: rosterState.parsed }); } catch (e) { return; }
   state.config = null;
-  renderRoster(res && res.success ? { type: 'ok', text: res.message || '저장되었습니다.' } : { type: 'error', text: (res && res.message) || '저장에 실패했습니다.' });
+  renderRosterImport(res && res.success ? { type: 'ok', text: res.message || '저장되었습니다.' } : { type: 'error', text: (res && res.message) || '저장에 실패했습니다.' });
 }
 
 // ---------- 공지(푸시 알림) ----------
