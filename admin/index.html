@@ -30,6 +30,9 @@
   .side button.nav.on { background: #087A55; color: #fff; }
   .side .spacer { flex: 1; }
   .side .divider { border-top: 1px solid #25483D; margin: 10px 6px; }
+  .pillbtn { border: 1px solid var(--border); border-radius: 999px; padding: 6px 14px; font-family: inherit; font-size: 13px; font-weight: 700; background: #fff; color: var(--text2); cursor: pointer; }
+  .pillbtn.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .pillbtn:disabled { opacity: .6; cursor: default; }
   .verbox { margin: 10px 6px 0; font-size: 11px; line-height: 1.6; color: #7FA596; }
   .verbox b { color: #A9C4B9; font-weight: 600; }
   .verfoot { display: none; font-size: 11px; line-height: 1.7; color: var(--text3); padding: 0 16px 28px; }
@@ -414,11 +417,21 @@ async function renderDetail(tabName) {
 
   const status = (tab.meta && tab.meta.status) || 'open';
   const teacherFile = tab.meta && tab.meta.teacherFile;
+  const ap = !!(tab.meta && tab.meta.antiPaste);
+  const apMin = (function () { const n = Math.floor(Number(tab.meta && tab.meta.antiPasteMin)); return (n >= 5 && n <= 500) ? n : 20; })();
 
   render(
     '<div class="wrap">' +
       '<a href="#" id="backBtn" class="hint">← 과제 목록</a>' +
-      '<h1 class="serif" style="margin-top:8px;">' + escapeHtml(tabName) + '</h1>' +
+      '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:8px;">' +
+        '<h1 class="serif" style="margin:0;">' + escapeHtml(tabName) + '</h1>' +
+        '<button type="button" class="pillbtn' + (ap ? ' on' : '') + '" id="apToggle">복붙방지 ' + (ap ? '켜짐' : '꺼짐') + '</button>' +
+      '</div>' +
+      '<div class="hint" style="margin:6px 0 12px;line-height:1.9;">' +
+        (ap
+          ? '학생 화면에서 붙여넣기·끌어다 놓기를 막고, 한 번에 <input id="apMin" type="number" min="5" max="500" value="' + apMin + '" style="width:72px;display:inline-block;padding:4px 8px;"> 자 이상 입력되면 작성 기록에 남겨요. <span id="apMsg"></span>'
+          : '켜면 학생 화면에서 붙여넣기를 막고, 한 번에 일정 글자 수 이상 입력되면 작성 기록에 남겨요.') +
+      '</div>' +
       (tab.description ? '<p class="lead">' + escapeHtml(tab.description) + '</p>' : '') +
       '<div class="statusbtns" style="max-width:440px;margin-bottom:16px;">' +
         '<button class="btn-outline' + (status === 'wait' ? '' : '') + '" data-status="wait">대기</button>' +
@@ -450,6 +463,23 @@ async function renderDetail(tabName) {
     b.onclick = function () { doSetStatus(tabName, b.getAttribute('data-status')); };
   });
   document.getElementById('delTabBtn').onclick = function () { doDeleteTab(tabName); };
+  document.getElementById('apToggle').onclick = async function () {
+    const btn = this; btn.disabled = true;
+    let r;
+    try { r = await api('setAntiPaste', { tabName: tabName, on: !ap }); } catch (e) { btn.disabled = false; return; }
+    if (!r || r.success !== true) { btn.disabled = false; alert((r && r.message) || '바꾸지 못했어요. 서버(Code.gs)가 버전 24 이상인지 확인해주세요.'); return; }
+    renderDetail(tabName);
+  };
+  const apMinEl = document.getElementById('apMin');
+  if (apMinEl) apMinEl.onchange = async function () {
+    const msg = document.getElementById('apMsg');
+    const v = Number(apMinEl.value);
+    if (!(v >= 5 && v <= 500)) { msg.textContent = '5~500 사이로 입력해주세요.'; apMinEl.value = apMin; return; }
+    msg.textContent = '저장 중…';
+    let r;
+    try { r = await api('setAntiPaste', { tabName: tabName, on: true, minChars: v }); } catch (e) { msg.textContent = ''; return; }
+    msg.textContent = (r && r.success) ? ('저장했어요 (' + r.antiPasteMin + '자)') : ((r && r.message) || '저장하지 못했어요.');
+  };
   document.getElementById('teacherFileInput').onchange = function (e) { doUploadTeacherFile(tabName, e.target.files[0]); };
   const clearBtn = document.getElementById('clearTeacherFileBtn');
   if (clearBtn) clearBtn.onclick = function () { doClearTeacherFile(tabName); };
@@ -586,6 +616,27 @@ async function doSaveRoster(tab) {
 
 // ---------- 제출 현황 ----------
 
+function traceKey_(sid) {
+  const t = String(sid == null ? '' : sid).trim();
+  return /^\d+$/.test(t) ? String(Number(t)) : t;
+}
+
+// 작성 기록 칸 — 붙여넣기 시도가 있거나 한 번에 기준 글자 수 이상 들어온 적이 있으면 «의심»으로 표시합니다.
+function traceCellHtml_(t, min) {
+  if (!t) return '<td><span class="hint">기록 없음</span></td>';
+  const big = t.maxChunk >= min, tries = t.pasteTries > 0, flag = big || tries;
+  const parts = [];
+  if (tries) parts.push('붙여넣기 시도 ' + t.pasteTries + '회');
+  if (t.maxChunk) parts.push('한꺼번에 최대 ' + t.maxChunk + '자' + (t.chunks ? ' (' + min + '자 이상 ' + t.chunks + '회)' : ''));
+  if (t.activeSec) parts.push('작성 ' + Math.max(1, Math.round(t.activeSec / 60)) + '분');
+  if (t.chars) parts.push(t.chars + '자');
+  if (t.note) parts.push(t.note);
+  const pill = flag
+    ? '<span class="pill" style="color:var(--error-text);background:var(--error-bg);">의심</span>'
+    : '<span class="pill open">정상</span>';
+  return '<td style="min-width:180px;">' + pill + '<div class="hint" style="margin-top:4px;line-height:1.5;">' + escapeHtml(parts.join(' · ')) + '</div></td>';
+}
+
 async function renderSubmissions(tab) {
   const body = document.getElementById('detailBody');
   body.innerHTML = '<div class="loading">불러오는 중…</div>';
@@ -598,7 +649,18 @@ async function renderSubmissions(tab) {
   const reviewIdx = fields.findIndex(function (f) { return f.type === 'reviewStatus'; });
   const feedbackIdx = fields.findIndex(function (f) { return f.type === 'feedback'; });
 
-  const head = '<tr>' + fields.map(function (f) { return '<th>' + escapeHtml(f.name) + '</th>'; }).join('') + '</tr>';
+  const traces = res.traces || {};
+  const apOn = !!res.antiPaste, apMin = res.antiPasteMin || 20;
+  const showTrace = apOn || Object.keys(traces).length > 0;
+  let flagged = 0, traced = 0;
+  rows.forEach(function (r) {
+    const t = traces[traceKey_(r[0])];
+    if (!t) return;
+    traced++;
+    if (t.pasteTries > 0 || t.maxChunk >= apMin) flagged++;
+  });
+
+  const head = '<tr>' + fields.map(function (f) { return '<th>' + escapeHtml(f.name) + '</th>'; }).join('') + (showTrace ? '<th>작성 기록</th>' : '') + '</tr>';
 
   const body_ = rows.map(function (r, ri) {
     const sid = r[0];
@@ -615,11 +677,13 @@ async function renderSubmissions(tab) {
           '<button class="btn-outline btn-sm fbEditBtn" data-row="' + ri + '">피드백 작성</button></td>';
       }
       return '<td>' + escapeHtml(v) + '</td>';
-    }).join('') + '</tr>';
+    }).join('') + (showTrace ? traceCellHtml_(traces[traceKey_(sid)], apMin) : '') + '</tr>';
   }).join('');
 
   body.innerHTML =
-    '<p class="hint">총 ' + rows.length + '건</p>' +
+    '<p class="hint">총 ' + rows.length + '건' +
+      (apOn ? ' · 복붙 방지 켜짐 · 한 번에 ' + apMin + '자 이상 기록 · 의심 ' + flagged + '명 / 기록 ' + traced + '명' : (showTrace ? ' · 복붙 방지 꺼짐 (이전 작성 기록이 있어요)' : '')) +
+      (apOn && res.antiPastePartial ? ' · 수업 도중에 켜서 그 전에 쓴 글은 기록이 없을 수 있어요' : '') + '</p>' +
     (reviewIdx < 0 ? '<p class="hint">검토상태·피드백 열은 학생이 한 번 이상 제출하면 자동으로 생깁니다.</p>' : '') +
     '<div class="tablewrap"><table>' + head + (body_ || '<tr><td class="hint">제출된 답변이 없습니다.</td></tr>') + '</table></div>' +
     '<button class="btn-outline" id="csvBtn">CSV 내보내기</button>';

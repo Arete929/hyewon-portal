@@ -817,7 +817,7 @@ function wireShareToNotes_(tab, teacherFile) {
 
 function renderAssignmentForm(tab, entry, notice) {
   state.currentEntry = entry;
-  const antiPaste = !!(tab.meta && tab.meta.antiPaste);
+  const antiPaste = antiPasteMinOf_(tab);
   const inputs = fieldInputs(tab);
   const fieldsHtml = buildFieldsHtml(inputs, antiPaste);
   const teacherFile = tab.meta && tab.meta.teacherFile;
@@ -1157,7 +1157,7 @@ function buildFieldsHtml(inputs, antiPaste) {
       return head + '<div class="field"><label for="' + id + '">' + escapeHtml(f.name) + '</label>' +
         '<textarea id="' + id + '" data-field="' + i + '" data-antipaste="' + (antiPaste ? '1' : '0') + '"></textarea>' +
         '<div class="rowbetween">' +
-          (antiPaste ? '<span class="badge-anti">복사-붙여넣기 제한</span>' : '<span></span>') +
+          (antiPaste ? '<span class="badge-anti">복사-붙여넣기 제한 · 한 번에 ' + antiPaste + '자 이상 입력되면 기록돼요</span>' : '<span></span>') +
           '<span class="charcount" id="cc_' + id + '">0자</span>' +
         '</div></div>';
     }
@@ -1169,19 +1169,45 @@ function buildFieldsHtml(inputs, antiPaste) {
   }).join('');
 }
 
+// 복붙 방지가 켜진 과제면 «한 번에 몇 자 이상 기록할지» 숫자를, 꺼져 있으면 0 을 돌려줍니다(서버 기본값 20).
+function antiPasteMinOf_(tab) {
+  if (!(tab && tab.meta && tab.meta.antiPaste)) return 0;
+  const n = Math.floor(Number(tab.meta.antiPasteMin));
+  return (n >= 5 && n <= 500) ? n : 20;
+}
+
 function wireFieldEvents(tab, inputs) {
   inputs.forEach(function (f, i) {
     if (f.type !== 'long') return;
     const ta = document.getElementById('f_' + i);
     const cc = document.getElementById('cc_f_' + i);
     ta.addEventListener('input', function () { cc.textContent = ta.value.length + '자'; });
-    if (tab.meta && tab.meta.antiPaste) {
+    const apMin = antiPasteMinOf_(tab);
+    if (apMin) {
+      // «한 번에 apMin 자 이상» 들어온 입력을 기록합니다. maxChunk = 한 번에 들어온 가장 긴 글자 수,
+      // chunks = apMin 자 이상 들어온 횟수. 붙여넣기·끌어다 놓기는 막고, 그 밖의 방법(자동 완성·음성 입력 등)은 막을 수 없어 기록만 합니다.
+      function seen(len) {
+        state.antiPaste.maxChunk = Math.max(state.antiPaste.maxChunk, len);
+        if (len >= apMin) state.antiPaste.chunks++;
+      }
+      ta.dataset.lastLen = '0';
       ta.addEventListener('paste', function (e) {
         e.preventDefault();
         state.antiPaste.pasteTries++;
-        const text = (e.clipboardData || window.clipboardData).getData('text');
-        state.antiPaste.maxChunk = Math.max(state.antiPaste.maxChunk, text.length);
-        state.antiPaste.chunks++;
+        const text = (e.clipboardData || window.clipboardData).getData('text') || '';
+        seen(text.length);
+      });
+      ta.addEventListener('drop', function (e) {
+        e.preventDefault();
+        state.antiPaste.pasteTries++;
+        const text = (e.dataTransfer && e.dataTransfer.getData('text')) || '';
+        seen(text.length);
+      });
+      ta.addEventListener('input', function () {
+        const len = ta.value.length;
+        const added = len - Number(ta.dataset.lastLen || 0);
+        ta.dataset.lastLen = String(len);
+        if (added >= 2) seen(added);                       // 한 글자씩 치는 입력(1자)은 건너뜁니다
       });
       ta.addEventListener('keydown', function (e) {
         if (e.key === 'Backspace' || e.key === 'Delete') state.antiPaste.deletes++;
@@ -1200,7 +1226,7 @@ function wireFieldEvents(tab, inputs) {
 
 function renderForm(tab, notice) {
   const status = (tab.meta && tab.meta.status) || 'open';
-  const antiPaste = !!(tab.meta && tab.meta.antiPaste);
+  const antiPaste = antiPasteMinOf_(tab);
   const inputs = fieldInputs(tab);
   const fieldsHtml = buildFieldsHtml(inputs, antiPaste);
 
