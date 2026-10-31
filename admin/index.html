@@ -78,6 +78,9 @@
   .srow .dot { width: 38px; height: 38px; border-radius: 50%; background: var(--accent); color: #fff; display: grid; place-items: center; font-weight: 700; font-size: 13px; flex: none; }
   .srow .t { flex: 1; min-width: 0; font-size: 14px; font-weight: 600; }
   .srow .t small { display: block; color: var(--text2); font-size: 11px; font-weight: 400; margin-top: 2px; }
+  .gtags { display: inline-flex; gap: 4px; margin-left: 6px; vertical-align: middle; }
+  .gt { font-style: normal; font-size: 10px; font-weight: 700; padding: 1px 7px; border-radius: 999px; }
+  .gt-h { background: #E6EEFF; color: #2D5BD0; } .gt-p { background: #DDF5EB; color: #12805B; } .gt-n { background: #FDE8F1; color: #B0306A; }
   @media (max-width: 760px) {
     .subm { display: block; } .subm ~ .tablewrap { display: none; } .subm ~ .hint { display: none; }
     body { padding-bottom: 96px; }
@@ -759,7 +762,7 @@ async function renderSubmissions(tab) {
     const done = reviewIdx >= 0 && r[reviewIdx] === '검토완료';
     const nm = nameIdx >= 0 ? r[nameIdx] : '';
     const sub = [timeIdx >= 0 ? r[timeIdx] : '', flag && t.maxChunk ? '한 번에 ' + t.maxChunk + '자' : ''].filter(Boolean).join(' · ');
-    return '<div class="srow" data-flag="' + (flag ? 1 : 0) + '" data-done="' + (done ? 1 : 0) + '"><div class="dot">' + escapeHtml(String(nm || r[0] || '?').slice(-2)) + '</div>' +
+    return '<div class="srow" data-sid="' + escapeHtml(traceKey_(r[0])) + '" data-flag="' + (flag ? 1 : 0) + '" data-done="' + (done ? 1 : 0) + '"><div class="dot">' + escapeHtml(String(nm || r[0] || '?').slice(-2)) + '</div>' +
       '<div class="t">' + escapeHtml(nm ? r[0] + ' ' + nm : r[0]) + '<small>' + escapeHtml(sub) + '</small></div>' +
       '<span class="tag ' + (flag ? 'wr' : done ? 'ok' : 'ok') + '">' + (flag ? '복붙 의심' : done ? '검토완료' : '제출') + '</span></div>';
   }).join('');
@@ -780,15 +783,36 @@ async function renderSubmissions(tab) {
     '<button class="btn-outline" id="csvBtn">CSV 내보내기</button>';
 
   document.getElementById('csvBtn').onclick = function () { exportCsv(tab.sheetName, fields, rows); };
-  document.querySelectorAll('#subChips button').forEach(function (b) {
-    b.onclick = function () {
-      document.querySelectorAll('#subChips button').forEach(function (x) { x.classList.toggle('on', x === b); });
-      const f = b.getAttribute('data-f');
-      document.querySelectorAll('#subCards .srow').forEach(function (r) {
-        r.style.display = (f === 'all' || (f === 'flag' && r.dataset.flag === '1') || (f === 'todo' && r.dataset.done !== '1')) ? '' : 'none';
-      });
-    };
-  });
+  function wireChips_() {
+    document.querySelectorAll('#subChips button').forEach(function (b) {
+      b.onclick = function () {
+        document.querySelectorAll('#subChips button').forEach(function (x) { x.classList.toggle('on', x === b); });
+        const f = b.getAttribute('data-f');
+        document.querySelectorAll('#subCards .srow').forEach(function (r) {
+          const g = (r.dataset.groups || '').split(',');
+          r.style.display = (f === 'all' || (f === 'flag' && r.dataset.flag === '1') || (f === 'todo' && r.dataset.done !== '1') || (f.indexOf('g:') === 0 && g.indexOf(f.slice(2)) >= 0)) ? '' : 'none';
+        });
+      };
+    });
+  }
+  wireChips_();
+  // 담임 / 체육 / 넷볼 구분(노션 학생 INFO). 못 읽어도 목록은 그대로 보여요.
+  api('getStudentGroups', {}).then(function (g) {
+    if (!g || !g.success || !document.getElementById('subCards')) return;
+    const found = {};
+    document.querySelectorAll('#subCards .srow').forEach(function (r) {
+      const tags = g.groups[r.dataset.sid] || [];
+      r.dataset.groups = tags.join(',');
+      tags.forEach(function (t) { found[t] = true; });
+      const box = r.querySelector('.t small');
+      if (tags.length && box) box.insertAdjacentHTML('beforebegin', '<span class="gtags">' + tags.map(function (t) { return '<i class="gt gt-' + (t === '담임' ? 'h' : t === '체육' ? 'p' : 'n') + '">' + t + '</i>'; }).join('') + '</span>');
+    });
+    const chips = document.getElementById('subChips');
+    ['담임', '체육', '넷볼'].filter(function (t) { return found[t]; }).forEach(function (t) {
+      chips.insertAdjacentHTML('beforeend', '<button data-f="g:' + t + '">' + t + '</button>');
+    });
+    wireChips_();
+  }).catch(function () {});
 
   document.querySelectorAll('.reviewToggle').forEach(function (btn) {
     btn.onclick = async function () {
