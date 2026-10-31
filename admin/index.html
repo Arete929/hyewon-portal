@@ -758,9 +758,9 @@ async function renderSubmissions(tab) {
     const flag = !!t && (t.pasteTries > 0 || t.maxChunk >= apMin);
     const done = reviewIdx >= 0 && r[reviewIdx] === '검토완료';
     const nm = nameIdx >= 0 ? r[nameIdx] : '';
-    const sub = [r[0], timeIdx >= 0 ? r[timeIdx] : '', flag && t.maxChunk ? '한 번에 ' + t.maxChunk + '자' : ''].filter(Boolean).join(' · ');
+    const sub = [timeIdx >= 0 ? r[timeIdx] : '', flag && t.maxChunk ? '한 번에 ' + t.maxChunk + '자' : ''].filter(Boolean).join(' · ');
     return '<div class="srow" data-flag="' + (flag ? 1 : 0) + '" data-done="' + (done ? 1 : 0) + '"><div class="dot">' + escapeHtml(String(nm || r[0] || '?').slice(-2)) + '</div>' +
-      '<div class="t">' + escapeHtml(nm || r[0]) + '<small>' + escapeHtml(sub) + '</small></div>' +
+      '<div class="t">' + escapeHtml(nm ? r[0] + ' ' + nm : r[0]) + '<small>' + escapeHtml(sub) + '</small></div>' +
       '<span class="tag ' + (flag ? 'wr' : done ? 'ok' : 'ok') + '">' + (flag ? '복붙 의심' : done ? '검토완료' : '제출') + '</span></div>';
   }).join('');
   const mobileList =
