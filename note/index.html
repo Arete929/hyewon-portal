@@ -54,6 +54,12 @@
   .recent { border-top: 1px solid var(--border); padding: 10px 0; font-size: 14px; line-height: 1.6; }
   .recent small { color: var(--text2); display: block; }
   .center { min-height: 80vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+  .bar { padding-top: calc(12px + env(safe-area-inset-top)); }
+  .banner { display: flex; align-items: center; justify-content: space-between; gap: 10px; background: var(--warn-bg); color: var(--warn); border-radius: 12px; padding: 10px 12px; margin-bottom: 12px; font-size: 14px; font-weight: 600; }
+  .banner button { border: 0; border-radius: 999px; background: var(--warn); color: #fff; padding: 7px 12px; font: inherit; font-size: 13px; font-weight: 700; }
+  .ob { border-top: 1px solid var(--border); padding: 10px 0; font-size: 14px; line-height: 1.6; }
+  .ob small { color: var(--text2); display: block; }
+  .ob .x { float: right; border: 0; background: none; color: var(--err); font-size: 18px; }
   .toast { position: fixed; left: 50%; bottom: 96px; transform: translateX(-50%); background: #1C1B1A; color: #fff; padding: 11px 16px; border-radius: 999px; font-size: 14px; font-weight: 600; z-index: 9; max-width: 90%; }
 </style>
 </head>
@@ -71,6 +77,20 @@ function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function
 function lsGet(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : v; } catch (e) { return d; } }
 function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 function bytesOf(t) { let n = 0; t = String(t || ''); for (let i = 0; i < t.length; i++) { const c = t.charCodeAt(i); n += c === 10 ? 2 : c === 13 ? 0 : c > 127 ? 3 : 1; } return n; }
+// ---------- 휴대폰에 임시 저장(보내지 못한 기록) · 작성 중 글 자동 보관 ----------
+const LS_OUTBOX = 'note_outbox';
+function outbox() { try { return JSON.parse(lsGet(LS_OUTBOX, '[]')) || []; } catch (e) { return []; } }
+function setOutbox(a) { lsSet(LS_OUTBOX, JSON.stringify(a)); }
+function draftKey() { return 'note_draft_' + (state.sel ? state.sel.id : '') + '_' + state.kind; }
+function saveDraft(t) { if (!state.sel) return; if (t) lsSet(draftKey(), t); else { try { localStorage.removeItem(draftKey()); } catch (e) {} } }
+let deferredInstall = null;
+window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); deferredInstall = e; });
+function isStandalone() { return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true; }
+function isIOS() { return /iPhone|iPad|iPod/.test(navigator.userAgent || ''); }
+// 네트워크가 끊겼거나 서버 준비가 덜 된 경우처럼 «나중에 다시 보내면 되는» 실패인지
+function retryable(r) { return !r || (r.success === false && /노션 토큰이 서버에 없|잠시 바빠|노션 데이터베이스를 찾을 수 없/.test(String(r.message || ''))); }
+function queueEntry(e) { const a = outbox(); a.push(e); setOutbox(a); return a.length; }
+
 function toast(msg) { const el = document.createElement('div'); el.className = 'toast'; el.textContent = msg; document.body.appendChild(el); setTimeout(function () { el.remove(); }, 2200); }
 
 async function api(action, data, noToken) {
@@ -92,6 +112,9 @@ function shell(inner, withBar) {
   const lo = document.getElementById('logoutBtn');
   if (lo) lo.onclick = function () { state.token = ''; try { localStorage.removeItem(TOKEN_KEY); } catch (e) {} renderLogin(); };
 }
+
+if ('serviceWorker' in navigator) { window.addEventListener('load', function () { navigator.serviceWorker.register('./sw.js').catch(function () {}); }); }
+window.addEventListener('online', function () { if (state.token && outbox().length) flushOutbox(true); });
 
 async function boot() {
   try { const r = await (await fetch('../routes.json')).json(); state.exec = r.tools && r.tools.report && r.tools.report.exec; } catch (e) {}
@@ -132,6 +155,54 @@ async function loadStudents() {
   }
   state.students = r.students || []; state.schoolYear = r.schoolYear || 0; if (r.kinds) state.kinds = r.kinds;
   renderSearch();
+  if (outbox().length) flushOutbox(true);
+}
+
+function bannerHtml() {
+  const n = outbox().length;
+  return n ? '<div class="banner"><span>📥 보내지 못한 기록 ' + n + '건</span><span><button type="button" id="obSend">지금 보내기</button> <button type="button" id="obView">보기</button></span></div>' : '';
+}
+function wireBanner() {
+  const s = document.getElementById('obSend'), v = document.getElementById('obView');
+  if (s) s.onclick = function () { flushOutbox(false); };
+  if (v) v.onclick = renderOutbox;
+}
+function installHtml() {
+  if (isStandalone()) return '';
+  if (deferredInstall) return '<div class="card"><button type="button" class="btn ghost" id="installBtn" style="width:100%;">📲 홈 화면에 앱으로 설치</button></div>';
+  if (isIOS()) return '<div class="card"><p class="hint" style="margin:0;">아이폰: 사파리의 공유 버튼 → «홈 화면에 추가»를 누르면 앱처럼 쓸 수 있어요.</p></div>';
+  return '';
+}
+function wireInstall() {
+  const b = document.getElementById('installBtn');
+  if (b) b.onclick = async function () { try { deferredInstall.prompt(); await deferredInstall.userChoice; } catch (e) {} deferredInstall = null; b.parentNode.remove(); };
+}
+
+async function flushOutbox(silent) {
+  let a = outbox(); if (!a.length || state.flushing) return; state.flushing = true;
+  let sent = 0, failMsg = '';
+  for (const e of a.slice()) {
+    let r;
+    try { r = await api('noteSave', { studentId: e.studentId, kind: e.kind, subject: e.subject, text: e.text, voice: e.voice, at: e.at }); }
+    catch (err) { failMsg = err && err.message === 'unauthorized' ? '로그인이 필요해요' : '인터넷에 연결되면 다시 보낼게요'; break; }
+    if (r && r.success === true) { setOutbox(outbox().filter(function (x) { return x.cid !== e.cid; })); sent++; }
+    else { failMsg = (r && r.message) || '보내지 못했어요'; break; }
+  }
+  state.flushing = false;
+  if (sent) toast('임시 저장 ' + sent + '건을 보냈어요 ✓');
+  else if (failMsg && !silent) toast(failMsg);
+  if (document.getElementById('obList')) renderOutbox(); else if (sent) { const b = document.querySelector('.banner'); if (b) { const n = outbox().length; if (n) b.firstChild.textContent = '📥 보내지 못한 기록 ' + n + '건'; else b.remove(); } }
+}
+
+function renderOutbox() {
+  const a = outbox();
+  shell('<div class="wrap"><div class="card"><div class="row" style="justify-content:space-between;"><b>보내지 못한 기록 ' + a.length + '건</b><button type="button" class="btn ghost" id="obBack" style="padding:8px 12px;">닫기</button></div>' +
+    '<p class="hint" style="margin:6px 0 0;">인터넷이 연결되면 자동으로 보내요. 지우면 휴대폰에서도 없어져요.</p>' +
+    '<div id="obList">' + (a.length ? a.map(function (e, i) { return '<div class="ob"><button class="x" type="button" data-i="' + i + '" aria-label="삭제">✕</button><small>' + esc((e.at || '').slice(0, 16).replace('T', ' ')) + ' · ' + esc(e.label || e.studentId) + ' · ' + esc(e.kind) + (e.subject ? ' · ' + esc(e.subject) : '') + '</small>' + esc(e.text.length > 100 ? e.text.slice(0, 100) + '…' : e.text) + '</div>'; }).join('') : '<p class="hint">없어요 👍</p>') + '</div>' +
+    (a.length ? '<button type="button" class="btn" id="obGo" style="width:100%;margin-top:12px;">지금 보내기</button>' : '') + '</div></div>', true);
+  document.getElementById('obBack').onclick = function () { state.sel ? renderEditor() : renderSearch(); };
+  const go = document.getElementById('obGo'); if (go) go.onclick = function () { flushOutbox(false); };
+  document.querySelectorAll('.ob .x').forEach(function (b) { b.onclick = function () { if (!confirm('이 기록을 지울까요?')) return; const arr = outbox(); arr.splice(Number(b.getAttribute('data-i')), 1); setOutbox(arr); renderOutbox(); }; });
 }
 
 function recentIds() { try { return JSON.parse(lsGet(LS_RECENT, '[]')) || []; } catch (e) { return []; } }
@@ -142,12 +213,13 @@ function label(s) { return s.id + ' ' + s.name; }
 function renderSearch() {
   stopMic(); state.sel = null;
   const rec = recentIds().map(studentById).filter(Boolean);
-  shell('<div class="wrap">' +
+  shell('<div class="wrap">' + bannerHtml() + installHtml() +
     '<div class="card"><label class="lab" for="q">학생 찾기 (이름 또는 학번)</label>' +
     '<input id="q" type="search" inputmode="search" autocomplete="off" placeholder="예: 3101 또는 홍길" value="' + esc(state.query) + '">' +
     '<div id="results"></div></div>' +
     (rec.length ? '<div class="card"><label class="lab">최근에 쓴 학생</label><div class="chips">' + rec.map(function (s) { return '<button type="button" class="chip" data-id="' + esc(s.id) + '">' + esc(label(s)) + '</button>'; }).join('') + '</div></div>' : '') +
     '</div>', true);
+  wireBanner(); wireInstall();
   const q = document.getElementById('q');
   const paint = function () {
     state.query = q.value.trim();
@@ -166,7 +238,7 @@ function pick(id) { const s = studentById(id); if (!s) return; state.sel = s; st
 
 function renderEditor(keepText) {
   const s = state.sel, old = keepText ? (document.getElementById('txt') || {}).value || '' : '';
-  shell('<div class="wrap">' +
+  shell('<div class="wrap">' + bannerHtml() +
     '<div class="card"><div class="who"><div><b>' + esc(s.id) + ' ' + esc(s.name) + '</b><small>' + esc(s.grade) + '학년 ' + esc(s.cls) + '반 ' + esc(s.num) + '번</small></div>' +
     '<button type="button" class="btn ghost" id="changeBtn" style="padding:10px 14px;">다른 학생</button></div></div>' +
     '<div class="card"><label class="lab">구분</label><div class="chips">' + state.kinds.map(function (k) { return '<button type="button" class="chip' + (k === state.kind ? ' on' : '') + '" data-kind="' + esc(k) + '">' + esc(k) + '</button>'; }).join('') + '</div>' +
@@ -180,12 +252,13 @@ function renderEditor(keepText) {
     '<div class="card"><button type="button" class="btn ghost" id="recentBtn" style="width:100%;">이 학생 최근 기록 보기</button><div id="recentBox"></div></div>' +
     '</div>' +
     '<div class="savebar"><div class="in"><button type="button" class="btn grow" id="saveBtn">저장</button></div></div>', true);
-  const ta = document.getElementById('txt'); ta.value = old; updateCount();
-  ta.addEventListener('input', updateCount);
+  wireBanner();
+  const ta = document.getElementById('txt'); ta.value = old || lsGet(draftKey(), ''); updateCount();
+  let dt = null; ta.addEventListener('input', function () { updateCount(); clearTimeout(dt); dt = setTimeout(function () { saveDraft(ta.value); }, 400); });
   document.getElementById('changeBtn').onclick = function () { renderSearch(); };
   document.querySelectorAll('.chip[data-kind]').forEach(function (b) { b.onclick = function () { const t = ta.value; state.kind = b.getAttribute('data-kind'); lsSet(LS_KIND, state.kind); stopMic(); renderEditor(true); document.getElementById('txt').value = t; updateCount(); }; });
   const subj = document.getElementById('subj'); if (subj) subj.addEventListener('input', function () { state.subject = subj.value; lsSet(LS_SUBJECT, state.subject); });
-  document.getElementById('clearBtn').onclick = function () { stopMic(); ta.value = ''; state.voiceUsed = false; updateCount(); ta.focus(); };
+  document.getElementById('clearBtn').onclick = function () { stopMic(); ta.value = ''; saveDraft(''); state.voiceUsed = false; updateCount(); ta.focus(); };
   const mic = document.getElementById('micBtn'); if (mic) mic.onclick = function () { state.listening ? stopMic() : startMic(); };
   document.getElementById('saveBtn').onclick = save;
   document.getElementById('recentBtn').onclick = loadRecent;
@@ -222,11 +295,19 @@ async function save() {
   if (!text) { toast('내용을 입력해주세요'); return; }
   if (state.kind === '과세특' && !state.subject.trim()) { toast('과목을 입력해주세요'); return; }
   stopMic(); state.saving = true; btn.disabled = true; btn.textContent = '저장 중…';
-  let r; try { r = await api('noteSave', { studentId: state.sel.id, kind: state.kind, subject: state.kind === '과세특' ? state.subject.trim() : '', text: text, voice: state.voiceUsed }); }
-  catch (e) { state.saving = false; return; }
+  const entry = { cid: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), studentId: state.sel.id, label: label(state.sel), kind: state.kind,
+                  subject: state.kind === '과세특' ? state.subject.trim() : '', text: text, voice: state.voiceUsed, at: new Date().toISOString() };
+  let r, failed = false;
+  try { r = await api('noteSave', entry); } catch (e) { failed = true; }
   state.saving = false; btn.disabled = false; btn.textContent = '저장';
+  if (failed || retryable(r)) {                               // 인터넷이 없거나 서버 준비 중 → 잃지 않게 휴대폰에 임시 저장
+    const n = queueEntry(entry);
+    toast('휴대폰에 임시 저장했어요 (대기 ' + n + '건)'); ta.value = ''; saveDraft(''); state.voiceUsed = false; updateCount();
+    const bn = document.querySelector('.banner'); if (!bn) { const w = document.querySelector('.wrap'); if (w) { w.insertAdjacentHTML('afterbegin', bannerHtml()); wireBanner(); } } else bn.firstChild.textContent = '📥 보내지 못한 기록 ' + n + '건';
+    return;
+  }
   if (!r || r.success !== true) { toast((r && r.message) || '저장하지 못했어요'); return; }
-  toast('저장했어요 ✓ ' + r.bytes + '바이트'); ta.value = ''; state.voiceUsed = false; updateCount();
+  toast('저장했어요 ✓ ' + r.bytes + '바이트'); ta.value = ''; saveDraft(''); state.voiceUsed = false; updateCount();
   document.getElementById('recentBox').innerHTML = '';
 }
 
