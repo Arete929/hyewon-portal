@@ -1,0 +1,16 @@
+{
+  "name": "학생 기록",
+  "short_name": "학생 기록",
+  "description": "행발·과세특·누가기록을 말하거나 입력해서 바로 저장",
+  "lang": "ko",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F6F5F1",
+  "theme_color": "#087A55",
+  "icons": [
+    { "src": "../assets/favicon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "../assets/favicon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}

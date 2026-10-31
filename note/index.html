@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>학생 기록</title>
+<meta name="theme-color" content="#087A55">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="32x32" href="../assets/favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="../assets/favicon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="학생 기록">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap">
+<style>
+  :root { --bg:#F6F5F1; --surface:#fff; --text:#1C1B1A; --text2:#6B6863; --text3:#A8A49A; --border:#E3E0D8;
+          --accent:#087A55; --accent-dark:#065F44; --ok-bg:#E7F6EC; --ok:#1F7A3D; --err-bg:#FDEBEB; --err:#C22B2B; --warn-bg:#FFF4E0; --warn:#9A6400; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--text); font-family: 'Noto Sans KR', sans-serif; -webkit-text-size-adjust: 100%; }
+  .bar { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 12px 16px; background: var(--accent); color: #fff; }
+  .bar b { font-size: 17px; }
+  .bar small { opacity: .85; font-size: 12px; margin-left: 8px; font-weight: 500; }
+  .bar button { background: rgba(255,255,255,.18); color: #fff; border: 0; border-radius: 999px; padding: 7px 12px; font: inherit; font-size: 12px; font-weight: 600; }
+  .wrap { max-width: 640px; margin: 0 auto; padding: 14px 16px 120px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 16px; margin-bottom: 12px; }
+  label.lab { display: block; font-size: 12px; font-weight: 700; color: var(--text2); margin-bottom: 6px; }
+  input[type=text], input[type=search], input[type=password], textarea { width: 100%; border: 1px solid var(--border); border-radius: 12px; padding: 13px 14px; font: inherit; font-size: 16px; background: #fff; color: var(--text); }
+  textarea { min-height: 210px; resize: vertical; line-height: 1.7; }
+  input:focus, textarea:focus { outline: 2px solid rgba(8,122,85,.35); border-color: var(--accent); }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip { border: 1px solid var(--border); border-radius: 999px; padding: 10px 15px; background: #fff; font: inherit; font-size: 15px; font-weight: 600; color: var(--text2); }
+  .chip.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .res { display: flex; align-items: center; justify-content: space-between; width: 100%; text-align: left; background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 13px 14px; margin-top: 8px; font: inherit; font-size: 16px; }
+  .res b { font-variant-numeric: tabular-nums; }
+  .res small { color: var(--text3); }
+  .who { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .who b { font-size: 20px; }
+  .who small { display: block; color: var(--text2); font-size: 12px; margin-top: 2px; }
+  .btn { border: 0; border-radius: 12px; padding: 14px 18px; font: inherit; font-size: 16px; font-weight: 700; background: var(--accent); color: #fff; }
+  .btn:disabled { opacity: .55; }
+  .btn.ghost { background: #fff; color: var(--accent); border: 1px solid var(--border); }
+  .btn.mic { background: #fff; color: var(--text); border: 1px solid var(--border); }
+  .btn.mic.on { background: #E5484D; border-color: #E5484D; color: #fff; }
+  .row { display: flex; gap: 10px; align-items: center; }
+  .grow { flex: 1; }
+  .count { font-size: 13px; color: var(--text2); font-variant-numeric: tabular-nums; }
+  .count.over { color: var(--err); font-weight: 700; }
+  .msg { border-radius: 12px; padding: 11px 13px; font-size: 14px; margin-bottom: 12px; }
+  .msg.err { background: var(--err-bg); color: var(--err); }
+  .msg.ok { background: var(--ok-bg); color: var(--ok); }
+  .msg.warn { background: var(--warn-bg); color: var(--warn); }
+  .hint { font-size: 12px; color: var(--text2); line-height: 1.6; }
+  .savebar { position: fixed; left: 0; right: 0; bottom: 0; padding: 10px 16px calc(10px + env(safe-area-inset-bottom)); background: linear-gradient(to top, var(--bg) 70%, rgba(246,245,241,0)); }
+  .savebar .in { max-width: 640px; margin: 0 auto; display: flex; gap: 10px; }
+  .recent { border-top: 1px solid var(--border); padding: 10px 0; font-size: 14px; line-height: 1.6; }
+  .recent small { color: var(--text2); display: block; }
+  .center { min-height: 80vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+  .toast { position: fixed; left: 50%; bottom: 96px; transform: translateX(-50%); background: #1C1B1A; color: #fff; padding: 11px 16px; border-radius: 999px; font-size: 14px; font-weight: 600; z-index: 9; max-width: 90%; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+const TOKEN_KEY = 'hyewon_admin_token';          // 관리자 페이지와 같은 로그인(같은 주소에서 한 번 로그인하면 여기서도 유지)
+const LS_RECENT = 'note_recent_students', LS_SUBJECT = 'note_last_subject', LS_KIND = 'note_last_kind';
+const BYTE_LIMIT = 1500;                          // 어림 한도 — 학교 지침으로 확인하세요
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+const state = { exec: '', token: '', students: [], schoolYear: 0, kinds: ['행발', '과세특', '누가기록', '상담', '기타'],
+                sel: null, kind: '행발', subject: '', listening: false, rec: null, voiceUsed: false, saving: false, query: '' };
+
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+function lsGet(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : v; } catch (e) { return d; } }
+function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+function bytesOf(t) { let n = 0; t = String(t || ''); for (let i = 0; i < t.length; i++) { const c = t.charCodeAt(i); n += c === 10 ? 2 : c === 13 ? 0 : c > 127 ? 3 : 1; } return n; }
+function toast(msg) { const el = document.createElement('div'); el.className = 'toast'; el.textContent = msg; document.body.appendChild(el); setTimeout(function () { el.remove(); }, 2200); }
+
+async function api(action, data, noToken) {
+  const body = new URLSearchParams();
+  body.set('action', action);
+  const payload = Object.assign({}, data || {});
+  if (state.token && !noToken) payload.token = state.token;
+  body.set('data', JSON.stringify(payload));
+  const res = await fetch(state.exec, { method: 'POST', body: body });
+  const json = await res.json();
+  if (json && json.error === 'unauthorized') { state.token = ''; try { localStorage.removeItem(TOKEN_KEY); } catch (e) {} renderLogin('로그인이 끊어졌어요. 다시 로그인해주세요.'); throw new Error('unauthorized'); }
+  return json;
+}
+
+function shell(inner, withBar) {
+  document.getElementById('app').innerHTML =
+    (withBar ? '<div class="bar"><div><b>학생 기록</b><small>' + (state.schoolYear ? state.schoolYear + '학년도' : '') + '</small></div><button id="logoutBtn" type="button">로그아웃</button></div>' : '') +
+    inner;
+  const lo = document.getElementById('logoutBtn');
+  if (lo) lo.onclick = function () { state.token = ''; try { localStorage.removeItem(TOKEN_KEY); } catch (e) {} renderLogin(); };
+}
+
+async function boot() {
+  try { const r = await (await fetch('../routes.json')).json(); state.exec = r.tools && r.tools.report && r.tools.report.exec; } catch (e) {}
+  if (!state.exec) { shell('<div class="center"><div class="card"><div class="msg err">연결 주소를 찾지 못했어요.</div></div></div>', false); return; }
+  state.token = lsGet(TOKEN_KEY, '');
+  state.kind = lsGet(LS_KIND, '행발'); state.subject = lsGet(LS_SUBJECT, '');
+  if (!state.token) return renderLogin();
+  await loadStudents();
+}
+
+function renderLogin(err) {
+  shell('<div class="center"><div class="card" style="width:100%;max-width:380px;">' +
+    '<h2 style="margin:0 0 4px;">학생 기록</h2><p class="hint" style="margin:0 0 14px;">선생님 전용이에요. 관리자 비밀번호로 로그인하세요.</p>' +
+    (err ? '<div class="msg err">' + esc(err) + '</div>' : '') +
+    '<label class="lab" for="pw">비밀번호</label><input id="pw" type="password" autocomplete="current-password">' +
+    '<label style="display:flex;gap:8px;align-items:center;margin:12px 0;font-size:14px;"><input type="checkbox" id="rem" checked style="width:auto;"> 이 기기 기억하기 (30일)</label>' +
+    '<button class="btn" id="goBtn" style="width:100%;">로그인</button></div></div>', false);
+  const go = async function () {
+    const pw = document.getElementById('pw').value; if (!pw) return;
+    const rem = document.getElementById('rem').checked, b = document.getElementById('goBtn');
+    b.disabled = true; b.textContent = '확인 중…';
+    let r; try { r = await api('login', { password: pw, remember: rem }, true); } catch (e) { return; }
+    if (!r || !r.success) return renderLogin((r && r.message) || '로그인하지 못했어요.');
+    state.token = r.token; if (rem) lsSet(TOKEN_KEY, r.token);
+    await loadStudents();
+  };
+  document.getElementById('goBtn').onclick = go;
+  document.getElementById('pw').addEventListener('keydown', function (e) { if (e.key === 'Enter') go(); });
+}
+
+async function loadStudents() {
+  shell('<div class="center"><span class="hint">학생 명단을 불러오는 중…</span></div>', true);
+  let r; try { r = await api('noteStudents'); } catch (e) { return; }
+  if (!r || r.success !== true) {
+    const old = r && (r.error === 'unknown_action');
+    shell('<div class="wrap"><div class="msg err">' + esc(old ? '서버가 예전 버전이에요(버전 25 이상 필요). 잠시 뒤 다시 열어주세요.' : ((r && r.message) || '명단을 불러오지 못했어요.')) + '</div><button class="btn ghost" id="retry">다시 시도</button></div>', true);
+    document.getElementById('retry').onclick = loadStudents; return;
+  }
+  state.students = r.students || []; state.schoolYear = r.schoolYear || 0; if (r.kinds) state.kinds = r.kinds;
+  renderSearch();
+}
+
+function recentIds() { try { return JSON.parse(lsGet(LS_RECENT, '[]')) || []; } catch (e) { return []; } }
+function pushRecent(id) { const a = recentIds().filter(function (x) { return x !== id; }); a.unshift(id); lsSet(LS_RECENT, JSON.stringify(a.slice(0, 8))); }
+function studentById(id) { return state.students.find(function (s) { return String(s.id) === String(id); }); }
+function label(s) { return s.id + ' ' + s.name; }
+
+function renderSearch() {
+  stopMic(); state.sel = null;
+  const rec = recentIds().map(studentById).filter(Boolean);
+  shell('<div class="wrap">' +
+    '<div class="card"><label class="lab" for="q">학생 찾기 (이름 또는 학번)</label>' +
+    '<input id="q" type="search" inputmode="search" autocomplete="off" placeholder="예: 3101 또는 홍길" value="' + esc(state.query) + '">' +
+    '<div id="results"></div></div>' +
+    (rec.length ? '<div class="card"><label class="lab">최근에 쓴 학생</label><div class="chips">' + rec.map(function (s) { return '<button type="button" class="chip" data-id="' + esc(s.id) + '">' + esc(label(s)) + '</button>'; }).join('') + '</div></div>' : '') +
+    '</div>', true);
+  const q = document.getElementById('q');
+  const paint = function () {
+    state.query = q.value.trim();
+    const t = state.query.replace(/\s+/g, ''), box = document.getElementById('results');
+    if (!t) { box.innerHTML = ''; return; }
+    const hits = state.students.filter(function (s) { return String(s.id).indexOf(t) === 0 || String(s.name).indexOf(t) >= 0; }).slice(0, 8);
+    box.innerHTML = hits.length ? hits.map(function (s) { return '<button type="button" class="res" data-id="' + esc(s.id) + '"><span><b>' + esc(s.id) + '</b> ' + esc(s.name) + '</span><small>' + esc(s.grade) + '학년 ' + esc(s.cls) + '반 ' + esc(s.num) + '번</small></button>'; }).join('') : '<p class="hint" style="margin:10px 2px 0;">찾는 학생이 없어요.</p>';
+    box.querySelectorAll('.res').forEach(function (b) { b.onclick = function () { pick(b.getAttribute('data-id')); }; });
+  };
+  q.addEventListener('input', paint); paint();
+  document.querySelectorAll('.chip[data-id]').forEach(function (b) { b.onclick = function () { pick(b.getAttribute('data-id')); }; });
+  q.focus();
+}
+
+function pick(id) { const s = studentById(id); if (!s) return; state.sel = s; state.query = ''; pushRecent(s.id); renderEditor(); }
+
+function renderEditor(keepText) {
+  const s = state.sel, old = keepText ? (document.getElementById('txt') || {}).value || '' : '';
+  shell('<div class="wrap">' +
+    '<div class="card"><div class="who"><div><b>' + esc(s.id) + ' ' + esc(s.name) + '</b><small>' + esc(s.grade) + '학년 ' + esc(s.cls) + '반 ' + esc(s.num) + '번</small></div>' +
+    '<button type="button" class="btn ghost" id="changeBtn" style="padding:10px 14px;">다른 학생</button></div></div>' +
+    '<div class="card"><label class="lab">구분</label><div class="chips">' + state.kinds.map(function (k) { return '<button type="button" class="chip' + (k === state.kind ? ' on' : '') + '" data-kind="' + esc(k) + '">' + esc(k) + '</button>'; }).join('') + '</div>' +
+    (state.kind === '과세특' ? '<div style="margin-top:12px;"><label class="lab" for="subj">과목</label><input id="subj" type="text" placeholder="예: 체육" value="' + esc(state.subject) + '"></div>' : '') + '</div>' +
+    '<div class="card"><div class="row" style="justify-content:space-between;margin-bottom:8px;"><label class="lab" style="margin:0;" for="txt">내용</label>' +
+    '<span class="count" id="cnt"></span></div>' +
+    '<textarea id="txt" placeholder="' + (SR ? '🎤 말하기를 누르거나 직접 입력하세요' : '입력하세요(키보드의 마이크로 말해도 돼요)') + '"></textarea>' +
+    '<div class="row" style="margin-top:10px;">' + (SR ? '<button type="button" class="btn mic grow" id="micBtn">🎤 말하기</button>' : '') +
+    '<button type="button" class="btn ghost" id="clearBtn">지우기</button></div>' +
+    '<p class="hint" style="margin:8px 2px 0;">바이트는 한글 3·영문 1·줄바꿈 2로 어림해요. 한도(' + BYTE_LIMIT + ')는 학교 지침으로 확인하세요. 음성은 구글 서버로 전달돼 글자로 바뀌니, 학생 이름은 말하지 말고 내용만 말하세요.</p></div>' +
+    '<div class="card"><button type="button" class="btn ghost" id="recentBtn" style="width:100%;">이 학생 최근 기록 보기</button><div id="recentBox"></div></div>' +
+    '</div>' +
+    '<div class="savebar"><div class="in"><button type="button" class="btn grow" id="saveBtn">저장</button></div></div>', true);
+  const ta = document.getElementById('txt'); ta.value = old; updateCount();
+  ta.addEventListener('input', updateCount);
+  document.getElementById('changeBtn').onclick = function () { renderSearch(); };
+  document.querySelectorAll('.chip[data-kind]').forEach(function (b) { b.onclick = function () { const t = ta.value; state.kind = b.getAttribute('data-kind'); lsSet(LS_KIND, state.kind); stopMic(); renderEditor(true); document.getElementById('txt').value = t; updateCount(); }; });
+  const subj = document.getElementById('subj'); if (subj) subj.addEventListener('input', function () { state.subject = subj.value; lsSet(LS_SUBJECT, state.subject); });
+  document.getElementById('clearBtn').onclick = function () { stopMic(); ta.value = ''; state.voiceUsed = false; updateCount(); ta.focus(); };
+  const mic = document.getElementById('micBtn'); if (mic) mic.onclick = function () { state.listening ? stopMic() : startMic(); };
+  document.getElementById('saveBtn').onclick = save;
+  document.getElementById('recentBtn').onclick = loadRecent;
+  if (state.listening) paintMic();
+}
+
+function updateCount() {
+  const ta = document.getElementById('txt'), c = document.getElementById('cnt'); if (!ta || !c) return;
+  const b = bytesOf(ta.value), over = (state.kind === '행발' || state.kind === '과세특') && b > BYTE_LIMIT;
+  c.textContent = ta.value.length + '자 · ' + b + '바이트' + ((state.kind === '행발' || state.kind === '과세특') ? ' / ' + BYTE_LIMIT : '');
+  c.className = 'count' + (over ? ' over' : '');
+}
+
+function paintMic() { const m = document.getElementById('micBtn'); if (!m) return; m.classList.toggle('on', state.listening); m.textContent = state.listening ? '⏹ 멈추기 (듣는 중…)' : '🎤 말하기'; }
+function startMic() {
+  if (!SR) return;
+  const ta = document.getElementById('txt'); if (!ta) return;
+  let base = ta.value;
+  const rec = new SR(); rec.lang = 'ko-KR'; rec.continuous = true; rec.interimResults = true;
+  rec.onresult = function (e) {
+    let said = ''; for (let i = 0; i < e.results.length; i++) said += e.results[i][0].transcript;
+    ta.value = base + (base && !/\s$/.test(base) && said ? ' ' : '') + said; updateCount(); state.voiceUsed = true;
+  };
+  rec.onerror = function (e) { if (e.error === 'not-allowed' || e.error === 'service-not-allowed') { state.listening = false; paintMic(); toast('마이크 사용을 허용해주세요'); } };
+  rec.onend = function () { if (state.listening) { base = (document.getElementById('txt') || {}).value || ''; try { rec.start(); } catch (e) { state.listening = false; paintMic(); } } else paintMic(); };
+  state.rec = rec; state.listening = true; paintMic();
+  try { rec.start(); } catch (e) { state.listening = false; paintMic(); }
+}
+function stopMic() { state.listening = false; if (state.rec) { try { state.rec.stop(); } catch (e) {} state.rec = null; } paintMic(); }
+
+async function save() {
+  if (state.saving) return;
+  const ta = document.getElementById('txt'), text = ta.value.trim(), btn = document.getElementById('saveBtn');
+  if (!text) { toast('내용을 입력해주세요'); return; }
+  if (state.kind === '과세특' && !state.subject.trim()) { toast('과목을 입력해주세요'); return; }
+  stopMic(); state.saving = true; btn.disabled = true; btn.textContent = '저장 중…';
+  let r; try { r = await api('noteSave', { studentId: state.sel.id, kind: state.kind, subject: state.kind === '과세특' ? state.subject.trim() : '', text: text, voice: state.voiceUsed }); }
+  catch (e) { state.saving = false; return; }
+  state.saving = false; btn.disabled = false; btn.textContent = '저장';
+  if (!r || r.success !== true) { toast((r && r.message) || '저장하지 못했어요'); return; }
+  toast('저장했어요 ✓ ' + r.bytes + '바이트'); ta.value = ''; state.voiceUsed = false; updateCount();
+  document.getElementById('recentBox').innerHTML = '';
+}
+
+async function loadRecent() {
+  const box = document.getElementById('recentBox'); box.innerHTML = '<p class="hint">불러오는 중…</p>';
+  let r; try { r = await api('noteRecent', { studentId: state.sel.id }); } catch (e) { return; }
+  if (!r || r.success !== true) { box.innerHTML = '<div class="msg err" style="margin-top:10px;">' + esc((r && r.message) || '불러오지 못했어요.') + '</div>'; return; }
+  box.innerHTML = r.items.length ? r.items.map(function (it) {
+    const d = (it.date || '').slice(0, 10);
+    return '<div class="recent"><small>' + esc(d) + ' · ' + esc(it.kind) + (it.subject ? ' · ' + esc(it.subject) : '') + '</small>' + esc(it.text.length > 160 ? it.text.slice(0, 160) + '…' : it.text) + '</div>';
+  }).join('') : '<p class="hint" style="margin-top:10px;">아직 기록이 없어요.</p>';
+}
+
+boot();
+</script>
+</body>
+</html>
