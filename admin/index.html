@@ -70,7 +70,16 @@
   .tcard .sub { display: flex; justify-content: space-between; font-size: 12px; color: var(--text2); }
   .hnav { margin: 4px 0 10px; font-size: 14px; font-weight: 700; display: flex; justify-content: space-between; }
   .hnav span { font-size: 12px; color: var(--text3); font-weight: 400; }
+  .subm { display: none; }
+  .chips { display: flex; gap: 8px; margin: 0 0 12px; overflow-x: auto; }
+  .chips button { border: 0; background: #fff; border-radius: 999px; padding: 8px 14px; font-family: inherit; font-size: 12px; font-weight: 600; color: var(--text2); cursor: pointer; white-space: nowrap; }
+  .chips button.on { background: var(--accent); color: #fff; }
+  .srow { background: #fff; border-radius: 18px; padding: 12px 14px; margin-bottom: 8px; display: flex; align-items: center; gap: 12px; }
+  .srow .dot { width: 38px; height: 38px; border-radius: 50%; background: var(--accent); color: #fff; display: grid; place-items: center; font-weight: 700; font-size: 13px; flex: none; }
+  .srow .t { flex: 1; min-width: 0; font-size: 14px; font-weight: 600; }
+  .srow .t small { display: block; color: var(--text2); font-size: 11px; font-weight: 400; margin-top: 2px; }
   @media (max-width: 760px) {
+    .subm { display: block; } .subm ~ .tablewrap { display: none; } .subm ~ .hint { display: none; }
     body { padding-bottom: 96px; }
     .shell { flex-direction: column; }
     .side { display: none; }
@@ -742,7 +751,27 @@ async function renderSubmissions(tab) {
     }).join('') + (showTrace ? traceCellHtml_(traces[traceKey_(sid)], apMin) : '') + '</tr>';
   }).join('');
 
-  body.innerHTML =
+  const nameIdx = fields.findIndex(function (f) { return /이름|성명/.test(f.name); });
+  const timeIdx = fields.findIndex(function (f) { return /시각|시간|제출일|일시/.test(f.name); });
+  const cards = rows.map(function (r) {
+    const t = traces[traceKey_(r[0])];
+    const flag = !!t && (t.pasteTries > 0 || t.maxChunk >= apMin);
+    const done = reviewIdx >= 0 && r[reviewIdx] === '검토완료';
+    const nm = nameIdx >= 0 ? r[nameIdx] : '';
+    const sub = [r[0], timeIdx >= 0 ? r[timeIdx] : '', flag && t.maxChunk ? '한 번에 ' + t.maxChunk + '자' : ''].filter(Boolean).join(' · ');
+    return '<div class="srow" data-flag="' + (flag ? 1 : 0) + '" data-done="' + (done ? 1 : 0) + '"><div class="dot">' + escapeHtml(String(nm || r[0] || '?').slice(-2)) + '</div>' +
+      '<div class="t">' + escapeHtml(nm || r[0]) + '<small>' + escapeHtml(sub) + '</small></div>' +
+      '<span class="tag ' + (flag ? 'wr' : done ? 'ok' : 'ok') + '">' + (flag ? '복붙 의심' : done ? '검토완료' : '제출') + '</span></div>';
+  }).join('');
+  const mobileList =
+    '<div class="subm"><div class="kpis" style="grid-template-columns:1fr 1fr 1fr;"><div class="kpi"><span>제출</span><b>' + rows.length + '</b></div>' +
+    '<div class="kpi"><span>복붙 의심</span><b style="color:#8a6500;">' + flagged + '</b></div>' +
+    '<div class="kpi"><span>검토완료</span><b>' + rows.filter(function (r) { return reviewIdx >= 0 && r[reviewIdx] === '검토완료'; }).length + '</b></div></div>' +
+    '<div class="chips" id="subChips"><button class="on" data-f="all">전체</button><button data-f="flag">복붙 의심</button><button data-f="todo">검토 전</button></div>' +
+    '<div id="subCards">' + (cards || '<p class="hint">제출된 답변이 없습니다.</p>') + '</div>' +
+    '<p class="hint" style="margin:8px 2px 16px;">피드백·검토 변경은 PC 화면의 표에서 할 수 있어요.</p></div>';
+
+  body.innerHTML = mobileList +
     '<p class="hint">총 ' + rows.length + '건' +
       (apOn ? ' · 복붙 방지 켜짐 · 한 번에 ' + apMin + '자 이상 기록 · 의심 ' + flagged + '명 / 기록 ' + traced + '명' : (showTrace ? ' · 복붙 방지 꺼짐 (이전 작성 기록이 있어요)' : '')) +
       (apOn && res.antiPastePartial ? ' · 수업 도중에 켜서 그 전에 쓴 글은 기록이 없을 수 있어요' : '') + '</p>' +
@@ -751,6 +780,15 @@ async function renderSubmissions(tab) {
     '<button class="btn-outline" id="csvBtn">CSV 내보내기</button>';
 
   document.getElementById('csvBtn').onclick = function () { exportCsv(tab.sheetName, fields, rows); };
+  document.querySelectorAll('#subChips button').forEach(function (b) {
+    b.onclick = function () {
+      document.querySelectorAll('#subChips button').forEach(function (x) { x.classList.toggle('on', x === b); });
+      const f = b.getAttribute('data-f');
+      document.querySelectorAll('#subCards .srow').forEach(function (r) {
+        r.style.display = (f === 'all' || (f === 'flag' && r.dataset.flag === '1') || (f === 'todo' && r.dataset.done !== '1')) ? '' : 'none';
+      });
+    };
+  });
 
   document.querySelectorAll('.reviewToggle').forEach(function (btn) {
     btn.onclick = async function () {
