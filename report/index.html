@@ -439,6 +439,15 @@ async function boot() {
     return renderError('서버에 연결할 수 없습니다. 주소가 올바른지 확인해주세요.');
   }
 
+  // 짧은 주소: «…/hyewon-portal/?k7q2» (또는 …/report/?k7q2) → 그 코드를 가진 과제로 바로 들어가요.
+  const short = /^\?([a-z0-9]{4})$/i.exec(location.search || '');
+  if (short && !state.tab) {
+    const code = short[1].toLowerCase();
+    const hit = (state.config.tabs || []).find(function (t) { return t.meta && t.meta.shortCode === code; });
+    if (!hit) return renderError('주소가 올바르지 않거나 없어진 과제예요. 선생님께 받은 주소를 다시 확인해 주세요.');
+    state.tab = hit.sheetName;
+  }
+
   // 과제·학년을 특정하는 값이 전혀 없는 "맨 주소"(허브에서 들어오는 기본 진입점)는
   // 학번+학생코드로 먼저 로그인하고 "오늘의 과제"를 보여주는 새 흐름으로 갑니다.
   // ?grade= 나 ?tab= 처럼 선생님이 이미 나눠준 링크/QR은 예전 흐름 그대로 둡니다.

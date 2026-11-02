@@ -137,6 +137,9 @@
   tr:last-child td { border-bottom: none; }
   .tablewrap { overflow-x: auto; margin-bottom: 16px; }
   .code { font-family: ui-monospace, Menlo, monospace; letter-spacing: .06em; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 2px 7px; }
+  .linkcard .lc-body { display: flex; gap: 16px; align-items: center; margin-top: 12px; flex-wrap: wrap; }
+  .linkcard .lc-qr img { width: 132px; height: 132px; image-rendering: pixelated; background: #fff; border: 1px solid var(--border); border-radius: 12px; display: block; }
+  .linkcard .lc-short { font-size: 20px; font-weight: 800; color: var(--accent); letter-spacing: .01em; word-break: break-all; }
   .tp-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
   .tp-chip { border: 1px solid var(--border); background: #fff; color: var(--text2); border-radius: 999px; padding: 6px 12px; font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
   .tp-chip i { font-style: normal; font-size: 11px; opacity: .7; margin-left: 2px; }
@@ -719,10 +722,24 @@ async function renderDetail(tabName) {
         '</div>';
       })() +
       (openAcc
-        ? '<div class="msg warn" style="max-width:560px;">로그인 없이 받는 과제예요. 학생은 학번·이름만 적어 제출하고 학생코드는 묻지 않아요(본인 확인이 안 되니 민감한 과제에는 쓰지 마세요). 이 과제 전용 링크로만 들어올 수 있어요.' +
-          '<div class="row" style="margin-top:8px;"><input type="text" readonly id="oaUrl" value="' + escapeHtml(new URL('../report/', location.href).href + '?tab=' + encodeURIComponent(tabName)) + '"><button class="btn-outline btn-sm" id="oaCopy" type="button">복사</button></div>' +
-          '<div id="oaQr" style="margin-top:12px;"></div></div>'
+        ? '<div class="msg warn" style="max-width:720px;">로그인 없이 받는 과제예요. 학생은 아래 짧은 주소나 QR로 들어와 학번·이름만 적어 제출해요(본인 확인이 안 되니 민감한 과제에는 쓰지 마세요).</div>'
         : '') +
+      (function () {
+        const code = tab.meta && tab.meta.shortCode;
+        const shortUrl = code ? new URL('../', location.href).href + '?' + code : '';
+        return '<div class="card wide linkcard" style="max-width:720px;margin-bottom:14px;padding:16px 18px;">' +
+          '<b style="font-size:14px;">학생용 주소 · QR</b>' +
+          (code
+            ? '<div class="lc-body"><div id="oaQr" class="lc-qr"></div><div style="flex:1;min-width:0;">' +
+                '<div class="lc-short" id="lcShort">' + escapeHtml(shortUrl.replace(/^https?:\/\//, '')) + '</div>' +
+                '<div class="hint" style="margin:2px 0 10px;">짧은 코드 <b class="code">' + escapeHtml(code) + '</b> · 칠판에 적거나 단톡방에 붙여 주세요.' + (openAcc ? '' : ' 학생은 이 주소로 들어와 학번·학생코드로 로그인해요.') + '</div>' +
+                '<input type="hidden" id="oaUrl" value="' + escapeHtml(shortUrl) + '">' +
+                '<div class="row" style="gap:8px;flex-wrap:wrap;"><button class="btn btn-sm" id="oaCopy" type="button">주소 복사</button><span id="oaQrDl"></span></div>' +
+              '</div></div>'
+            : '<div class="row" style="margin-top:10px;gap:10px;flex-wrap:wrap;"><button class="btn btn-sm" id="scMake" type="button">짧은 주소 · QR 만들기</button>' +
+              '<span class="hint">«…/hyewon-portal/?k7q2» 같은 짧은 주소와 QR이 생겨요.</span></div>') +
+        '</div>';
+      })() +
       (tab.description ? '<p class="lead">' + escapeHtml(tab.description) + '</p>' : '') +
       '<div class="statusbtns" style="max-width:440px;margin-bottom:16px;">' +
         '<button class="btn-outline' + (status === 'wait' ? '' : '') + '" data-status="wait">대기</button>' +
@@ -813,18 +830,26 @@ async function renderDetail(tabName) {
     if (!r || r.success !== true) { btn.disabled = false; alert((r && r.message) || '바꾸지 못했어요. 서버(Code.gs)가 버전 29 이상인지 확인해주세요.'); return; }
     renderDetail(tabName);
   };
-  if (openAcc) loadQrLib_().then(function () {
+  if (document.getElementById('oaQr')) loadQrLib_().then(function () {
     const box = document.getElementById('oaQr'); if (!box) return;
     const q = qrcode(0, 'M'); q.addData(document.getElementById('oaUrl').value); q.make();
-    const png = q.createDataURL(8, 16);
-    box.innerHTML = '<img alt="QR" src="' + png + '" style="width:180px;height:180px;image-rendering:pixelated;background:#fff;border:1px solid var(--border);border-radius:10px;display:block;">' +
-      '<a class="btn-outline btn-sm" style="margin-top:8px;display:inline-block;text-decoration:none;" download="' + escapeHtml(tabName) + '_QR.gif" href="' + png + '">QR 이미지 저장</a>';
-  }).catch(function () { const box = document.getElementById('oaQr'); if (box) box.textContent = 'QR을 만들지 못했어요. 위 링크를 복사해서 쓰세요.'; });
+    const png = q.createDataURL(10, 12);
+    box.innerHTML = '<img alt="QR" src="' + png + '">';
+    document.getElementById('oaQrDl').innerHTML = '<a class="btn-outline btn-sm" style="text-decoration:none;" download="' + escapeHtml(tabName) + '_QR.gif" href="' + png + '">QR 이미지 저장</a>';
+  }).catch(function () { const box = document.getElementById('oaQr'); if (box) box.textContent = 'QR을 만들지 못했어요. 주소를 복사해서 쓰세요.'; });
+  const scMake = document.getElementById('scMake');
+  if (scMake) scMake.onclick = async function () {
+    scMake.disabled = true; scMake.textContent = '만드는 중…';
+    let r;
+    try { r = await api('ensureShortCode', { tabName: tabName }); } catch (e) { scMake.disabled = false; return; }
+    if (!r || r.success !== true) { scMake.disabled = false; scMake.textContent = '짧은 주소 · QR 만들기'; alert((r && r.message) || '만들지 못했어요. 서버(Code.gs)가 버전 32 이상인지 확인해주세요.'); return; }
+    renderDetail(tabName);
+  };
   const oaCopy = document.getElementById('oaCopy');
-  if (oaCopy) oaCopy.onclick = function () {
-    const el = document.getElementById('oaUrl'); el.select();
-    try { navigator.clipboard.writeText(el.value); } catch (e) { document.execCommand('copy'); }
-    this.textContent = '복사됨';
+  if (oaCopy) oaCopy.onclick = async function () {
+    const v = document.getElementById('oaUrl').value, btn = this;
+    try { await navigator.clipboard.writeText(v); btn.textContent = '복사됨 ✓'; }
+    catch (e) { window.prompt('아래 주소를 복사해 주세요', v); }
   };
   document.getElementById('apToggle').onclick = async function () {
     const btn = this; btn.disabled = true;
