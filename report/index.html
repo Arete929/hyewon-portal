@@ -49,8 +49,11 @@
   .otp input { flex: 1 1 0; min-width: 0; max-width: 40px; padding: 0; text-align: center; font-size: 18px; font-weight: 700; letter-spacing: 0; text-transform: uppercase; aspect-ratio: 3 / 4; }
   .otp input.filled { background: #EAF7F1; border-color: #BFE4D3; color: #0B3D33; }
   #otpCode input:nth-child(3n):not(:last-child) { margin-right: 10px; }
-  .login-hero { display: flex; justify-content: center; margin: 10px 0 -8px; position: relative; z-index: 1; pointer-events: none; }
-  .login-hero svg { width: 250px; height: auto; display: block; }
+  .login-photo { position: relative; height: 270px; margin-top: -30px; overflow: hidden; flex-shrink: 0; }
+  .login-photo img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 36% 30%; }
+  .login-photo:after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 120px; background: linear-gradient(to bottom, rgba(255,252,246,0) 0%, rgba(255,252,246,.85) 70%, var(--bg) 100%); }
+  .login-card { padding-top: 26px; box-shadow: 0 10px 30px rgba(24,58,53,.12); border-color: rgba(229,234,231,.8); background: rgba(255,255,255,.97); }
+  @media (min-width: 640px) { .login-photo { height: 340px; } }
   input:focus, textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(47,111,237,0.12); }
   .hint { font-size: 12px; color: var(--text3); }
   .btn { display: block; width: 100%; text-align: center; text-decoration: none; background: var(--hyewon-coral); color: #fff; font-size: 16px; font-weight: 600; padding: 14px; border-radius: 10px; border: none; cursor: pointer; font-family: inherit; }
@@ -441,76 +444,21 @@ function loginStepperHtml_() {
   '</div>';
 }
 
-// 로그인 화면 위 일러스트 — 달리는 두 학생(직접 그린 SVG)
-function heroGirl_(o) {
-  const skin = o.skin, hair = o.hair, shirt = o.shirt, dark = o.shirtDark;
-  const limb = (d, w, c) => `<path d="${d}" fill="none" stroke="${c}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round"/>`;
-  return `
-  <!-- ponytail -->
-  <path d="M74 22 C 98 10, 122 22, 118 46 C 115 62, 104 70, 96 76 C 104 62, 104 48, 92 40 C 86 36, 80 34, 74 34 Z" fill="${hair}"/>
-  <path d="M96 30 C 108 32, 114 42, 110 54" fill="none" stroke="#fff" stroke-opacity=".18" stroke-width="3" stroke-linecap="round"/>
-  <circle cx="78" cy="27" r="5.5" fill="${o.band}"/>
-  <!-- back arm -->
-  ${limb('M76 82 L92 96 L104 84', 9, o.skinShade)}
-  <!-- back leg -->
-  ${limb('M50 126 L40 146 L22 150', 11, o.skinShade)}
-  <rect x="14" y="143" width="11" height="12" rx="3" fill="#fff" transform="rotate(-8 19 149)"/>
-  <path d="M4 152 C 4 146, 14 144, 22 147 L 26 156 C 18 160, 6 160, 4 156 Z" fill="#fff" stroke="#9FB3B8" stroke-width="1.5"/>
-  <path d="M8 157 L 25 156" stroke="${shirt}" stroke-width="2.4" stroke-linecap="round"/>
-  <!-- torso -->
-  <path d="M42 74 Q60 68 80 74 L86 112 Q60 118 36 112 Z" fill="${shirt}"/>
-  <path d="M50 72 L60 86 L70 72" fill="none" stroke="#fff" stroke-width="3.2" stroke-linejoin="round"/>
-  <path d="M80 76 L85 110" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
-  <path d="M42 76 L37 110" stroke="${dark}" stroke-width="3" stroke-linecap="round" opacity=".6"/>
-  <!-- shorts -->
-  <path d="M36 110 Q60 116 86 110 L88 128 L64 130 L60 124 L56 130 L34 128 Z" fill="#1F2A33"/>
-  <path d="M35 122 L37 128" stroke="${o.band}" stroke-width="2.4" stroke-linecap="round"/>
-  <!-- front leg -->
-  ${limb('M70 128 L88 140 L84 160', 11, skin)}
-  <rect x="78" y="152" width="11" height="12" rx="3" fill="#fff"/>
-  <path d="M76 162 C 78 156, 90 156, 96 160 L 100 166 C 92 170, 80 170, 76 167 Z" fill="#fff" stroke="#9FB3B8" stroke-width="1.5"/>
-  <path d="M79 168 L 98 166" stroke="${shirt}" stroke-width="2.4" stroke-linecap="round"/>
-  <!-- front arm -->
-  ${limb('M44 82 L30 98 L20 90', 9, skin)}
-  <circle cx="19" cy="89" r="5" fill="${skin}"/>
-  <!-- neck + head -->
-  <rect x="55" y="62" width="12" height="12" rx="4" fill="${o.skinShade}"/>
-  <circle cx="60" cy="40" r="27" fill="${skin}"/>
-  <!-- hair top + bangs -->
-  <path d="M33 42 C 30 18, 52 6, 70 10 C 84 13, 92 26, 88 40 C 82 30, 74 26, 66 25 C 64 32, 56 36, 48 34 C 44 38, 38 40, 33 42 Z" fill="${hair}"/>
-  <path d="M34 40 C 32 48, 33 54, 36 58" fill="none" stroke="${hair}" stroke-width="4" stroke-linecap="round"/>
-  <!-- face -->
-  <ellipse cx="50" cy="44" rx="4.2" ry="5.6" fill="#3A2318"/>
-  <ellipse cx="70" cy="44" rx="4.2" ry="5.6" fill="#3A2318"/>
-  <circle cx="51.6" cy="41.6" r="1.7" fill="#fff"/><circle cx="71.6" cy="41.6" r="1.7" fill="#fff"/>
-  <path d="M45 36 Q50 33.5 54 35.5 M66 35.5 Q70 33.5 75 36" stroke="#5A3626" stroke-width="1.6" fill="none" stroke-linecap="round"/>
-  <ellipse cx="43" cy="53" rx="5" ry="3" fill="#F48C8C" opacity=".45"/>
-  <ellipse cx="77" cy="53" rx="5" ry="3" fill="#F48C8C" opacity=".45"/>
-  <path d="M54 54 Q60 61 66 54 Q60 56.5 54 54 Z" fill="#C2414B"/>`;
-}
-
-function loginHeroSvg_() {
-  const A = { skin:'#FBD8BE', skinShade:'#EFC2A2', hair:'#7A4428', shirt:'#14A39B', shirtDark:'#0C7C76', band:'#F25C8A' };
-  const B = { skin:'#F8D1B3', skinShade:'#E9B996', hair:'#4A2C1E', shirt:'#14A39B', shirtDark:'#0C7C76', band:'#3CC7C0' };
-  return '<div class="login-hero" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 270 185">' +
-    '<ellipse cx="135" cy="178" rx="110" ry="6" fill="#000" opacity=".07"/>' +
-    '<g transform="translate(6 6)">' + heroGirl_(A) + '</g><g transform="translate(132 0)">' + heroGirl_(B) + '</g></svg></div>';
-}
-
 function renderGlobalLogin(errorMsg) {
   render(
     '<div class="login-page">' +
-      '<div style="flex-shrink:0;background:var(--hyewon-emerald);border-radius:0 0 28px 28px;padding:18px 20px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;">' +
+      '<div style="flex-shrink:0;position:relative;z-index:2;background:var(--hyewon-emerald);border-radius:0 0 28px 28px;padding:18px 20px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;box-shadow:0 4px 14px rgba(8,122,85,.25);">' +
         '<div style="display:flex;align-items:center;gap:10px;min-width:0;">' +
           '<img src="../assets/logo.png" alt="" style="width:40px;height:40px;flex-shrink:0;">' +
           '<span class="dongle" style="color:#fff;font-size:24px;white-space:nowrap;">혜원포털</span>' +
         '</div>' +
         '<p style="margin:0;color:#fff;font-size:12px;line-height:1.4;text-align:right;opacity:0.9;flex-shrink:0;">꿈을 향해<br>함께, 혜원 ♡</p>' +
       '</div>' +
-      loginStepperHtml_() +
-      loginHeroSvg_() +
-      '<div style="flex-grow:1;display:flex;flex-direction:column;padding:0 24px 0;">' +
-        '<div class="card" style="padding-top:28px;">' +
+      '<div class="login-photo" aria-hidden="true"><picture>' +
+        '<source srcset="../assets/login-bg.webp" type="image/webp">' +
+        '<img src="../assets/login-bg.jpg" alt="" decoding="async"></picture></div>' +
+      '<div style="flex-grow:1;display:flex;flex-direction:column;padding:0 22px 0;position:relative;z-index:1;margin-top:-64px;">' +
+        '<div class="card login-card">' +
           '<h1 class="dongle" style="margin:0;font-size:30px;color:#0B6E76;text-align:center;">혜원 포털</h1>' +
           '<p style="margin:2px 0 20px;font-size:14px;color:var(--text2);font-weight:600;text-align:center;">학생 로그인</p>' +
           (errorMsg ? '<div class="msg error">' + escapeHtml(errorMsg) + '</div>' : '') +
@@ -525,7 +473,8 @@ function renderGlobalLogin(errorMsg) {
           '</button>' +
         '</div>' +
       '</div>' +
-      '<div style="flex-shrink:0;margin-top:18px;" aria-hidden="true">' +
+      loginStepperHtml_() +
+      '<div style="flex-shrink:0;margin-top:6px;" aria-hidden="true">' +
         '<img src="../assets/bottom-banner.png" alt="" style="display:block;width:100%;">' +
       '</div>' +
       footerHtml_() +
