@@ -6,7 +6,7 @@
 <title>혜원포털 관리자</title>
 <link rel="icon" type="image/png" sizes="32x32" href="../assets/favicon-32.png">
 <link rel="apple-touch-icon" sizes="180x180" href="../assets/favicon-180.png">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&family=Noto+Serif+KR:wght@600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gugi&family=Noto+Sans+KR:wght@400;500;600;700&family=Noto+Serif+KR:wght@600;700&display=swap">
 <style>
   :root {
     --bg:#EEF2F6; --surface:#FFFFFF; --text:#14231F; --text2:#5F6F6B; --text3:#9AA8A4;
@@ -24,6 +24,7 @@
   .side .brandbox { display: flex; align-items: center; gap: 10px; margin: 4px 6px 26px; }
   .side .brandbox img { width: 34px; height: 34px; border-radius: 10px; background: #fff; flex: none; }
   .side .brandbox b { color: #fff; font-size: 15px; line-height: 1.25; }
+  .gugi { font-family: 'Gugi', sans-serif; font-weight: 400; font-size: 17px; letter-spacing: .01em; }
   .side .brandbox small { display: block; color: #7FA596; font-size: 11px; font-weight: 500; }
   .side button.nav, .side a.nav { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; background: none; border: none; color: #A9C4B9; font-family: inherit; font-size: 14px; font-weight: 600; padding: 11px 12px; border-radius: 10px; cursor: pointer; text-decoration: none; margin-bottom: 4px; }
   .side button.nav:hover, .side a.nav:hover { background: #1B4A3E; color: #fff; }
@@ -227,7 +228,7 @@ function render(inner) {
   }).join('');
   document.getElementById('app').innerHTML =
     '<div class="shell"><aside class="side">' +
-      '<div class="brandbox"><img src="../assets/logo.png" alt=""><b>혜원포털<small>관리자</small></b></div>' +
+      '<div class="brandbox"><img src="../assets/logo.png" alt=""><b><span class="gugi">혜원포털</span><small>관리자</small></b></div>' +
       nav +
       '<div class="spacer"></div><div class="divider"></div>' +
       '<a class="nav" id="navStudentView" href="../report/" target="_blank" rel="noopener">학생 화면 보기</a>' +

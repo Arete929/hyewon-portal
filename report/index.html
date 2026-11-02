@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="icon" type="image/png" sizes="32x32" href="../assets/favicon-32.png">
 <link rel="apple-touch-icon" sizes="180x180" href="../assets/favicon-180.png">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dongle:wght@700&family=Noto+Sans+KR:wght@400;500;600;700&family=Noto+Serif+KR:wght@600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dongle:wght@700&family=Gugi&family=Noto+Sans+KR:wght@400;500;600;700&family=Noto+Serif+KR:wght@600;700&display=swap">
 <style>
   :root {
     --hyewon-emerald:#087A55; --hyewon-coral:#F04E68; --hyewon-cream:#FFFCF6;
@@ -27,6 +27,7 @@
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--text); font-family: 'Noto Sans KR', sans-serif; }
   .serif { font-family: 'Noto Serif KR', serif; }
+  .gugi { font-family: 'Gugi', sans-serif; font-weight: 400; letter-spacing: 0.01em; }
   .dongle { font-family: 'Dongle', sans-serif; font-weight: 700; display: block; margin: 0; line-height: 1; }
   #app { max-width: 480px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; }
   .topbar { padding: 18px 20px 0; display: flex; justify-content: space-between; align-items: center; }
@@ -452,7 +453,7 @@ function renderGlobalLogin(errorMsg) {
         '<img src="../assets/login-bg.jpg" alt="" decoding="async"></picture></div>' +
       '<div style="flex-grow:1;display:flex;flex-direction:column;padding:0 22px 0;position:relative;z-index:1;margin-top:-64px;">' +
         '<div class="card login-card">' +
-          '<h1 class="dongle" style="margin:0;font-size:30px;color:#0B6E76;text-align:center;">혜원 포털</h1>' +
+          '<h1 class="gugi" style="margin:0;font-size:28px;line-height:1.2;color:#0B6E76;text-align:center;">혜원포털</h1>' +
           '<p style="margin:2px 0 20px;font-size:14px;color:var(--text2);font-weight:600;text-align:center;">학생 로그인</p>' +
           (errorMsg ? '<div class="msg error">' + escapeHtml(errorMsg) + '</div>' : '') +
           '<div class="field"><label>학번 <span style="color:var(--text3);font-weight:500;">(4자리)</span></label>' +
@@ -696,7 +697,7 @@ function appbarHtml_(title, withBack) {
         '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="15 18 9 12 15 6"></polyline></svg>' +
         '<span style="font-weight:800;font-size:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escapeHtml(title) + '</span>' +
       '</a>'
-    : '<div class="brand"><img src="../assets/logo.png" alt=""><span>혜원포털</span></div>';
+    : '<div class="brand"><img src="../assets/logo.png" alt=""><span class="gugi" style="font-size:18px;">혜원포털</span></div>';
   const right = withBack
     ? '<a href="#" id="homeBtn2" style="color:#fff;display:flex;" aria-label="오늘의 과제로"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"></path><path d="M5 10v10h14V10"></path></svg></a>'
     : '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>' +
