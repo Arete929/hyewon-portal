@@ -47,6 +47,10 @@
   textarea { min-height: 140px; resize: vertical; line-height: 1.6; }
   .otp { display: flex; gap: 6px; justify-content: flex-start; }
   .otp input { flex: 1 1 0; min-width: 0; max-width: 40px; padding: 0; text-align: center; font-size: 18px; font-weight: 700; letter-spacing: 0; text-transform: uppercase; aspect-ratio: 3 / 4; }
+  .otp input.filled { background: #EAF7F1; border-color: #BFE4D3; color: #0B3D33; }
+  #otpCode input:nth-child(3n):not(:last-child) { margin-right: 10px; }
+  .login-hero { display: flex; justify-content: center; margin: 10px 0 -8px; position: relative; z-index: 1; pointer-events: none; }
+  .login-hero svg { width: 220px; height: auto; display: block; }
   input:focus, textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(47,111,237,0.12); }
   .hint { font-size: 12px; color: var(--text3); }
   .btn { display: block; width: 100%; text-align: center; text-decoration: none; background: var(--hyewon-coral); color: #fff; font-size: 16px; font-weight: 600; padding: 14px; border-radius: 10px; border: none; cursor: pointer; font-family: inherit; }
@@ -419,6 +423,28 @@ function loginStepperHtml_() {
   '</div>';
 }
 
+function loginHeroSvg_() {
+  const girl = function (x, shirt, skin, hair, flip) {
+    return '<g transform="translate(' + x + ' 0)' + (flip ? ' scale(-1 1) translate(-80 0)' : '') + '">' +
+      '<path d="M44 26 C 62 20 70 34 60 46 C 62 34 54 30 44 30 Z" fill="' + hair + '"/>' +      // 포니테일
+      '<circle cx="36" cy="32" r="15" fill="' + skin + '"/>' +
+      '<path d="M21 31 C 22 14 50 12 52 30 C 44 24 30 24 21 31Z" fill="' + hair + '"/>' +      // 앞머리
+      '<circle cx="31" cy="34" r="1.8" fill="#2b1d16"/><circle cx="42" cy="34" r="1.8" fill="#2b1d16"/>' +
+      '<path d="M32 40 Q36.5 44 41 40" stroke="#C2554B" stroke-width="2" fill="none" stroke-linecap="round"/>' +
+      '<path d="M22 52 L52 52 L56 86 L18 86 Z" fill="' + shirt + '"/>' +                       // 상의
+      '<path d="M22 52 L10 70" stroke="' + skin + '" stroke-width="7" stroke-linecap="round"/>' +
+      '<path d="M52 54 L66 64" stroke="' + skin + '" stroke-width="7" stroke-linecap="round"/>' +
+      '<path d="M18 86 L56 86 L58 100 L16 100 Z" fill="#23303A"/>' +                          // 반바지
+      '<path d="M24 100 L14 128" stroke="' + skin + '" stroke-width="9" stroke-linecap="round"/>' +
+      '<path d="M48 100 L62 122" stroke="' + skin + '" stroke-width="9" stroke-linecap="round"/>' +
+      '<ellipse cx="11" cy="131" rx="11" ry="5.5" fill="#fff" stroke="#BFD0D4"/>' +
+      '<ellipse cx="66" cy="125" rx="11" ry="5.5" fill="#fff" stroke="#BFD0D4"/></g>';
+  };
+  return '<div class="login-hero" aria-hidden="true"><svg viewBox="0 0 220 140" xmlns="http://www.w3.org/2000/svg">' +
+    '<ellipse cx="110" cy="136" rx="86" ry="5" fill="#0001"/>' +
+    girl(20, '#14A3A0', '#F6C9A8', '#6B3A26', false) + girl(118, '#14A3A0', '#F2BE9B', '#4A2A1E', false) + '</svg></div>';
+}
+
 function renderGlobalLogin(errorMsg) {
   render(
     '<div class="login-page">' +
@@ -430,8 +456,9 @@ function renderGlobalLogin(errorMsg) {
         '<p style="margin:0;color:#fff;font-size:12px;line-height:1.4;text-align:right;opacity:0.9;flex-shrink:0;">꿈을 향해<br>함께, 혜원 ♡</p>' +
       '</div>' +
       loginStepperHtml_() +
-      '<div style="flex-grow:1;display:flex;flex-direction:column;padding:28px 24px 0;">' +
-        '<div class="card">' +
+      loginHeroSvg_() +
+      '<div style="flex-grow:1;display:flex;flex-direction:column;padding:0 24px 0;">' +
+        '<div class="card" style="padding-top:28px;">' +
           '<h1 class="dongle" style="margin:0;font-size:30px;color:#0B6E76;text-align:center;">혜원 포털</h1>' +
           '<p style="margin:2px 0 20px;font-size:14px;color:var(--text2);font-weight:600;text-align:center;">학생 로그인</p>' +
           (errorMsg ? '<div class="msg error">' + escapeHtml(errorMsg) + '</div>' : '') +
@@ -1432,6 +1459,7 @@ function wireOtp(containerId, numeric) {
       let v = inp.value.slice(-1);
       v = numeric ? v.replace(/[^0-9]/g, '') : v.toUpperCase().replace(/[^A-Z0-9]/g, '');
       inp.value = v;
+      inp.classList.toggle('filled', !!v);
       if (v && i < inputs.length - 1) inputs[i + 1].focus();
     });
     inp.addEventListener('keydown', function (e) {
