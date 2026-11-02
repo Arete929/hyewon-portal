@@ -6,23 +6,19 @@
   function kst(iso) {
     var d = new Date(iso); if (isNaN(d.getTime())) return '';
     var p = {};
-    new Intl.DateTimeFormat('ko-KR', { timeZone: 'Asia/Seoul', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' })
+    new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' })
       .formatToParts(d).forEach(function (x) { p[x.type] = x.value; });
-    return p.month + '/' + p.day + ' ' + p.hour + ':' + p.minute;
+    return p.year + '-' + p.month + '-' + p.day + ' ' + p.hour + ':' + p.minute;
   }
   function text() {
-    var web = v.web ? v.web.sha + ' · ' + v.web.time : (v.loaded ? '확인 못 함' : '확인 중…');
-    var server = v.loaded ? '확인 못 함' : '확인 중…';
-    if (v.server) {
-      var m = /^(\d{4})-(\d{2})-(\d{2}) (\d{2}:\d{2})$/.exec(String(v.server.buildTime || ''));
-      server = 'v' + v.server.version + (m ? ' · ' + Number(m[2]) + '/' + Number(m[3]) + ' ' + m[4] : '');
-    }
-    return '화면 ' + web + ' · 서버 ' + server;
+    if (!v.loaded) return '혜원포털 · 버전 확인 중…';
+    var times = [v.web && v.web.time, v.server && v.server.buildTime].filter(function (t) { return /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(t || ''); }).sort();
+    return ['혜원포털', v.server ? 'v' + v.server.version : '', times.length ? '배포 ' + times[times.length - 1] + ' (KST)' : ''].filter(Boolean).join(' · ');
   }
   function paint() {
     var els = document.querySelectorAll('.hv-foot');
     for (var i = 0; i < els.length; i++) {
-      els[i].innerHTML = '<span>메이드 바이 이글티처 · 교육 목적</span><small>' + text() + '</small>';
+      els[i].innerHTML = '<small>' + text() + '</small><span>ⓒ 메이드 바이 이글티처 · 교육 목적</span>';
     }
   }
   async function load(exec) {
@@ -48,7 +44,7 @@
   }
   var css = document.createElement('style');
   css.textContent = '.hv-foot{text-align:center;padding:18px 16px 26px;color:#9AA79F;line-height:1.6}' +
-    '.hv-foot span{display:block;font-size:11px}.hv-foot small{display:block;font-size:10px;opacity:.85}';
+    '.hv-foot small{display:block;font-size:11px;margin-bottom:3px}.hv-foot span{display:block;font-size:11px}';
   document.head.appendChild(css);
   window.HyewonVer = { load: load, paint: paint };
 })();
