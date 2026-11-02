@@ -49,7 +49,7 @@
   .otp input { flex: 1 1 0; min-width: 0; max-width: 40px; padding: 0; text-align: center; font-size: 18px; font-weight: 700; letter-spacing: 0; text-transform: uppercase; aspect-ratio: 3 / 4; }
   .otp input.filled { background: #EAF7F1; border-color: #BFE4D3; color: #0B3D33; }
   #otpCode input:nth-child(3n):not(:last-child) { margin-right: 10px; }
-  .login-photo { position: relative; height: 270px; margin-top: -30px; overflow: hidden; flex-shrink: 0; }
+  .login-photo { position: relative; height: 270px; margin-top: 0; overflow: hidden; flex-shrink: 0; }
   .login-photo img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 36% 30%; }
   .login-photo:after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 120px; background: linear-gradient(to bottom, rgba(255,252,246,0) 0%, rgba(255,252,246,.85) 70%, var(--bg) 100%); }
   .login-card { padding-top: 26px; box-shadow: 0 10px 30px rgba(24,58,53,.12); border-color: rgba(229,234,231,.8); background: rgba(255,255,255,.97); }
@@ -447,13 +447,6 @@ function loginStepperHtml_() {
 function renderGlobalLogin(errorMsg) {
   render(
     '<div class="login-page">' +
-      '<div style="flex-shrink:0;position:relative;z-index:2;background:var(--hyewon-emerald);border-radius:0 0 28px 28px;padding:18px 20px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;box-shadow:0 4px 14px rgba(8,122,85,.25);">' +
-        '<div style="display:flex;align-items:center;gap:10px;min-width:0;">' +
-          '<img src="../assets/logo.png" alt="" style="width:40px;height:40px;flex-shrink:0;">' +
-          '<span class="dongle" style="color:#fff;font-size:24px;white-space:nowrap;">혜원포털</span>' +
-        '</div>' +
-        '<p style="margin:0;color:#fff;font-size:12px;line-height:1.4;text-align:right;opacity:0.9;flex-shrink:0;">꿈을 향해<br>함께, 혜원 ♡</p>' +
-      '</div>' +
       '<div class="login-photo" aria-hidden="true"><picture>' +
         '<source srcset="../assets/login-bg.webp" type="image/webp">' +
         '<img src="../assets/login-bg.jpg" alt="" decoding="async"></picture></div>' +
