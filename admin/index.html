@@ -513,6 +513,13 @@ async function renderDetail(tabName) {
           ? '학생 화면에서 붙여넣기·끌어다 놓기를 막고, 한 번에 <input id="apMin" type="number" min="5" max="500" value="' + apMin + '" style="width:72px;display:inline-block;padding:4px 8px;"> 자 이상 입력되면 작성 기록에 남겨요. <span id="apMsg"></span>'
           : '켜면 학생 화면에서 붙여넣기를 막고, 한 번에 일정 글자 수 이상 입력되면 작성 기록에 남겨요.') +
       '</div>' +
+      '<div class="row" style="flex-wrap:wrap;gap:8px;margin:0 0 12px;max-width:560px;">' +
+        '<label for="dlIn" style="margin:0;">제출 기한</label>' +
+        '<input id="dlIn" type="datetime-local" value="' + escapeHtml((tab.meta && tab.meta.deadline) || '') + '" style="width:auto;flex:1;min-width:200px;padding:8px 10px;">' +
+        '<button class="btn-outline btn-sm" id="dlSave" type="button">저장</button>' +
+        ((tab.meta && tab.meta.deadline) ? '<button class="btn-outline btn-sm" id="dlClear" type="button">기한 없애기</button>' : '') +
+        '<span class="hint" id="dlMsg" style="width:100%;">' + ((tab.meta && tab.meta.deadline) ? '이 시각이 지나면 서버가 제출을 받지 않아요(학생 화면에도 표시).' : '정하지 않으면 «마감»으로 바꿀 때까지 받아요.') + '</span>' +
+      '</div>' +
       (openAcc
         ? '<div class="msg warn" style="max-width:560px;">로그인 없이 받는 과제예요. 학생은 학번·이름만 적어 제출하고 학생코드는 묻지 않아요(본인 확인이 안 되니 민감한 과제에는 쓰지 마세요). 이 과제 전용 링크로만 들어올 수 있어요.' +
           '<div class="row" style="margin-top:8px;"><input type="text" readonly id="oaUrl" value="' + escapeHtml(new URL('../report/', location.href).href + '?tab=' + encodeURIComponent(tabName)) + '"><button class="btn-outline btn-sm" id="oaCopy" type="button">복사</button></div>' +
@@ -549,6 +556,21 @@ async function renderDetail(tabName) {
     b.onclick = function () { doSetStatus(tabName, b.getAttribute('data-status')); };
   });
   document.getElementById('delTabBtn').onclick = function () { doDeleteTab(tabName); };
+  async function saveDeadline_(v) {
+    const msg = document.getElementById('dlMsg');
+    msg.textContent = '저장 중…';
+    let r;
+    try { r = await api('setDeadline', { tabName: tabName, deadline: v }); } catch (e) { msg.textContent = '서버에 연결하지 못했어요.'; return; }
+    if (!r || r.success !== true) { msg.textContent = (r && r.message) || '저장하지 못했어요. 서버(Code.gs)가 버전 30 이상인지 확인해주세요.'; return; }
+    renderDetail(tabName);
+  }
+  document.getElementById('dlSave').onclick = function () {
+    const v = document.getElementById('dlIn').value;
+    if (!v) { document.getElementById('dlMsg').textContent = '날짜와 시각을 골라주세요.'; return; }
+    saveDeadline_(v.slice(0, 16));
+  };
+  const dlClear = document.getElementById('dlClear');
+  if (dlClear) dlClear.onclick = function () { if (confirm('제출 기한을 없앨까요?')) saveDeadline_(''); };
   document.getElementById('oaToggle').onclick = async function () {
     const btn = this; btn.disabled = true;
     if (!openAcc && !confirm('로그인 없이 받을까요?\n\n학생코드 확인이 없어서 학번과 이름을 아는 누구나 제출할 수 있어요.')) { btn.disabled = false; return; }

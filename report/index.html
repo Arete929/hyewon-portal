@@ -50,7 +50,7 @@
   .otp input.filled { background: #EAF7F1; border-color: #BFE4D3; color: #0B3D33; }
   #otpCode input:nth-child(3n):not(:last-child) { margin-right: 10px; }
   .login-hero { display: flex; justify-content: center; margin: 10px 0 -8px; position: relative; z-index: 1; pointer-events: none; }
-  .login-hero svg { width: 220px; height: auto; display: block; }
+  .login-hero svg { width: 250px; height: auto; display: block; }
   input:focus, textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(47,111,237,0.12); }
   .hint { font-size: 12px; color: var(--text3); }
   .btn { display: block; width: 100%; text-align: center; text-decoration: none; background: var(--hyewon-coral); color: #fff; font-size: 16px; font-weight: 600; padding: 14px; border-radius: 10px; border: none; cursor: pointer; font-family: inherit; }
@@ -100,7 +100,7 @@
   .extras button.on { background: var(--hyewon-mint); color: var(--hyewon-emerald); border-color: transparent; }
   .extras .hint { text-align: center; }
   .peekbar { background: #4B3BB5; color: #fff; font-size: 12.5px; font-weight: 700; text-align: center; padding: 6px 10px; flex-shrink: 0; }
-  .appbar { flex-shrink: 0; background: var(--hyewon-emerald); padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; }
+  .appbar { flex-shrink: 0; background: var(--hyewon-emerald); padding: 16px 18px 18px; display: flex; align-items: center; justify-content: space-between; border-radius: 0 0 22px 22px; box-shadow: 0 4px 14px rgba(8,122,85,.18); }
   .appbar .brand { display: flex; align-items: center; gap: 8px; color: #fff; font-weight: 800; font-size: 16px; }
   .appbar .brand img { width: 26px; height: 26px; }
   .appbar .icons { display: flex; align-items: center; gap: 14px; }
@@ -124,13 +124,14 @@
   .sporticon { width: 42px; height: 42px; border-radius: 50%; flex-shrink: 0; overflow: hidden; display: flex; }
   .sporticon svg { display: block; }
   .assign-list { display: flex; flex-direction: column; gap: 10px; }
-  .assign-card { display: flex; align-items: center; gap: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 13px 14px; text-decoration: none; color: var(--text); }
+  .assign-card { display: flex; align-items: center; gap: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 13px 14px; text-decoration: none; color: var(--text); box-shadow: 0 2px 8px rgba(24,58,53,.05); }
   .assign-main { display: flex; flex-direction: column; gap: 4px; min-width: 0; flex-grow: 1; }
   .assign-title { font-weight: 700; font-size: 15px; }
   .assign-sub { font-size: 12px; color: var(--text2); }
   .assign-time { font-size: 12px; color: var(--text3); }
   .assign-chev { flex-shrink: 0; color: var(--text3); }
-  .rpill { font-size: 11px; font-weight: 700; padding: 4px 9px; border-radius: 999px; white-space: nowrap; flex-shrink: 0; }
+  .rpill { font-size: 11px; font-weight: 700; padding: 4px 9px; border-radius: 999px; white-space: nowrap; flex-shrink: 0; display: inline-flex; align-items: center; gap: 4px; }
+  .rpill svg { flex-shrink: 0; }
   .rpill.none { color: var(--text2); background: #EFEDE7; }
   .rpill.pending { color: var(--warn-text); background: var(--warn-bg); }
   .rpill.done { color: var(--success-text); background: var(--success-bg); }
@@ -138,15 +139,32 @@
   /* 과제 상세 · 제출 현황 */
   .info-row { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text2); margin-bottom: 14px; }
   .info-row b { font-weight: 600; color: var(--text); }
-  .detail-card { background: #fff; border: 1px solid var(--border); border-radius: 14px; padding: 16px; margin-bottom: 14px; }
+  .detail-card { background: #fff; border: 1px solid var(--border); border-radius: 16px; padding: 16px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(24,58,53,.04); }
+  .detail-card.mint { background: var(--hyewon-mint); border-color: #CDE9DD; box-shadow: none; }
+  .meta-rows { padding: 6px 16px; }
+  .meta-row { display: flex; align-items: center; gap: 8px; font-size: 13px; padding: 9px 0; }
+  .meta-row + .meta-row { border-top: 1px solid var(--border); }
+  .meta-row .k { color: var(--text2); width: 64px; flex-shrink: 0; }
+  .meta-row .v { font-weight: 600; color: var(--text); }
+  .meta-row .v.over { color: var(--hyewon-coral); }
+  .sec-head { display: flex; align-items: center; gap: 7px; font-size: 14px; font-weight: 700; margin: 0 0 10px; }
+  .pdf-badge { width: 34px; height: 40px; border-radius: 6px; background: #F04E4E; color: #fff; font-size: 10px; font-weight: 800; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 6px; flex-shrink: 0; position: relative; }
+  .pdf-badge:before { content: ''; position: absolute; top: 0; right: 0; border-style: solid; border-width: 0 10px 10px 0; border-color: transparent #fff transparent transparent; opacity: .6; }
+  .dl-btn { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 11px; font-weight: 700; color: var(--accent); text-decoration: none; flex-shrink: 0; padding: 4px 6px; }
+  .status-chip { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; padding: 8px 12px; border-radius: 12px; }
+  .status-chip.done { background: var(--hyewon-mint); color: var(--hyewon-emerald); }
+  .status-chip.pending { background: var(--warn-bg); color: var(--warn-text); }
+  .btn.ghost { background: #fff; color: var(--hyewon-coral); border: 1.5px solid var(--hyewon-coral); }
+  .btn.ghost:hover { background: #FFF3F5; }
   .detail-card .row-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
   .detail-card .row-head b { font-size: 14px; }
-  .file-chip { display: flex; align-items: center; gap: 10px; background: var(--hyewon-mint); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; }
+  .file-chip { display: flex; align-items: center; gap: 12px; background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; }
   .file-chip b { display: block; font-size: 14px; }
-  .feedback-box { background: var(--hyewon-mint); border-radius: 12px; padding: 14px 16px; margin-bottom: 16px; }
+  .feedback-box { background: var(--hyewon-mint); border-radius: 12px; padding: 12px 14px; }
   .feedback-box b { display: block; font-size: 13px; color: var(--accent); margin-bottom: 6px; }
   .feedback-box p { margin: 0; font-size: 14px; line-height: 1.6; white-space: pre-wrap; }
-  .submitted-file { display: flex; align-items: center; gap: 12px; background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 10px; text-decoration: none; color: inherit; }
+  .submitted-file { display: flex; align-items: center; gap: 12px; background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 8px; text-decoration: none; color: inherit; }
+  .submitted-file + .submitted-file { margin-top: 8px; }
   .submitted-file .thumb { width: 54px; height: 54px; border-radius: 10px; background: var(--hyewon-ink); flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
 
   /* 성적 */
@@ -423,26 +441,60 @@ function loginStepperHtml_() {
   '</div>';
 }
 
+// 로그인 화면 위 일러스트 — 달리는 두 학생(직접 그린 SVG)
+function heroGirl_(o) {
+  const skin = o.skin, hair = o.hair, shirt = o.shirt, dark = o.shirtDark;
+  const limb = (d, w, c) => `<path d="${d}" fill="none" stroke="${c}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round"/>`;
+  return `
+  <!-- ponytail -->
+  <path d="M74 22 C 98 10, 122 22, 118 46 C 115 62, 104 70, 96 76 C 104 62, 104 48, 92 40 C 86 36, 80 34, 74 34 Z" fill="${hair}"/>
+  <path d="M96 30 C 108 32, 114 42, 110 54" fill="none" stroke="#fff" stroke-opacity=".18" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="78" cy="27" r="5.5" fill="${o.band}"/>
+  <!-- back arm -->
+  ${limb('M76 82 L92 96 L104 84', 9, o.skinShade)}
+  <!-- back leg -->
+  ${limb('M50 126 L40 146 L22 150', 11, o.skinShade)}
+  <rect x="14" y="143" width="11" height="12" rx="3" fill="#fff" transform="rotate(-8 19 149)"/>
+  <path d="M4 152 C 4 146, 14 144, 22 147 L 26 156 C 18 160, 6 160, 4 156 Z" fill="#fff" stroke="#9FB3B8" stroke-width="1.5"/>
+  <path d="M8 157 L 25 156" stroke="${shirt}" stroke-width="2.4" stroke-linecap="round"/>
+  <!-- torso -->
+  <path d="M42 74 Q60 68 80 74 L86 112 Q60 118 36 112 Z" fill="${shirt}"/>
+  <path d="M50 72 L60 86 L70 72" fill="none" stroke="#fff" stroke-width="3.2" stroke-linejoin="round"/>
+  <path d="M80 76 L85 110" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+  <path d="M42 76 L37 110" stroke="${dark}" stroke-width="3" stroke-linecap="round" opacity=".6"/>
+  <!-- shorts -->
+  <path d="M36 110 Q60 116 86 110 L88 128 L64 130 L60 124 L56 130 L34 128 Z" fill="#1F2A33"/>
+  <path d="M35 122 L37 128" stroke="${o.band}" stroke-width="2.4" stroke-linecap="round"/>
+  <!-- front leg -->
+  ${limb('M70 128 L88 140 L84 160', 11, skin)}
+  <rect x="78" y="152" width="11" height="12" rx="3" fill="#fff"/>
+  <path d="M76 162 C 78 156, 90 156, 96 160 L 100 166 C 92 170, 80 170, 76 167 Z" fill="#fff" stroke="#9FB3B8" stroke-width="1.5"/>
+  <path d="M79 168 L 98 166" stroke="${shirt}" stroke-width="2.4" stroke-linecap="round"/>
+  <!-- front arm -->
+  ${limb('M44 82 L30 98 L20 90', 9, skin)}
+  <circle cx="19" cy="89" r="5" fill="${skin}"/>
+  <!-- neck + head -->
+  <rect x="55" y="62" width="12" height="12" rx="4" fill="${o.skinShade}"/>
+  <circle cx="60" cy="40" r="27" fill="${skin}"/>
+  <!-- hair top + bangs -->
+  <path d="M33 42 C 30 18, 52 6, 70 10 C 84 13, 92 26, 88 40 C 82 30, 74 26, 66 25 C 64 32, 56 36, 48 34 C 44 38, 38 40, 33 42 Z" fill="${hair}"/>
+  <path d="M34 40 C 32 48, 33 54, 36 58" fill="none" stroke="${hair}" stroke-width="4" stroke-linecap="round"/>
+  <!-- face -->
+  <ellipse cx="50" cy="44" rx="4.2" ry="5.6" fill="#3A2318"/>
+  <ellipse cx="70" cy="44" rx="4.2" ry="5.6" fill="#3A2318"/>
+  <circle cx="51.6" cy="41.6" r="1.7" fill="#fff"/><circle cx="71.6" cy="41.6" r="1.7" fill="#fff"/>
+  <path d="M45 36 Q50 33.5 54 35.5 M66 35.5 Q70 33.5 75 36" stroke="#5A3626" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+  <ellipse cx="43" cy="53" rx="5" ry="3" fill="#F48C8C" opacity=".45"/>
+  <ellipse cx="77" cy="53" rx="5" ry="3" fill="#F48C8C" opacity=".45"/>
+  <path d="M54 54 Q60 61 66 54 Q60 56.5 54 54 Z" fill="#C2414B"/>`;
+}
+
 function loginHeroSvg_() {
-  const girl = function (x, shirt, skin, hair, flip) {
-    return '<g transform="translate(' + x + ' 0)' + (flip ? ' scale(-1 1) translate(-80 0)' : '') + '">' +
-      '<path d="M44 26 C 62 20 70 34 60 46 C 62 34 54 30 44 30 Z" fill="' + hair + '"/>' +      // 포니테일
-      '<circle cx="36" cy="32" r="15" fill="' + skin + '"/>' +
-      '<path d="M21 31 C 22 14 50 12 52 30 C 44 24 30 24 21 31Z" fill="' + hair + '"/>' +      // 앞머리
-      '<circle cx="31" cy="34" r="1.8" fill="#2b1d16"/><circle cx="42" cy="34" r="1.8" fill="#2b1d16"/>' +
-      '<path d="M32 40 Q36.5 44 41 40" stroke="#C2554B" stroke-width="2" fill="none" stroke-linecap="round"/>' +
-      '<path d="M22 52 L52 52 L56 86 L18 86 Z" fill="' + shirt + '"/>' +                       // 상의
-      '<path d="M22 52 L10 70" stroke="' + skin + '" stroke-width="7" stroke-linecap="round"/>' +
-      '<path d="M52 54 L66 64" stroke="' + skin + '" stroke-width="7" stroke-linecap="round"/>' +
-      '<path d="M18 86 L56 86 L58 100 L16 100 Z" fill="#23303A"/>' +                          // 반바지
-      '<path d="M24 100 L14 128" stroke="' + skin + '" stroke-width="9" stroke-linecap="round"/>' +
-      '<path d="M48 100 L62 122" stroke="' + skin + '" stroke-width="9" stroke-linecap="round"/>' +
-      '<ellipse cx="11" cy="131" rx="11" ry="5.5" fill="#fff" stroke="#BFD0D4"/>' +
-      '<ellipse cx="66" cy="125" rx="11" ry="5.5" fill="#fff" stroke="#BFD0D4"/></g>';
-  };
-  return '<div class="login-hero" aria-hidden="true"><svg viewBox="0 0 220 140" xmlns="http://www.w3.org/2000/svg">' +
-    '<ellipse cx="110" cy="136" rx="86" ry="5" fill="#0001"/>' +
-    girl(20, '#14A3A0', '#F6C9A8', '#6B3A26', false) + girl(118, '#14A3A0', '#F2BE9B', '#4A2A1E', false) + '</svg></div>';
+  const A = { skin:'#FBD8BE', skinShade:'#EFC2A2', hair:'#7A4428', shirt:'#14A39B', shirtDark:'#0C7C76', band:'#F25C8A' };
+  const B = { skin:'#F8D1B3', skinShade:'#E9B996', hair:'#4A2C1E', shirt:'#14A39B', shirtDark:'#0C7C76', band:'#3CC7C0' };
+  return '<div class="login-hero" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 270 185">' +
+    '<ellipse cx="135" cy="178" rx="110" ry="6" fill="#000" opacity=".07"/>' +
+    '<g transform="translate(6 6)">' + heroGirl_(A) + '</g><g transform="translate(132 0)">' + heroGirl_(B) + '</g></svg></div>';
 }
 
 function renderGlobalLogin(errorMsg) {
@@ -509,6 +561,63 @@ async function doGlobalLogin() {
   state.myTabs = res.tabs || [];
   saveLogin(studentId, code);
   renderToday();
+}
+
+// ---------- 아이콘 · 제출 기한 ----------
+const IC = {
+  cal: '<rect x="3" y="4" width="18" height="17" rx="2"></rect><path d="M16 2v4M8 2v4M3 10h18"></path>',
+  doc: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><path d="M8 13h8M8 17h5"></path>',
+  mega: '<path d="M3 11v3a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1z"></path><path d="M15.5 8.5a5 5 0 0 1 0 7"></path><path d="M18.5 5.5a9 9 0 0 1 0 13"></path>',
+  clock: '<circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path>',
+  chat: '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path><path d="M8 9h8M8 13h5"></path>',
+  check: '<polyline points="20 6 9 17 4 12"></polyline>',
+  refresh: '<polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>',
+  chev: '<polyline points="9 18 15 12 9 6"></polyline>',
+  down: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><path d="M12 15V3"></path>',
+  file: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline>',
+  info: '<rect x="4" y="3" width="16" height="18" rx="2"></rect><path d="M8 8h8M8 12h8M8 16h5"></path>'
+};
+function ic_(name, size, color, sw) {
+  return '<svg width="' + (size || 16) + '" height="' + (size || 16) + '" viewBox="0 0 24 24" fill="none" stroke="' + (color || 'currentColor') +
+    '" stroke-width="' + (sw || 2) + '" stroke-linecap="round" stroke-linejoin="round">' + IC[name] + '</svg>';
+}
+// 교사가 정한 제출 기한(meta.deadline = 'yyyy-MM-ddTHH:mm', 한국 시각). 없으면 null.
+function deadlineInfo_(tab) {
+  const v = String((tab && tab.meta && tab.meta.deadline) || '');
+  const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/.exec(v);
+  if (!m) return null;
+  const at = new Date(v + ':59.999+09:00');
+  const days = ['일', '월', '화', '수', '목', '금', '토'];
+  const dow = days[new Date(Date.UTC(+m[1], +m[2] - 1, +m[3])).getUTCDay()];
+  const left = at.getTime() - Date.now();
+  const dday = Math.ceil(left / 86400000);
+  return {
+    text: m[1] + '. ' + m[2] + '. ' + m[3] + '. (' + dow + ') ' + m[4] + ':' + m[5],
+    short: Number(m[2]) + '/' + Number(m[3]) + ' ' + m[4] + ':' + m[5],
+    over: left < 0,
+    dday: left < 0 ? '마감' : (dday <= 0 ? 'D-DAY' : 'D-' + dday)
+  };
+}
+function metaRowsHtml_(tab) {
+  const dl = deadlineInfo_(tab);
+  return '<div class="detail-card meta-rows">' +
+    (dl ? '<div class="meta-row">' + ic_('cal', 15, 'var(--text2)') + '<span class="k">제출 기한</span><span class="v' + (dl.over ? ' over' : '') + '">' + escapeHtml(dl.text) + (dl.over ? ' · 마감됨' : '') + '</span></div>' : '') +
+    '<div class="meta-row">' + ic_('doc', 15, 'var(--text2)') + '<span class="k">과제 유형</span><span class="v">' + escapeHtml(assignmentTypeLabel_(tab)) + '</span></div>' +
+  '</div>';
+}
+function titleCardHtml_(name) {
+  const sub = sportCategoryLabel_(name);
+  return '<div class="detail-card" style="display:flex;align-items:center;gap:12px;">' +
+    '<div class="sporticon">' + sportIconHtml_(name) + '</div>' +
+    '<div style="min-width:0;"><div style="font-weight:800;font-size:17px;">' + escapeHtml(name) + '</div>' +
+    (sub ? '<div class="assign-sub">' + escapeHtml(sub) + '</div>' : '') + '</div></div>';
+}
+function reviewPillHtml_(t) {
+  const cls = reviewClass_(t);
+  const icon = cls === 'done' ? '<span style="width:14px;height:14px;border-radius:50%;background:var(--hyewon-emerald);display:inline-flex;align-items:center;justify-content:center;">' + ic_('check', 9, '#fff', 3.5) + '</span>'
+    : cls === 'pending' ? '<span style="width:14px;height:14px;border-radius:50%;background:#F2A33A;display:inline-flex;align-items:center;justify-content:center;color:#fff;font-size:10px;font-weight:900;">!</span>'
+    : '<span style="width:12px;height:12px;border-radius:50%;background:#A9B3AF;display:inline-block;"></span>';
+  return '<span class="rpill ' + cls + '" style="align-self:flex-start;">' + icon + reviewLabel_(t) + (t.submittedAt ? ' · 제출 ' + escapeHtml(t.submittedAt) : '') + '</span>';
 }
 
 function reviewLabel_(entry) {
@@ -774,13 +883,12 @@ function scoreHtml_(r) {
 function renderToday() {
   const items = (state.myTabs || []).map(function (t) {
     const sub = sportCategoryLabel_(t.sheetName);
-    const pillText = reviewLabel_(t) + (t.submittedAt ? ' · 제출 ' + escapeHtml(t.submittedAt) : '');
     return '<a class="assign-card" href="#" data-tab="' + escapeHtml(t.sheetName) + '">' +
       '<div class="sporticon">' + sportIconHtml_(t.sheetName) + '</div>' +
       '<div class="assign-main">' +
         '<span class="assign-title">' + escapeHtml(t.sheetName) + '</span>' +
         (sub ? '<span class="assign-sub">' + escapeHtml(sub) + '</span>' : '') +
-        '<span class="rpill ' + reviewClass_(t) + '" style="align-self:flex-start;">' + pillText + '</span>' +
+        reviewPillHtml_(t) +
       '</div>' +
       '<svg class="assign-chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>' +
     '</a>';
@@ -907,19 +1015,17 @@ function renderAssignmentForm(tab, entry, notice) {
     appbarHtml_('과제 상세', true) +
     '<div class="main" style="padding-top:16px;">' +
       (notice ? '<div class="msg error">' + escapeHtml(notice) + '</div>' : '') +
-      '<div class="detail-card" style="display:flex;align-items:center;gap:12px;">' +
-        '<div class="sporticon">' + sportIconHtml_(tab.sheetName) + '</div>' +
-        '<div><div style="font-weight:700;font-size:15px;">' + escapeHtml(tab.sheetName) + '</div>' +
-        (sub ? '<div class="assign-sub">' + escapeHtml(sub) + '</div>' : '') + '</div>' +
-      '</div>' +
-      '<div class="info-row"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--text2)" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>과제 유형 <b>' + escapeHtml(assignmentTypeLabel_(tab)) + '</b></div>' +
+      titleCardHtml_(tab.sheetName) +
+      metaRowsHtml_(tab) +
       (tab.description
-        ? '<div class="detail-card"><div class="row-head"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path></svg><b>교사 안내</b></div><p style="margin:0;font-size:13px;line-height:1.6;color:var(--text);">' + escapeHtml(tab.description) + '</p></div>'
+        ? '<div class="detail-card mint"><div class="sec-head" style="color:var(--hyewon-emerald);">' + ic_('mega', 18, 'var(--hyewon-emerald)') + '교사 안내</div>' +
+            '<p style="margin:0;font-size:14px;line-height:1.7;color:var(--text);white-space:pre-wrap;">' + escapeHtml(tab.description) + '</p></div>'
         : '') +
       (teacherFile
-        ? '<div class="detail-card"><div class="row-head"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg><b>첨부 파일</b></div>' +
-            '<div class="file-chip"><div style="flex-grow:1;min-width:0;"><b>' + escapeHtml(teacherFile.name) + '</b><span class="hint">' + fileSizeLabel(teacherFile.size) + '</span></div>' +
-            '<a class="btn-outline" style="width:auto;flex-shrink:0;" href="' + escapeHtml(teacherFile.url) + '" target="_blank" rel="noopener">다운로드</a></div>' +
+        ? '<div class="detail-card"><div class="sec-head">' + ic_('file', 16, 'var(--text2)') + '첨부 파일</div>' +
+            '<div class="file-chip">' + (isPdfFile_(teacherFile) ? '<div class="pdf-badge">PDF</div>' : '<div class="pdf-badge" style="background:#5B7CF0;">FILE</div>') +
+              '<div style="flex-grow:1;min-width:0;"><b style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escapeHtml(teacherFile.name) + '</b><span class="hint">' + fileSizeLabel(teacherFile.size) + '</span></div>' +
+              '<a class="dl-btn" href="' + escapeHtml(teacherFile.url) + '" target="_blank" rel="noopener">' + ic_('down', 20, 'var(--hyewon-emerald)') + '다운로드</a></div>' +
             (canShareToNotes_(teacherFile)
               ? '<button class="btn" id="shareNotesBtn" type="button" style="margin-top:10px;">삼성노트로 보내기</button>' +
                 '<p class="hint" id="shareNotesHint" style="margin:6px 0 0;">누르면 공유 창이 떠요. 거기서 «삼성 노트»를 고르면 PDF 위에 바로 쓸 수 있어요.</p>'
@@ -927,7 +1033,8 @@ function renderAssignmentForm(tab, entry, notice) {
           '</div>'
         : '') +
       '<div class="card">' + fieldsHtml + '</div>' +
-      '<button class="btn" id="submitBtn" style="margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:8px;">' +
+      ((deadlineInfo_(tab) || {}).over ? '<div class="msg error">제출 기한이 지나서 더 이상 제출할 수 없어요.</div>' : '') +
+      '<button class="btn" id="submitBtn"' + ((deadlineInfo_(tab) || {}).over ? ' disabled' : '') + ' style="margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:8px;">' +
         '<span>' + (entry.submitted ? '수정 제출하기' : '제출하기') + '</span>' +
         '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto;"><polyline points="9 18 15 12 9 6"></polyline></svg>' +
       '</button>' +
@@ -955,27 +1062,32 @@ function renderSubmissionStatus(tab, entry) {
   const hasFeedback = !!entry.feedback;
   const btnLabel = hasFeedback ? '피드백 반영해 수정 제출' : '다시 제출하기';
 
-  const sub = sportCategoryLabel_(tab.sheetName);
+  const done = reviewClass_(entry) === 'done';
+  const over = (deadlineInfo_(tab) || {}).over;
   render(
     appbarHtml_('제출 현황', true) +
     '<div class="main" style="padding-top:16px;">' +
-      '<div class="detail-card" style="display:flex;align-items:center;gap:12px;">' +
-        '<div class="sporticon">' + sportIconHtml_(tab.sheetName) + '</div>' +
-        '<div><div style="font-weight:700;font-size:15px;">' + escapeHtml(tab.sheetName) + '</div>' +
-        (sub ? '<div class="assign-sub">' + escapeHtml(sub) + '</div>' : '') + '</div>' +
+      titleCardHtml_(tab.sheetName) +
+      '<div class="detail-card rowbetween" style="gap:10px;">' +
+        '<div style="display:flex;align-items:center;gap:10px;">' + ic_('clock', 18, 'var(--text2)') +
+          '<div><div style="font-size:12px;color:var(--text2);">제출 시간</div><div style="font-size:15px;font-weight:700;">' + escapeHtml(entry.submittedAt) + '</div></div></div>' +
+        '<span class="status-chip ' + (done ? 'done' : 'pending') + '">' +
+          (done ? '<span style="width:18px;height:18px;border-radius:50%;background:var(--hyewon-emerald);display:inline-flex;align-items:center;justify-content:center;">' + ic_('check', 11, '#fff', 3.5) + '</span>교사 검토 완료'
+                : ic_('clock', 15, 'var(--warn-text)') + '검토 중') + '</span>' +
       '</div>' +
-      '<div class="info-row" style="justify-content:space-between;">' +
-        '<span style="display:flex;align-items:center;gap:6px;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--text2)" stroke-width="2"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 3"></path></svg>제출 시간 <b>' + escapeHtml(entry.submittedAt) + '</b></span>' +
-        '<span class="rpill ' + reviewClass_(entry) + '">' + reviewLabel_(entry) + '</span>' +
-      '</div>' +
-      (hasFeedback ? '<div class="feedback-box"><div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg><b style="margin:0;">선생님 피드백</b></div><p>' + escapeHtml(entry.feedback) + '</p></div>' : '') +
-      '<button class="btn" id="resubmitBtn" style="display:flex;align-items:center;justify-content:center;gap:8px;">' +
-        '<span>' + btnLabel + '</span>' +
-        '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto;">' + (hasFeedback ? '<polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>' : '<polyline points="9 18 15 12 9 6"></polyline>') + '</svg>' +
-      '</button>' +
-      '<div id="submittedFileArea" style="margin-top:20px;"></div>' +
-      '<div class="detail-card" style="margin-top:14px;"><b style="display:block;font-size:13px;margin-bottom:10px;">과제 정보</b>' +
-        '<div class="rowbetween" style="font-size:13px;padding:6px 0;"><span style="color:var(--text2);">과제 유형</span><span style="font-weight:600;">' + escapeHtml(assignmentTypeLabel_(tab)) + '</span></div>' +
+      (hasFeedback
+        ? '<div class="detail-card"><div class="sec-head">' + ic_('chat', 17, 'var(--text2)') + '선생님 피드백</div>' +
+            '<div class="feedback-box"><p>' + escapeHtml(entry.feedback) + '</p></div></div>'
+        : '') +
+      (over
+        ? '<div class="msg error" style="margin-bottom:12px;">제출 기한이 지나 수정 제출은 할 수 없어요.</div>'
+        : '<button class="btn ghost" id="resubmitBtn" style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:12px;">' +
+            ic_('refresh', 17, 'var(--hyewon-coral)', 2.4) + '<span>' + btnLabel + '</span>' +
+            '<span style="margin-left:auto;display:flex;">' + ic_('chev', 16, 'var(--hyewon-coral)', 2.4) + '</span>' +
+          '</button>') +
+      '<div class="detail-card" id="submittedFileCard" style="display:none;"><div class="sec-head">' + ic_('file', 16, 'var(--text2)') + '제출한 파일</div><div id="submittedFileArea"></div></div>' +
+      '<div class="detail-card" style="padding-bottom:6px;"><div class="sec-head">' + ic_('info', 16, 'var(--text2)') + '과제 정보</div>' +
+        metaRowsHtml_(tab).replace('class="detail-card meta-rows"', 'style="margin:0 -2px;"') +
       '</div>' +
     '</div>' +
     footerHtml_() +
@@ -983,7 +1095,8 @@ function renderSubmissionStatus(tab, entry) {
   );
   const backBtn2 = wireChrome_();
   if (backBtn2) backBtn2.onclick = function (e) { e.preventDefault(); renderToday(); };
-  document.getElementById('resubmitBtn').onclick = function () { renderAssignmentForm(tab, entry); };
+  const rb = document.getElementById('resubmitBtn');
+  if (rb) rb.onclick = function () { renderAssignmentForm(tab, entry); };
   loadSubmittedFile_(tab);
 }
 
@@ -996,8 +1109,9 @@ async function loadSubmittedFile_(tab) {
   } catch (e) { return; }
   if (!res || !res.success || !res.files || !res.files.length) return;
 
-  area.innerHTML = '<b style="display:block;font-size:13px;margin-bottom:10px;">제출한 파일</b>' +
-    res.files.map(function (f) {
+  const card = document.getElementById('submittedFileCard');
+  if (card) card.style.display = '';
+  area.innerHTML = res.files.map(function (f) {
       const isVideo = /video/.test(f.mimeType);
       return '<a class="submitted-file" href="' + escapeHtml(f.url) + '" target="_blank" rel="noopener">' +
         '<div class="thumb">' + (isVideo
@@ -1235,7 +1349,7 @@ function buildFieldsHtml(inputs, antiPaste) {
     }
     if (f.type === 'long') {
       return head + '<div class="field"><label for="' + id + '">' + escapeHtml(f.name) + '</label>' +
-        '<textarea id="' + id + '" data-field="' + i + '" data-antipaste="' + (antiPaste ? '1' : '0') + '"></textarea>' +
+        '<textarea id="' + id + '" data-field="' + i + '" data-antipaste="' + (antiPaste ? '1' : '0') + '" placeholder="오늘 어떤 활동을 했는지 자유롭게 작성해 주세요."></textarea>' +
         '<div class="rowbetween">' +
           (antiPaste ? '<span class="badge-anti">복사-붙여넣기 제한 · 한 번에 ' + antiPaste + '자 이상 입력되면 기록돼요</span>' : '<span></span>') +
           '<span class="charcount" id="cc_' + id + '">0자</span>' +
