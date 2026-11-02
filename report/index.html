@@ -230,6 +230,7 @@
   .hh-ttl { position: absolute; left: 20px; right: 20px; bottom: 16px; z-index: 2; display: flex; justify-content: space-between; align-items: flex-end; }
   .hh-ttl h1 { margin: 0; font-size: 24px; font-weight: 800; color: #14524A; }
   .hh-ttl span { font-size: 13px; color: var(--text2); }
+  .hh-top .pill { background: rgba(255,255,255,.92) !important; color: #087A55 !important; box-shadow: 0 2px 8px rgba(0,0,0,.2); }
   .theme-pick { display: flex; gap: 8px; }
   .theme-pick button { flex: 1; padding: 14px 10px; border-radius: 14px; border: 1.5px solid var(--border); background: var(--surface); color: var(--text); font-family: inherit; font-size: 14px; font-weight: 700; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 8px; }
   .theme-pick button.on { border-color: var(--hyewon-emerald); box-shadow: 0 0 0 3px rgba(8,122,85,.15); }
@@ -1472,19 +1473,29 @@ function renderForm(tab, notice) {
   const antiPaste = antiPasteMinOf_(tab);
   const inputs = fieldInputs(tab);
   const fieldsHtml = buildFieldsHtml(inputs, antiPaste);
+  const over = (deadlineInfo_(tab) || {}).over;
+  const open = !!state.login.open;
 
   render(
     peekBarHtml_() +
-    '<div class="topbar"><span class="brand">' + escapeHtml(brandLabel()) + '</span>' +
-      '<span class="pill ' + status + '">' + statusLabel(status) + '</span></div>' +
-    '<div class="head"><h1 class="serif">' + escapeHtml(tab.sheetName) + '</h1>' +
-      (tab.description ? '<p>' + escapeHtml(tab.description) + '</p>' : '') +
-    '</div>' +
-    '<div class="main">' +
-      (state.login.open
-        ? '<div class="card"><div class="field"><label>학번 (4자리)</label><input id="openId" type="text" inputmode="numeric" maxlength="4" autocomplete="off" value="' + escapeHtml(state.login.studentId) + '"></div>' +
-          '<div class="field"><label>이름</label><input id="openName" type="text" maxlength="20" autocomplete="off" value="' + escapeHtml(state.login.studentName) + '"></div>' +
-          '<span class="hint">로그인 없이 제출하는 과제예요. 학번과 이름을 정확히 적어주세요.</span></div>'
+    // 과제 링크·QR 로 들어온 화면 — 홈과 같은 응원 그림 머리, 그 위에 과제 이름
+    '<div class="home-hero" style="height:190px;"><picture><source srcset="../assets/login-bg.webp" type="image/webp"><img class="bg" src="../assets/login-bg.jpg" alt="" decoding="async"></picture>' +
+      '<div class="hh-top"><img class="logo" src="../assets/logo.png" alt=""><span class="gugi">혜원포털</span>' +
+        '<span class="pill ' + status + '" style="position:relative;z-index:2;">' + statusLabel(status) + '</span>' +
+        '<button class="ib" id="themeBtn2" type="button" aria-label="밝게/어둡게 바꾸기">' + themeIcon_() + '</button></div>' +
+      '<div class="hh-ttl"><h1 style="font-size:22px;line-height:1.3;">' + escapeHtml(tab.sheetName) + '</h1></div></div>' +
+    '<div class="main" style="padding-top:8px;">' +
+      metaRowsHtml_(tab) +
+      (tab.description
+        ? '<div class="detail-card mint"><div class="sec-head" style="color:var(--hyewon-emerald);">' + ic_('mega', 18, 'var(--hyewon-emerald)') + '교사 안내</div>' +
+            '<p style="margin:0;font-size:14px;line-height:1.7;color:var(--text);white-space:pre-wrap;">' + escapeHtml(tab.description) + '</p></div>'
+        : '') +
+      (open
+        ? '<div class="detail-card"><div class="sec-head">' + ic_('info', 16, 'var(--text2)') + '누가 제출하나요?</div>' +
+            '<div class="row" style="display:flex;gap:10px;">' +
+              '<div class="field" style="flex:0 0 110px;margin:0;"><label>학번 (4자리)</label><input id="openId" type="text" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="3201" value="' + escapeHtml(state.login.studentId) + '"></div>' +
+              '<div class="field" style="flex:1;margin:0;"><label>이름</label><input id="openName" type="text" maxlength="20" autocomplete="off" placeholder="이름" value="' + escapeHtml(state.login.studentName) + '"></div>' +
+            '</div><p class="hint" style="margin:10px 0 0;">로그인 없이 제출하는 과제예요. 학번과 이름을 정확히 적어주세요.</p></div>'
         : '<div class="identity rowbetween">' +
           '<div><b>' + escapeHtml(state.login.studentId) + ' · ' + escapeHtml(state.login.studentName) + '</b>' +
           '<small>학생코드로 확인됨</small></div>' +
@@ -1492,12 +1503,16 @@ function renderForm(tab, notice) {
         '</div>') +
       (notice ? '<div class="msg error">' + escapeHtml(notice) + '</div>' : '') +
       '<div class="card">' + fieldsHtml + '</div>' +
-      '<button class="btn" id="submitBtn" style="margin-bottom:10px;">제출하기</button>' +
-      '<p style="text-align:center;"><span class="hint">제출 시 ' + escapeHtml(state.login.studentId) + ' ' + escapeHtml(state.login.studentName) + ' 이름으로 기록됩니다</span></p>' +
+      (over ? '<div class="msg error">제출 기한이 지나서 더 이상 제출할 수 없어요.</div>' : '') +
+      '<button class="btn" id="submitBtn"' + (over ? ' disabled' : '') + ' style="margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:8px;">' +
+        '<span>제출하기</span><span style="margin-left:auto;display:flex;">' + ic_('chev', 16, '#fff', 2.4) + '</span></button>' +
+      (open ? '' : '<p style="text-align:center;"><span class="hint">제출 시 ' + escapeHtml(state.login.studentId) + ' ' + escapeHtml(state.login.studentName) + ' 이름으로 기록됩니다</span></p>') +
     '</div>' +
     footerHtml_()
   );
 
+  const tb = document.getElementById('themeBtn2');
+  if (tb) tb.onclick = function () { setTheme_(getTheme_() === 'dark' ? 'light' : 'dark'); };
   wireFieldEvents(tab, inputs);
   document.getElementById('submitBtn').onclick = function () { doSubmit(tab, false); };
   const lo = document.getElementById('logoutBtn');
@@ -1597,12 +1612,15 @@ async function doSubmit(tab, confirmOverwrite) {
 function renderSuccess(tab, message) {
   render(
     '<div class="center-pad"><div class="card" style="text-align:center;">' +
-      '<div class="success-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#1F7A3D" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>' +
+      '<div class="success-icon" style="color:var(--success-text);"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>' +
       '<div style="font-size:18px;font-weight:700;margin-bottom:6px;">제출 완료</div>' +
       '<p style="color:var(--text2);font-size:14px;margin:0;">' + escapeHtml(message || '제출이 완료되었습니다.') + '</p>' +
+      (state.login && state.login.open ? '<button class="btn-outline" id="againBtn" type="button" style="margin-top:16px;">다른 학생이 이어서 제출하기</button>' : '') +
     '</div></div>' +
     footerHtml_()
   );
+  const ag = document.getElementById('againBtn');
+  if (ag) ag.onclick = function () { state.login = { studentId: '', studentName: '', code: '', open: true }; renderForm(tab); };
 }
 
 // ---------- OTP 입력칸 ----------
