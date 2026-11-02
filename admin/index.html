@@ -454,12 +454,13 @@ async function renderDashboard() {
   document.querySelectorAll('[data-tab]').forEach(function (a) {
     a.onclick = function (e) { e.preventDefault(); renderDetail(a.getAttribute('data-tab')); };
   });
-  document.getElementById('newTabBtn').onclick = renderNewTab;
+  document.getElementById('newTabBtn').onclick = function () { renderNewTab(); };
 }
 
 // ---------- 새 과제 만들기 ----------
 
 function renderNewTab(notice) {
+  if (typeof notice !== 'string') notice = '';   // 버튼 클릭 이벤트가 안내 문구로 잘못 들어오지 않게
   state.nav = 'tasks';
   render(
     '<div class="wrap">' +
