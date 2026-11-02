@@ -45,7 +45,7 @@
   .stat span { display: block; font-size: 12px; color: var(--text2); font-weight: 600; margin-bottom: 6px; }
   .stat b { font-size: 26px; }
   .stat b.small { font-size: 15px; }
-  .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; align-items: start; }
+  .grid2 { margin-bottom: 16px; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; align-items: start; }
   .grid2 .card { max-width: none; margin-bottom: 0; }
   .bnav, .sheet, .sheetbg { display: none; }
   .hello { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
@@ -872,7 +872,6 @@ async function renderPortal(notice) {
     );
     return;
   }
-  const studentUrl = new URL('../report/', location.href).href;
   render(
     '<div class="wrap">' +
       '<div id="homeDash"></div>' +
@@ -885,82 +884,12 @@ async function renderPortal(notice) {
         '<div class="stat"><span>서버 버전</span><b>' + st.serverVersion + '</b></div>' +
       '</div>' +
       '<p class="hint" id="verLine" style="margin:-4px 0 16px;"></p>' +
-      (notice ? '<div class="msg ' + notice.type + '">' + escapeHtml(notice.text) + '</div>' : '') +
-      '<div class="grid2">' +
-        '<div class="card">' +
-          '<h2>마스터코드</h2>' +
-          '<p class="hint" style="margin:0 0 10px;">학번 + 마스터코드로 어느 학생 화면이든 둘러볼 수 있어요 (제출은 안 됨)</p>' +
-          '<p style="font-size:14px;margin:0 0 12px;">현재 값: <b>' + escapeHtml(st.masterCode) + '</b>' + (st.masterCustom ? '' : ' <span class="hint">(기본값)</span>') + '</p>' +
-          '<div class="field"><label for="mcIn">새 마스터코드 (영문 대문자·숫자 4자 이상)</label><input id="mcIn" type="text" maxlength="12"></div>' +
-          '<button class="btn" id="mcSave">변경</button>' +
-        '</div>' +
-        '<div class="card">' +
-          '<h2>학생 접속 주소</h2>' +
-          '<p class="hint" style="margin:0 0 10px;">학생은 이 주소 하나로 학번 + 학생코드로 로그인해요</p>' +
-          '<div class="row"><input type="text" readonly id="stuUrl" value="' + escapeHtml(studentUrl) + '"><button class="btn-outline" id="copyStu">복사</button></div>' +
-        '</div>' +
-      '</div>' +
-      '<div class="card">' +
-        '<h2>성적 조회 연결</h2>' +
-        '<p class="hint" style="margin:0 0 10px;">학생 화면의 «성적» 탭이 읽는 점수 시트예요. 연결이 잘 됐는지 확인해보세요.</p>' +
-        '<button class="btn-outline" id="scChk" style="width:auto;">연결 확인</button>' +
-        '<div id="scOut" style="margin-top:12px;font-size:13px;line-height:1.8;"></div>' +
-      '</div>' +
-      '<div class="card">' +
-        '<h2>Firestore 연결</h2>' +
-        '<p class="hint" style="margin:0 0 10px;">파이어베이스 데이터베이스(hyewon-portal)에 서버가 읽고 쓸 수 있는지 확인해요. 시험 문서 하나만 쓰고 다른 데이터는 건드리지 않아요.</p>' +
-        '<button class="btn-outline" id="fsChk" style="width:auto;">연결 시험</button>' +
-        '<div id="fsOut" style="margin-top:12px;font-size:13px;line-height:1.8;"></div>' +
-      '</div>' +
+      '<p class="hint" style="margin:0 0 16px;"><a href="#" id="goSet">마스터코드 · 학생 접속 주소 · 연결 시험은 «설정»으로 옮겼어요 →</a></p>' +
     '</div>'
   );
-  document.getElementById('fsChk').onclick = async function () {
-    const out = document.getElementById('fsOut');
-    out.innerHTML = '<span class="hint">시험 중…</span>';
-    let r;
-    try { r = await api('testFirestore'); } catch (e) { out.innerHTML = '<div class="msg error">서버에 연결하지 못했어요.</div>'; return; }
-    if (!r || r.success !== true) {
-      out.innerHTML = '<div class="msg error">' + escapeHtml((r && r.message) || '시험하지 못했어요. 서버(Code.gs)가 버전 18 이상인지 확인해주세요.') + '</div>';
-      return;
-    }
-    out.innerHTML =
-      '<div class="msg ok" style="margin-bottom:10px;">연결됐어요</div>' +
-      '<div>프로젝트: <b>' + escapeHtml(r.projectId || '') + '</b></div>' +
-      '<div>쓰기 <b>' + r.writeMs + '</b>ms · 읽기 <b>' + r.readMs + '</b>ms</div>';
-  };
+  document.getElementById('goSet').onclick = function (e) { e.preventDefault(); renderSettings(); };
   paintVer_();
   loadHomeDash_(st);
-  document.getElementById('scChk').onclick = async function () {
-    const out = document.getElementById('scOut');
-    out.innerHTML = '<span class="hint">확인 중…</span>';
-    let r;
-    try { r = await api('getScoreStatus'); } catch (e) { out.innerHTML = '<div class="msg error">서버에 연결하지 못했어요.</div>'; return; }
-    if (!r || r.success === false || r.error) {
-      out.innerHTML = '<div class="msg error">' + escapeHtml((r && r.message) || '확인하지 못했어요. 서버(Code.gs)를 최신으로 올렸는지 확인해주세요.') + '</div>';
-      return;
-    }
-    const cats = (r.categories || []).map(function (c) { return escapeHtml(c.category) + ' <span class="hint">(' + c.count + '칸)</span>'; }).join(' · ');
-    const crit = (r.criteria || []).map(function (c) { return escapeHtml(c.grade) + ' ' + escapeHtml(c.desc); }).join(' / ');
-    out.innerHTML =
-      '<div class="msg ' + (r.students ? 'ok' : 'error') + '" style="margin-bottom:10px;">' + (r.students ? '연결됐어요' : escapeHtml(r.message || '학생 줄을 찾지 못했어요')) + '</div>' +
-      '<div>파일: <b>' + escapeHtml(r.fileTitle || '') + '</b> › 시트 <b>' + escapeHtml(r.sheetName) + '</b></div>' +
-      '<div>학생 줄: <b>' + r.students + '</b>명 · 포털 명단과 겹침: <b>' + r.matched + '</b>명</div>' +
-      '<div>종목: ' + (cats || '<span class="hint">찾지 못함</span>') + '</div>' +
-      '<div>등급 기준: ' + (crit || '<span class="hint">«급간설정» 시트 없음</span>') + '</div>' +
-      (r.firstId ? '<div class="hint">첫 학생 ' + escapeHtml(r.firstId) + ' · 총점 ' + escapeHtml(r.sampleScore || '-') + '</div>' : '');
-  };
-  document.getElementById('mcSave').onclick = async function () {
-    const v = document.getElementById('mcIn').value.trim();
-    if (!v) return;
-    let r;
-    try { r = await api('setMasterCode', { code: v }); } catch (e) { return; }
-    renderPortal(r.success ? { type: 'ok', text: '마스터코드를 바꿨어요.' } : { type: 'error', text: r.message || '변경 실패' });
-  };
-  document.getElementById('copyStu').onclick = function () {
-    const el = document.getElementById('stuUrl'); el.select();
-    try { navigator.clipboard.writeText(el.value); } catch (e) { document.execCommand('copy'); }
-    this.textContent = '복사됨';
-  };
 }
 
 
@@ -1389,21 +1318,100 @@ async function doSendNotice() {
 
 // ---------- 설정 ----------
 
-function renderSettings(notice) {
+async function renderSettings(notice) {
   state.nav = 'settings';
+  render('<div class="wrap"><h1 class="serif">설정</h1><p class="hint">불러오는 중…</p></div>');
+  let st;
+  try { st = await api('getPortalStatus'); } catch (e) { return; }
+  if (!st || !st.success) st = { masterCode: '', masterCustom: false };
+  const studentUrl = new URL('../report/', location.href).href;
   render(
     '<div class="wrap">' +
       '<h1 class="serif">설정</h1>' +
+      '<p class="lead">접속 주소 · 코드 · 연결 상태를 여기서 관리해요</p>' +
+      (notice ? '<div class="msg ' + notice.type + '">' + escapeHtml(notice.text) + '</div>' : '') +
+      '<div class="grid2">' +
+        '<div class="card">' +
+          '<h2>마스터코드</h2>' +
+          '<p class="hint" style="margin:0 0 10px;">학번 + 마스터코드로 어느 학생 화면이든 둘러볼 수 있어요 (제출은 안 됨)</p>' +
+          '<p style="font-size:14px;margin:0 0 12px;">현재 값: <b>' + escapeHtml(st.masterCode) + '</b>' + (st.masterCustom ? '' : ' <span class="hint">(기본값)</span>') + '</p>' +
+          '<div class="field"><label for="mcIn">새 마스터코드 (영문 대문자·숫자 4자 이상)</label><input id="mcIn" type="text" maxlength="12"></div>' +
+          '<button class="btn" id="mcSave">변경</button>' +
+        '</div>' +
+        '<div class="card">' +
+          '<h2>학생 접속 주소</h2>' +
+          '<p class="hint" style="margin:0 0 10px;">학생은 이 주소 하나로 학번 + 학생코드로 로그인해요</p>' +
+          '<div class="row"><input type="text" readonly id="stuUrl" value="' + escapeHtml(studentUrl) + '"><button class="btn-outline" id="copyStu">복사</button></div>' +
+        '</div>' +
+      '</div>' +
       '<div class="card">' +
-        '<h2>비밀번호 변경</h2>' +
-        (notice ? '<div class="msg ' + notice.type + '">' + escapeHtml(notice.text) + '</div>' : '') +
+        '<h2>성적 조회 연결</h2>' +
+        '<p class="hint" style="margin:0 0 10px;">학생 화면의 «성적» 탭이 읽는 점수 시트예요. 연결이 잘 됐는지 확인해보세요.</p>' +
+        '<button class="btn-outline" id="scChk" style="width:auto;">연결 확인</button>' +
+        '<div id="scOut" style="margin-top:12px;font-size:13px;line-height:1.8;"></div>' +
+      '</div>' +
+      '<div class="card">' +
+        '<h2>Firestore 연결</h2>' +
+        '<p class="hint" style="margin:0 0 10px;">파이어베이스 데이터베이스(hyewon-portal)에 서버가 읽고 쓸 수 있는지 확인해요. 시험 문서 하나만 쓰고 다른 데이터는 건드리지 않아요.</p>' +
+        '<button class="btn-outline" id="fsChk" style="width:auto;">연결 시험</button>' +
+        '<div id="fsOut" style="margin-top:12px;font-size:13px;line-height:1.8;"></div>' +
+      '</div>' +
+      '<div class="card">' +
+        '<h2>관리자 비밀번호 변경</h2>' +
         '<div class="field"><label for="curPw">현재 비밀번호</label><input id="curPw" type="password"></div>' +
         '<div class="field"><label for="newPw">새 비밀번호 (10자 이상)</label><input id="newPw" type="password"></div>' +
         '<button class="btn" id="changePwBtn">변경</button>' +
       '</div>' +
+      '<div class="card"><h2>버전</h2><p class="hint" id="verLine" style="margin:0;"></p></div>' +
     '</div>'
   );
   document.getElementById('changePwBtn').onclick = doChangePassword;
+  paintVer_();
+  document.getElementById('fsChk').onclick = async function () {
+    const out = document.getElementById('fsOut');
+    out.innerHTML = '<span class="hint">시험 중…</span>';
+    let r;
+    try { r = await api('testFirestore'); } catch (e) { out.innerHTML = '<div class="msg error">서버에 연결하지 못했어요.</div>'; return; }
+    if (!r || r.success !== true) {
+      out.innerHTML = '<div class="msg error">' + escapeHtml((r && r.message) || '시험하지 못했어요. 서버(Code.gs)가 버전 18 이상인지 확인해주세요.') + '</div>';
+      return;
+    }
+    out.innerHTML =
+      '<div class="msg ok" style="margin-bottom:10px;">연결됐어요</div>' +
+      '<div>프로젝트: <b>' + escapeHtml(r.projectId || '') + '</b></div>' +
+      '<div>쓰기 <b>' + r.writeMs + '</b>ms · 읽기 <b>' + r.readMs + '</b>ms</div>';
+  };
+  document.getElementById('scChk').onclick = async function () {
+    const out = document.getElementById('scOut');
+    out.innerHTML = '<span class="hint">확인 중…</span>';
+    let r;
+    try { r = await api('getScoreStatus'); } catch (e) { out.innerHTML = '<div class="msg error">서버에 연결하지 못했어요.</div>'; return; }
+    if (!r || r.success === false || r.error) {
+      out.innerHTML = '<div class="msg error">' + escapeHtml((r && r.message) || '확인하지 못했어요. 서버(Code.gs)를 최신으로 올렸는지 확인해주세요.') + '</div>';
+      return;
+    }
+    const cats = (r.categories || []).map(function (c) { return escapeHtml(c.category) + ' <span class="hint">(' + c.count + '칸)</span>'; }).join(' · ');
+    const crit = (r.criteria || []).map(function (c) { return escapeHtml(c.grade) + ' ' + escapeHtml(c.desc); }).join(' / ');
+    out.innerHTML =
+      '<div class="msg ' + (r.students ? 'ok' : 'error') + '" style="margin-bottom:10px;">' + (r.students ? '연결됐어요' : escapeHtml(r.message || '학생 줄을 찾지 못했어요')) + '</div>' +
+      '<div>파일: <b>' + escapeHtml(r.fileTitle || '') + '</b> › 시트 <b>' + escapeHtml(r.sheetName) + '</b></div>' +
+      '<div>학생 줄: <b>' + r.students + '</b>명 · 포털 명단과 겹침: <b>' + r.matched + '</b>명</div>' +
+      '<div>종목: ' + (cats || '<span class="hint">찾지 못함</span>') + '</div>' +
+      '<div>등급 기준: ' + (crit || '<span class="hint">«급간설정» 시트 없음</span>') + '</div>' +
+      (r.firstId ? '<div class="hint">첫 학생 ' + escapeHtml(r.firstId) + ' · 총점 ' + escapeHtml(r.sampleScore || '-') + '</div>' : '');
+  };
+  document.getElementById('mcSave').onclick = async function () {
+    const v = document.getElementById('mcIn').value.trim();
+    if (!v) return;
+    let r;
+    try { r = await api('setMasterCode', { code: v }); } catch (e) { return; }
+    renderSettings(r.success ? { type: 'ok', text: '마스터코드를 바꿨어요.' } : { type: 'error', text: r.message || '변경 실패' });
+  };
+  document.getElementById('copyStu').onclick = function () {
+    const el = document.getElementById('stuUrl'); el.select();
+    try { navigator.clipboard.writeText(el.value); } catch (e) { document.execCommand('copy'); }
+    this.textContent = '복사됨';
+  };
 }
 
 async function doChangePassword() {
