@@ -20,21 +20,26 @@
   .serif { font-family: 'Noto Serif KR', serif; }
   #app { min-height: 100vh; }
   .shell { display: flex; min-height: 100vh; }
-  .side { width: 220px; flex-shrink: 0; background: #10342B; color: #A9C4B9; padding: 20px 12px; display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh; }
-  .side .brandbox { display: flex; align-items: center; gap: 10px; margin: 4px 6px 26px; }
-  .side .brandbox img { width: 34px; height: 34px; border-radius: 10px; background: #fff; flex: none; }
-  .side .brandbox b { color: #fff; font-size: 15px; line-height: 1.25; }
-  .gugi { font-family: 'Gugi', sans-serif; font-weight: 400; font-size: 17px; letter-spacing: .01em; }
-  .side .brandbox small { display: block; color: #7FA596; font-size: 11px; font-weight: 500; }
-  .side button.nav, .side a.nav { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; background: none; border: none; color: #A9C4B9; font-family: inherit; font-size: 14px; font-weight: 600; padding: 11px 12px; border-radius: 10px; cursor: pointer; text-decoration: none; margin-bottom: 4px; }
-  .side button.nav:hover, .side a.nav:hover { background: #1B4A3E; color: #fff; }
-  .side button.nav.on { background: #15524A; color: #fff; }
-  .side .spacer { flex: 1; }
-  .side .divider { border-top: 1px solid #25483D; margin: 10px 6px; }
+  .side { width: 232px; flex-shrink: 0; background: linear-gradient(180deg, #0F3B34 0%, #0B2C27 100%); color: #CFE3DC; padding: 0 14px 18px; display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+  .side .photo { position: relative; height: 170px; margin: 0 -14px; flex: none; background: url(../assets/login-bg.webp) 34% 22% / cover; }
+  .side .photo:after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(15,59,52,0) 30%, rgba(15,59,52,.75) 72%, #0F3B34 100%); }
+  .side .brandbox { position: relative; z-index: 1; display: flex; align-items: center; gap: 10px; margin: -44px 4px 18px; }
+  .side .brandbox img { width: 44px; height: 44px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 4px 12px rgba(0,0,0,.35); flex: none; background: #fff; }
+  .side .brandbox .gugi { display: block; color: #fff; font-size: 22px; line-height: 1.1; text-shadow: 0 2px 8px rgba(0,0,0,.35); }
+  .gugi { font-family: 'Gugi', sans-serif; font-weight: 400; letter-spacing: .01em; }
+  .side .brandbox small { display: inline-block; margin-top: 4px; font-size: 11px; font-weight: 700; color: #0F3B34; background: #FFD84A; border-radius: 999px; padding: 1px 9px; }
+  .side button.nav { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; background: none; border: none; color: #CFE3DC; font-family: inherit; font-size: 15px; font-weight: 700; padding: 7px 10px; border-radius: 14px; cursor: pointer; margin-bottom: 4px; position: relative; }
+  .side button.nav .ic { width: 34px; height: 34px; border-radius: 11px; display: grid; place-items: center; flex: none; }
+  .side button.nav:hover { background: rgba(255,255,255,.06); color: #fff; }
+  .side button.nav.on { background: rgba(255,255,255,.1); color: #fff; }
+  .side button.nav.on:after { content: ''; position: absolute; right: 12px; width: 7px; height: 7px; border-radius: 50%; background: #FFD84A; }
+  .side a.sub, .side button.sub { display: flex; align-items: center; gap: 8px; background: none; border: none; color: #9DBDB2; font-family: inherit; font-size: 13px; font-weight: 600; padding: 8px 12px; border-radius: 10px; cursor: pointer; text-decoration: none; text-align: left; }
+  .side a.sub:hover, .side button.sub:hover { color: #fff; background: rgba(255,255,255,.06); }
+  .side .spacer { flex: 1; min-height: 16px; }
   .pillbtn { border: 1px solid var(--border); border-radius: 999px; padding: 6px 14px; font-family: inherit; font-size: 13px; font-weight: 700; background: #fff; color: var(--text2); cursor: pointer; }
   .pillbtn.on { background: var(--accent); border-color: var(--accent); color: #fff; }
   .pillbtn:disabled { opacity: .6; cursor: default; }
-  .verbox { margin: 10px 6px 0; font-size: 11px; line-height: 1.6; color: #7FA596; }
+  .verbox { margin: 8px 12px 0; font-size: 10.5px; line-height: 1.6; color: #7FA596; }
   .verbox b { color: #A9C4B9; font-weight: 600; }
   .verfoot { display: none; font-size: 11px; line-height: 1.7; color: var(--text3); padding: 0 16px 28px; }
   .verfoot b { color: var(--text2); font-weight: 600; }
@@ -215,6 +220,8 @@ function render(inner) {
     paintVer_(); loadVersionInfo_();
     return;
   }
+  // 메뉴 아이콘 칸 색 = 로고 조각 색 (현황 청록 · 과제 노랑 · 명단 파랑 · 공지 빨강 · 설정 회색)
+  const tint = { home: ['#35D3C8', '#0B2C27'], tasks: ['rgba(255,216,74,.18)', '#FFD84A'], roster: ['rgba(61,139,242,.22)', '#6FA9FF'], notice: ['rgba(255,107,107,.2)', '#FF8A8A'], settings: ['rgba(255,255,255,.08)', '#CFE3DC'] };
   const items = [
     ['home', '현황', '<path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/>'],
     ['tasks', '과제', '<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 9h8M8 13h8M8 17h5"/>'],
@@ -223,16 +230,20 @@ function render(inner) {
     ['settings', '설정', '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>']
   ];
   const nav = items.map(function (it) {
-    return '<button class="nav' + (state.nav === it[0] ? ' on' : '') + '" data-nav="' + it[0] + '">' +
-      '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + it[2] + '</svg>' + it[1] + '</button>';
+    const on = state.nav === it[0];
+    const t = tint[it[0]];
+    const bg = on ? '#35D3C8' : t[0], fg = on ? '#0B2C27' : t[1];
+    return '<button class="nav' + (on ? ' on' : '') + '" data-nav="' + it[0] + '">' +
+      '<span class="ic" style="background:' + bg + ';"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="' + fg + '" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">' + it[2] + '</svg></span>' + it[1] + '</button>';
   }).join('');
   document.getElementById('app').innerHTML =
     '<div class="shell"><aside class="side">' +
-      '<div class="brandbox"><img src="../assets/logo.png" alt=""><b><span class="gugi">혜원포털</span><small>관리자</small></b></div>' +
+      '<div class="photo" aria-hidden="true"></div>' +
+      '<div class="brandbox"><img src="../assets/logo.png" alt=""><div><span class="gugi">혜원포털</span><small>관리자</small></div></div>' +
       nav +
-      '<div class="spacer"></div><div class="divider"></div>' +
-      '<a class="nav" id="navStudentView" href="../report/" target="_blank" rel="noopener">학생 화면 보기</a>' +
-      '<button class="nav" id="navLogout">로그아웃</button>' +
+      '<div class="spacer"></div>' +
+      '<a class="sub" id="navStudentView" href="../report/" target="_blank" rel="noopener"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7"/><path d="M8 7h9v9"/></svg>학생 화면 보기</a>' +
+      '<button class="sub" id="navLogout"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><path d="M21 12H9"/></svg>로그아웃</button>' +
       '<div class="verbox" id="verBox"></div>' +
     '</aside><main class="main">' + inner + '<div class="verfoot" id="verFoot"></div></main></div>' + bottomNavHtml_();
   document.querySelectorAll('[data-nav]').forEach(function (b) {
@@ -277,11 +288,18 @@ function verHtml_(sep) {
   } else { server = v.loaded ? '확인 못 함' : '확인 중…'; }
   return '화면 ' + web + sep + '서버 ' + server;
 }
+// 학생 화면과 같은 짧은 형식: «혜원포털 · v30 · 배포 2026-11-03 00:05 (KST)» (화면·서버 중 더 나중 시각)
+function verCompact_() {
+  const v = state.ver;
+  if (!v.loaded) return '혜원포털 · 버전 확인 중…';
+  const times = [v.web && v.web.full, v.server && v.server.buildTime].filter(function (t) { return /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(t || ''); }).sort();
+  return ['혜원포털', v.server ? 'v' + v.server.version : '', times.length ? '배포 ' + times[times.length - 1] + ' (KST)' : ''].filter(Boolean).join(' · ');
+}
 function paintVer_() {
   const box = document.getElementById('verBox');
-  if (box) box.innerHTML = verHtml_('<br>');
+  if (box) box.textContent = verCompact_();
   const foot = document.getElementById('verFoot');
-  if (foot) foot.innerHTML = verHtml_(' &nbsp;·&nbsp; ');
+  if (foot) foot.innerHTML = escapeHtml(verCompact_()) + '<br>ⓒKIM.JIN.HO';
   const line = document.getElementById('verLine');
   if (line) line.innerHTML = verHtml_(' &nbsp;·&nbsp; ');
 }
@@ -303,7 +321,12 @@ async function loadVersionInfo_() {
     if (r.ok) {
       const j = await r.json();
       const t = fmtIsoKst_(j && j.commit && j.commit.committer && j.commit.committer.date);
-      if (j && j.sha && t) v.web = { sha: String(j.sha).slice(0, 7), time: t };
+      if (j && j.sha && t) {
+        const p = {};
+        new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' })
+          .formatToParts(new Date(j.commit.committer.date)).forEach(function (x) { p[x.type] = x.value; });
+        v.web = { sha: String(j.sha).slice(0, 7), time: t, full: p.year + '-' + p.month + '-' + p.day + ' ' + p.hour + ':' + p.minute };
+      }
     }
   } catch (e) {}
   v.loading = false; v.loaded = true;
