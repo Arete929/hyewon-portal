@@ -67,6 +67,7 @@
   .upload input { display: none; }
   .footer { padding: 18px 20px 28px; text-align: center; }
   .footer span { font-size: 11px; color: var(--text3); }
+  .footer .verline { font-size: 10px; color: var(--text3); opacity: .8; margin-top: 4px; }
   .center-pad { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; padding: 0 20px; }
   .picklist { display: flex; flex-direction: column; gap: 8px; }
   .picklist a { display: flex; justify-content: space-between; align-items: center; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; text-decoration: none; color: var(--text); font-weight: 600; font-size: 15px; }
@@ -227,6 +228,51 @@ function clearLogin() {
 
 function render(html) {
   document.getElementById('app').innerHTML = html;
+  paintFootVer_();
+}
+
+// ---------- 바닥글: 만든이 + 화면·서버 버전/배포 시각 ----------
+const WEB_REPO = 'Arete929/hyewon-portal';
+state.ver = { loaded: false, loading: false, web: null, server: null };
+function footerHtml_(label) {
+  return '<div class="footer"><span>' + escapeHtml(label || '메이드 바이 이글티처 · 교육 목적') + '</span>' +
+    '<div class="verline"></div></div>';
+}
+function verText_() {
+  const v = state.ver;
+  const web = v.web ? v.web.sha + ' · ' + v.web.time : (v.loaded ? '확인 못 함' : '확인 중…');
+  let server = v.loaded ? '확인 못 함' : '확인 중…';
+  if (v.server) {
+    const m = /^(\d{4})-(\d{2})-(\d{2}) (\d{2}:\d{2})$/.exec(String(v.server.buildTime || ''));
+    server = 'v' + v.server.version + (m ? ' · ' + Number(m[2]) + '/' + Number(m[3]) + ' ' + m[4] : '');
+  }
+  return '화면 ' + web + ' · 서버 ' + server;
+}
+function paintFootVer_() {
+  document.querySelectorAll('.footer .verline').forEach(function (el) { el.textContent = verText_(); });
+}
+async function loadFootVer_() {
+  const v = state.ver;
+  if (v.loaded || v.loading || !state.exec) return;
+  v.loading = true;
+  try {
+    const st = await api('authStatus', null, 'GET');
+    if (st && st.ok) v.server = { version: st.serverVersion, buildTime: st.buildTime || '' };
+  } catch (e) {}
+  try {
+    const r = await fetch('https://api.github.com/repos/' + WEB_REPO + '/commits/main', { headers: { Accept: 'application/vnd.github+json' } });
+    if (r.ok) {
+      const j = await r.json();
+      const d = new Date(j && j.commit && j.commit.committer && j.commit.committer.date);
+      if (j && j.sha && !isNaN(d.getTime())) {
+        const p = {};
+        new Intl.DateTimeFormat('ko-KR', { timeZone: 'Asia/Seoul', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).formatToParts(d).forEach(function (x) { p[x.type] = x.value; });
+        v.web = { sha: String(j.sha).slice(0, 7), time: p.month + '/' + p.day + ' ' + p.hour + ':' + p.minute };
+      }
+    }
+  } catch (e) {}
+  v.loading = false; v.loaded = true;
+  paintFootVer_();
 }
 
 function brandLabel() {
@@ -288,6 +334,7 @@ async function boot() {
     }
   }
 
+  loadFootVer_();
   try {
     state.config = await api('getConfig', null, 'GET');
   } catch (e) {
@@ -396,7 +443,7 @@ function renderGlobalLogin(errorMsg) {
       '<div style="flex-shrink:0;margin-top:18px;" aria-hidden="true">' +
         '<img src="../assets/bottom-banner.png" alt="" style="display:block;width:100%;">' +
       '</div>' +
-      '<div class="footer"><span>Made by Eagle Teacher · 교육 목적</span></div>' +
+      footerHtml_() +
     '</div>'
   );
   wireOtp('otpId', true);
@@ -638,7 +685,7 @@ async function renderScore_() {
     '<div class="head"><h1 style="margin:0;font-size:21px;font-weight:800;">내 성적</h1>' +
       '<p>체육 수행평가 점수를 확인해요.</p></div>' +
     '<div class="main" id="scoreBody"><div class="loading">불러오는 중…</div></div>' +
-    '<div class="footer"><span>Made by Eagle Teacher · 교육 목적</span></div>' +
+    footerHtml_() +
     bottombarHtml_('score')
   );
   wireChrome_();
@@ -718,7 +765,7 @@ function renderToday() {
       (items || '<p class="hint">표시할 과제가 없습니다.</p>') +
     '</div></div>' +
     '<div class="extras" id="extras"></div>' +
-    '<div class="footer"><span>Made by Eagle Teacher · 교육 목적</span></div>' +
+    footerHtml_() +
     bottombarHtml_('home')
   );
 
@@ -853,7 +900,7 @@ function renderAssignmentForm(tab, entry, notice) {
       '</button>' +
       '<p style="text-align:center;"><span class="hint">제출 시 ' + escapeHtml(state.login.studentId) + ' ' + escapeHtml(state.login.studentName) + ' 이름으로 기록됩니다</span></p>' +
     '</div>' +
-    '<div class="footer"><span>Made by Eagle Teacher · 교육 목적</span></div>'
+    footerHtml_()
   );
 
   wireFieldEvents(tab, inputs);
@@ -898,7 +945,7 @@ function renderSubmissionStatus(tab, entry) {
         '<div class="rowbetween" style="font-size:13px;padding:6px 0;"><span style="color:var(--text2);">과제 유형</span><span style="font-weight:600;">' + escapeHtml(assignmentTypeLabel_(tab)) + '</span></div>' +
       '</div>' +
     '</div>' +
-    '<div class="footer"><span>Made by Eagle Teacher · 교육 목적</span></div>' +
+    footerHtml_() +
     bottombarHtml_('home')
   );
   const backBtn2 = wireChrome_();
@@ -990,7 +1037,7 @@ function renderPicker() {
     '<div class="main"><div class="picklist">' + (items || '<p style="color:var(--text2);font-size:14px;">표시할 과제가 없습니다.</p>') + '</div>' +
       (isFiltered ? '' : teacherLinkBox()) +
     '</div>' +
-    '<div class="footer"><span>' + escapeHtml(brandLabel()) + '</span></div>'
+    footerHtml_(brandLabel())
   );
 
   if (!isFiltered) {
@@ -1095,7 +1142,7 @@ function renderLogin(tab, errorMsg) {
         '<button class="btn" id="loginBtn">로그인</button>' +
       '</div>' +
     '</div>' +
-    '<div class="footer"><span>Made by Eagle Teacher · 교육 목적</span></div>'
+    footerHtml_()
   );
 
   wireOtp('otpId', true);
@@ -1248,7 +1295,7 @@ function renderForm(tab, notice) {
       '<button class="btn" id="submitBtn" style="margin-bottom:10px;">제출하기</button>' +
       '<p style="text-align:center;"><span class="hint">제출 시 ' + escapeHtml(state.login.studentId) + ' ' + escapeHtml(state.login.studentName) + ' 이름으로 기록됩니다</span></p>' +
     '</div>' +
-    '<div class="footer"><span>Made by Eagle Teacher · 교육 목적</span></div>'
+    footerHtml_()
   );
 
   wireFieldEvents(tab, inputs);
