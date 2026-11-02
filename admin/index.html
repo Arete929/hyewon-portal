@@ -1131,6 +1131,8 @@ async function renderRosterImport(notice, refresh) {
   let src, cfg;
   try { src = await api('getSourceRoster'); } catch (e) { return; }
   try { cfg = await apiGet('getConfig'); state.config = cfg; } catch (e) {}
+  let exc = [];
+  try { const er = await api('getRosterExceptions'); if (er && er.success) exc = er.exceptions || []; } catch (e) {}
   srcState.tabs = (cfg && cfg.tabs) || [];
   srcState.readAt = fmtNowKst_();
   try { localStorage.setItem('hyewon_roster_read_at', srcState.readAt); } catch (e) {}
@@ -1198,6 +1200,15 @@ async function renderRosterImport(notice, refresh) {
         '<span class="hint">마지막으로 읽은 시각 <b>' + escapeHtml(srcState.readAt) + '</b></span></div>' +
         '<p style="margin:10px 0 0;"><a href="#" id="srcChange" class="hint">다른 시트로 바꾸기</a></p>' +
       '</div>' +
+      '<div class="card wide"><h2>예외 학생 <span class="hint">(대안학교 · 전출 등)</span></h2>' +
+        '<p class="hint" style="margin:0 0 10px;">예외로 지정하면 시트에서 읽을 때 빠지고, 이미 들어 있던 모든 과제 명단에서도 지워져요. 제출 기록은 그대로 남아요.</p>' +
+        (exc.length ? '<div class="tablewrap"><table><tr><th>학번</th><th>사유</th><th>지정</th><th></th></tr>' + exc.map(function (x) {
+          return '<tr><td>' + escapeHtml(x.studentId) + '</td><td>' + escapeHtml(x.reason) + '</td><td>' + escapeHtml(x.at) + '</td><td><button class="btn-outline btn-sm excOff" data-id="' + escapeHtml(x.studentId) + '">해제</button></td></tr>';
+        }).join('') + '</table></div>' : '<p class="hint">지정된 예외 학생이 없어요.</p>') +
+        '<div class="row" style="margin-top:10px;"><input id="excId" type="text" inputmode="numeric" maxlength="4" placeholder="학번 (예: 3416)" style="max-width:140px;">' +
+        '<input id="excWhy" type="text" maxlength="40" placeholder="사유 (예: 대안학교)"><button class="btn" id="excAdd">예외로 지정</button></div>' +
+        '<div id="excOut" style="margin-top:10px;"></div>' +
+      '</div>' +
       '<div class="card wide"><h2>2. 기존 학생코드 (선택)</h2>' +
         '<p class="hint" style="margin:0 0 8px;">혜원핏 등에서 쓰던 코드를 «학번  코드» 한 줄씩(탭·쉼표·공백 구분) 붙여넣으세요. 이름 열이 끼어 있어도 돼요. 비워두면 이미 서버에 있는 코드는 유지하고 없는 학생만 새로 발급해요.</p>' +
         '<textarea id="codeRaw" placeholder="3101&#9;LX85P5I25"></textarea>' +
@@ -1212,6 +1223,24 @@ async function renderRosterImport(notice, refresh) {
     '</div>'
   );
   document.getElementById('srcRefresh').onclick = refreshRosterSource_;
+  document.getElementById('excAdd').onclick = async function () {
+    const id = document.getElementById('excId').value.trim(), why = document.getElementById('excWhy').value.trim();
+    const out = document.getElementById('excOut');
+    if (!/^\d{4}$/.test(id)) { out.innerHTML = '<div class="msg error">학번을 4자리 숫자로 입력해주세요.</div>'; return; }
+    if (!confirm(id + ' 학생을 예외로 지정할까요?\n\n이미 들어 있는 모든 과제 명단에서 이 학생이 지워져요. (제출 기록은 그대로)')) return;
+    let r;
+    try { r = await api('setRosterException', { studentId: id, reason: why, on: true }); } catch (e) { return; }
+    renderRosterImport(r && r.success ? { type: 'ok', text: id + ' 예외로 지정했어요' + (why ? ' (' + why + ')' : '') + ' · 과제 명단에서 ' + r.removedRows + '줄 지웠어요.' } : { type: 'error', text: (r && r.message) || '지정하지 못했어요. 서버(Code.gs)가 버전 28 이상인지 확인해주세요.' });
+  };
+  document.querySelectorAll('.excOff').forEach(function (b) {
+    b.onclick = async function () {
+      const id = b.getAttribute('data-id');
+      if (!confirm(id + ' 학생의 예외를 해제할까요?\n명단에는 «명단 가져오기»를 다시 해야 들어와요.')) return;
+      let r;
+      try { r = await api('setRosterException', { studentId: id, on: false }); } catch (e) { return; }
+      renderRosterImport(r && r.success ? { type: 'ok', text: id + ' 예외를 해제했어요. 명단에 넣으려면 «명단 가져오기»를 다시 해주세요.' } : { type: 'error', text: (r && r.message) || '해제하지 못했어요.' });
+    };
+  });
   document.getElementById('srcChange').onclick = function (e) { e.preventDefault(); changeRosterSource(); };
   document.getElementById('codeCheck').onclick = checkCodes;
   document.getElementById('rsApply').onclick = applyRoster;
