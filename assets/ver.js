@@ -18,7 +18,7 @@
   function paint() {
     var els = document.querySelectorAll('.hv-foot');
     for (var i = 0; i < els.length; i++) {
-      els[i].innerHTML = '<small>' + text() + '</small><span>ⓒ 메이드 바이 이글티처 · 교육 목적</span>';
+      els[i].innerHTML = '<small>' + text() + '</small><span>ⓒKIM.JIN.HO</span>';
     }
   }
   async function load(exec) {
