@@ -137,6 +137,13 @@
   tr:last-child td { border-bottom: none; }
   .tablewrap { overflow-x: auto; margin-bottom: 16px; }
   .code { font-family: ui-monospace, Menlo, monospace; letter-spacing: .06em; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 2px 7px; }
+  .modepick { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .modepick .mode { display: flex; flex-direction: column; gap: 4px; padding: 14px; border: 1.5px solid var(--border); border-radius: 14px; cursor: pointer; background: #fff; }
+  .modepick .mode input { display: none; }
+  .modepick .mode b { font-size: 14px; color: var(--text); }
+  .modepick .mode span { font-size: 12px; color: var(--text2); font-weight: 400; line-height: 1.5; }
+  .modepick .mode.on { border-color: var(--accent); background: #F1F8F5; box-shadow: 0 0 0 3px rgba(21,82,74,.12); }
+  @media (max-width: 560px) { .modepick { grid-template-columns: 1fr; } }
   .fieldrow { display: grid; grid-template-columns: 1fr 140px 34px; gap: 8px; margin-bottom: 8px; align-items: center; }
   .loading { text-align: center; padding: 60px 20px; color: var(--text2); font-size: 14px; }
   .statusbtns { display: flex; gap: 6px; }
@@ -468,11 +475,26 @@ function renderNewTab(notice) {
       (notice ? '<div class="msg error">' + escapeHtml(notice) + '</div>' : '') +
       '<div class="card wide">' +
         '<div class="field"><label for="tabName">과제 이름</label>' +
-        '<input id="tabName" type="text" placeholder="예: 2학년-줄넘기 (학년 접두어를 붙이면 학년별 링크가 자동으로 걸러줍니다)"></div>' +
+        '<input id="tabName" type="text" placeholder="예: 3학년 줄넘기 (학년을 앞에 붙이면 그 학년 학생에게만 보여요)"></div>' +
+        '<div class="field"><label>제출 방식</label>' +
+          '<div class="modepick">' +
+            '<label class="mode on"><input type="radio" name="mode" value="login" checked>' +
+              '<b>🔐 학번 + 학생코드 로그인</b><span>명단에 있는 학생만 본인 확인 후 제출해요. 성적에 들어가는 과제에 알맞아요.</span></label>' +
+            '<label class="mode"><input type="radio" name="mode" value="qr">' +
+              '<b>📱 QR·링크로만 (로그인 없음)</b><span>QR을 찍고 학번·이름만 적어 바로 제출해요. 명단이 없어도 되지만 본인 확인은 안 돼요.</span></label>' +
+          '</div></div>' +
+        '<div class="field"><label for="tabDesc">교사 안내 <span class="hint">(선택 · 학생 화면 «교사 안내»에 보여요)</span></label>' +
+        '<textarea id="tabDesc" style="min-height:80px;font-family:inherit;font-size:14px;" placeholder="예: 동작 3가지를 연결해 연습하고 활동 영상을 제출하세요."></textarea></div>' +
         '<label style="margin-bottom:8px;display:block;">항목</label>' +
         '<div id="fieldRows"></div>' +
         '<button class="btn-outline btn-sm" id="addFieldBtn" type="button">+ 항목 추가</button>' +
-        '<div style="margin-top:20px;"><button class="btn" id="createBtn">만들기</button></div>' +
+        '<div class="row" style="flex-wrap:wrap;gap:16px;margin-top:20px;">' +
+          '<div class="field" style="margin:0;"><label for="tabDeadline">제출 기한 <span class="hint">(선택)</span></label><input id="tabDeadline" type="datetime-local" style="width:auto;padding:9px 12px;"></div>' +
+          '<div class="field" style="margin:0;"><label>복붙 방지 <span class="hint">(글쓰기 과제)</span></label>' +
+            '<label style="display:flex;align-items:center;gap:8px;font-weight:500;color:var(--text);font-size:14px;"><input type="checkbox" id="tabAp" style="width:auto;"> 켜기 · 한 번에 <input id="tabApMin" type="number" min="5" max="500" value="20" style="width:72px;padding:6px 8px;"> 자 이상 입력되면 기록</label></div>' +
+        '</div>' +
+        '<p class="hint" style="margin:16px 0 0;">만든 과제는 «대기» 상태라 학생에게 아직 안 보여요. 준비가 끝나면 과제 화면에서 «진행중»으로 바꿔 주세요.</p>' +
+        '<div style="margin-top:14px;"><button class="btn" id="createBtn">만들기</button></div>' +
       '</div>' +
     '</div>'
   );
@@ -493,6 +515,9 @@ function renderNewTab(notice) {
   }
   addRow('항목1', 'short');
   document.getElementById('addFieldBtn').onclick = function () { addRow('', 'short'); };
+  document.querySelectorAll('.modepick input[name=mode]').forEach(function (r) {
+    r.onchange = function () { document.querySelectorAll('.modepick .mode').forEach(function (m) { m.classList.toggle('on', m.querySelector('input').checked); }); };
+  });
   document.getElementById('createBtn').onclick = doCreateTab;
 }
 
@@ -513,6 +538,25 @@ async function doCreateTab() {
   try { res = await api('addTab', { tabName: tabName, fields: fields }); }
   catch (e) { return; }
   if (!res.success) return renderNewTab(res.message || '만들기에 실패했습니다.');
+
+  // 고른 설정을 바로 적용해요(하나가 실패해도 과제는 만들어진 상태라 과제 화면에서 다시 바꿀 수 있어요).
+  const modeEl = document.querySelector('.modepick input[name=mode]:checked');
+  const qr = modeEl && modeEl.value === 'qr';
+  const desc = (document.getElementById('tabDesc').value || '').trim();
+  const dl = (document.getElementById('tabDeadline').value || '').slice(0, 16);
+  const ap = document.getElementById('tabAp').checked;
+  const apMin = Number(document.getElementById('tabApMin').value) || 20;
+  const fails = [];
+  async function step(label, action, data) {
+    btn.textContent = label + ' 적용 중…';
+    try { const r = await api(action, data); if (!r || r.success !== true) fails.push(label + ': ' + ((r && r.message) || '실패')); }
+    catch (e) { if (String(e && e.message) === 'unauthorized') throw e; fails.push(label + ': 서버 연결 실패'); }
+  }
+  if (desc) await step('교사 안내', 'updateHeaders', { tabName: tabName, headers: ['학번', '이름'].concat(fields), description: desc });
+  if (qr) await step('로그인 없이 받기', 'setOpenAccess', { tabName: tabName, on: true });
+  if (dl) await step('제출 기한', 'setDeadline', { tabName: tabName, deadline: dl });
+  if (ap) await step('복붙 방지', 'setAntiPaste', { tabName: tabName, on: true, minChars: apMin });
+  if (fails.length) alert('과제는 만들었지만 일부 설정을 적용하지 못했어요. 과제 화면에서 다시 바꿔 주세요.\n\n' + fails.join('\n'));
   renderDetail(tabName);
 }
 
