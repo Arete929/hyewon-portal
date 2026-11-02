@@ -147,6 +147,14 @@ const TOKEN_KEY = 'hyewon_admin_token';
 const state = { exec: '', token: '', config: null, currentTab: '', detailView: 'roster', nav: 'home' };
 
 function qs(name) { return new URLSearchParams(location.search).get(name) || ''; }
+function loadQrLib_() {
+  if (window.qrcode) return Promise.resolve();
+  return new Promise(function (resolve, reject) {
+    const el = document.createElement('script');
+    el.src = 'qrcode.js'; el.onload = resolve; el.onerror = reject;
+    document.head.appendChild(el);
+  });
+}
 function escapeHtml(s) {
   return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
     return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
@@ -489,6 +497,7 @@ async function renderDetail(tabName) {
   const status = (tab.meta && tab.meta.status) || 'open';
   const teacherFile = tab.meta && tab.meta.teacherFile;
   const ap = !!(tab.meta && tab.meta.antiPaste);
+  const openAcc = !!(tab.meta && tab.meta.openAccess);
   const apMin = (function () { const n = Math.floor(Number(tab.meta && tab.meta.antiPasteMin)); return (n >= 5 && n <= 500) ? n : 20; })();
 
   render(
@@ -497,12 +506,18 @@ async function renderDetail(tabName) {
       '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:8px;">' +
         '<h1 class="serif" style="margin:0;">' + escapeHtml(tabName) + '</h1>' +
         '<button type="button" class="pillbtn' + (ap ? ' on' : '') + '" id="apToggle">복붙방지 ' + (ap ? '켜짐' : '꺼짐') + '</button>' +
+        '<button type="button" class="pillbtn' + (openAcc ? ' on' : '') + '" id="oaToggle">로그인 없이 받기 ' + (openAcc ? '켜짐' : '꺼짐') + '</button>' +
       '</div>' +
       '<div class="hint" style="margin:6px 0 12px;line-height:1.9;">' +
         (ap
           ? '학생 화면에서 붙여넣기·끌어다 놓기를 막고, 한 번에 <input id="apMin" type="number" min="5" max="500" value="' + apMin + '" style="width:72px;display:inline-block;padding:4px 8px;"> 자 이상 입력되면 작성 기록에 남겨요. <span id="apMsg"></span>'
           : '켜면 학생 화면에서 붙여넣기를 막고, 한 번에 일정 글자 수 이상 입력되면 작성 기록에 남겨요.') +
       '</div>' +
+      (openAcc
+        ? '<div class="msg warn" style="max-width:560px;">로그인 없이 받는 과제예요. 학생은 학번·이름만 적어 제출하고 학생코드는 묻지 않아요(본인 확인이 안 되니 민감한 과제에는 쓰지 마세요). 이 과제 전용 링크로만 들어올 수 있어요.' +
+          '<div class="row" style="margin-top:8px;"><input type="text" readonly id="oaUrl" value="' + escapeHtml(new URL('../report/', location.href).href + '?tab=' + encodeURIComponent(tabName)) + '"><button class="btn-outline btn-sm" id="oaCopy" type="button">복사</button></div>' +
+          '<div id="oaQr" style="margin-top:12px;"></div></div>'
+        : '') +
       (tab.description ? '<p class="lead">' + escapeHtml(tab.description) + '</p>' : '') +
       '<div class="statusbtns" style="max-width:440px;margin-bottom:16px;">' +
         '<button class="btn-outline' + (status === 'wait' ? '' : '') + '" data-status="wait">대기</button>' +
@@ -534,6 +549,27 @@ async function renderDetail(tabName) {
     b.onclick = function () { doSetStatus(tabName, b.getAttribute('data-status')); };
   });
   document.getElementById('delTabBtn').onclick = function () { doDeleteTab(tabName); };
+  document.getElementById('oaToggle').onclick = async function () {
+    const btn = this; btn.disabled = true;
+    if (!openAcc && !confirm('로그인 없이 받을까요?\n\n학생코드 확인이 없어서 학번과 이름을 아는 누구나 제출할 수 있어요.')) { btn.disabled = false; return; }
+    let r;
+    try { r = await api('setOpenAccess', { tabName: tabName, on: !openAcc }); } catch (e) { btn.disabled = false; return; }
+    if (!r || r.success !== true) { btn.disabled = false; alert((r && r.message) || '바꾸지 못했어요. 서버(Code.gs)가 버전 29 이상인지 확인해주세요.'); return; }
+    renderDetail(tabName);
+  };
+  if (openAcc) loadQrLib_().then(function () {
+    const box = document.getElementById('oaQr'); if (!box) return;
+    const q = qrcode(0, 'M'); q.addData(document.getElementById('oaUrl').value); q.make();
+    const png = q.createDataURL(8, 16);
+    box.innerHTML = '<img alt="QR" src="' + png + '" style="width:180px;height:180px;image-rendering:pixelated;background:#fff;border:1px solid var(--border);border-radius:10px;display:block;">' +
+      '<a class="btn-outline btn-sm" style="margin-top:8px;display:inline-block;text-decoration:none;" download="' + escapeHtml(tabName) + '_QR.gif" href="' + png + '">QR 이미지 저장</a>';
+  }).catch(function () { const box = document.getElementById('oaQr'); if (box) box.textContent = 'QR을 만들지 못했어요. 위 링크를 복사해서 쓰세요.'; });
+  const oaCopy = document.getElementById('oaCopy');
+  if (oaCopy) oaCopy.onclick = function () {
+    const el = document.getElementById('oaUrl'); el.select();
+    try { navigator.clipboard.writeText(el.value); } catch (e) { document.execCommand('copy'); }
+    this.textContent = '복사됨';
+  };
   document.getElementById('apToggle').onclick = async function () {
     const btn = this; btn.disabled = true;
     let r;

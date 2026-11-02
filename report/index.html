@@ -363,6 +363,12 @@ async function boot() {
   if (status === 'wait') { return renderBlocked(tab, '아직 시작 전인 과제입니다. 선생님이 시작하면 제출할 수 있어요.'); }
   if (status === 'closed') { return renderBlocked(tab, '이 과제는 제출이 마감되었습니다.'); }
 
+  // 로그인 없는 과제: 학생코드 없이 학번·이름만 적어서 냅니다.
+  if (tab.meta && tab.meta.openAccess) {
+    state.login = { studentId: '', studentName: '', code: '', open: true };
+    return renderForm(tab);
+  }
+
   const saved = loadLogin();
   if (saved) { return tryAutoLogin(tab, saved); }
 
@@ -898,7 +904,7 @@ function renderAssignmentForm(tab, entry, notice) {
         '<span>' + (entry.submitted ? '수정 제출하기' : '제출하기') + '</span>' +
         '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto;"><polyline points="9 18 15 12 9 6"></polyline></svg>' +
       '</button>' +
-      '<p style="text-align:center;"><span class="hint">제출 시 ' + escapeHtml(state.login.studentId) + ' ' + escapeHtml(state.login.studentName) + ' 이름으로 기록됩니다</span></p>' +
+      (state.login.open ? '' : '<p style="text-align:center;"><span class="hint">제출 시 ' + escapeHtml(state.login.studentId) + ' ' + escapeHtml(state.login.studentName) + ' 이름으로 기록됩니다</span></p>') +
     '</div>' +
     footerHtml_()
   );
@@ -1285,11 +1291,15 @@ function renderForm(tab, notice) {
       (tab.description ? '<p>' + escapeHtml(tab.description) + '</p>' : '') +
     '</div>' +
     '<div class="main">' +
-      '<div class="identity rowbetween">' +
-        '<div><b>' + escapeHtml(state.login.studentId) + ' · ' + escapeHtml(state.login.studentName) + '</b>' +
-        '<small>학생코드로 확인됨</small></div>' +
-        '<button class="linklike" id="logoutBtn" style="padding:4px 0;">로그아웃</button>' +
-      '</div>' +
+      (state.login.open
+        ? '<div class="card"><div class="field"><label>학번 (4자리)</label><input id="openId" type="text" inputmode="numeric" maxlength="4" autocomplete="off" value="' + escapeHtml(state.login.studentId) + '"></div>' +
+          '<div class="field"><label>이름</label><input id="openName" type="text" maxlength="20" autocomplete="off" value="' + escapeHtml(state.login.studentName) + '"></div>' +
+          '<span class="hint">로그인 없이 제출하는 과제예요. 학번과 이름을 정확히 적어주세요.</span></div>'
+        : '<div class="identity rowbetween">' +
+          '<div><b>' + escapeHtml(state.login.studentId) + ' · ' + escapeHtml(state.login.studentName) + '</b>' +
+          '<small>학생코드로 확인됨</small></div>' +
+          '<button class="linklike" id="logoutBtn" style="padding:4px 0;">로그아웃</button>' +
+        '</div>') +
       (notice ? '<div class="msg error">' + escapeHtml(notice) + '</div>' : '') +
       '<div class="card">' + fieldsHtml + '</div>' +
       '<button class="btn" id="submitBtn" style="margin-bottom:10px;">제출하기</button>' +
@@ -1300,7 +1310,8 @@ function renderForm(tab, notice) {
 
   wireFieldEvents(tab, inputs);
   document.getElementById('submitBtn').onclick = function () { doSubmit(tab, false); };
-  document.getElementById('logoutBtn').onclick = function () {
+  const lo = document.getElementById('logoutBtn');
+  if (lo) lo.onclick = function () {
     if (!confirm('로그아웃할까요? 다시 쓰려면 학번과 학생코드를 입력해야 합니다.')) return;
     clearLogin();
     state.login = null;
@@ -1310,6 +1321,13 @@ function renderForm(tab, notice) {
 
 async function doSubmit(tab, confirmOverwrite) {
   if (isPeek_()) { return renderCurrentForm(tab, '마스터코드로는 둘러볼 수만 있어요. 제출은 학생 본인 코드로 해주세요.'); }
+  if (state.login.open) {
+    const oi = document.getElementById('openId'), on = document.getElementById('openName');
+    state.login.studentId = oi ? oi.value.trim() : '';
+    state.login.studentName = on ? on.value.trim() : '';
+    if (!/^\d{4}$/.test(state.login.studentId)) { return renderCurrentForm(tab, '학번을 4자리 숫자로 입력해주세요.'); }
+    if (!state.login.studentName) { return renderCurrentForm(tab, '이름을 입력해주세요.'); }
+  }
   const inputs = fieldInputs(tab);
   const values = tab.fields.map(function () { return ''; });
   values[0] = state.login.studentId;
