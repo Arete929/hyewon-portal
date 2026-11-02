@@ -386,6 +386,18 @@ function fileToBase64(file) {
   });
 }
 
+// 과제의 지금 상태 — «대기»라도 예약 공개 시각(meta.openAt, 한국 시각)이 지났으면 «진행중»으로 봐요(서버도 같은 규칙).
+function openAtInfo_(tab) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/.exec(String((tab && tab.meta && tab.meta.openAt) || ''));
+  if (!m) return null;
+  const at = new Date(m[0] + ':00+09:00').getTime();
+  return { passed: Date.now() >= at, text: Number(m[2]) + '월 ' + Number(m[3]) + '일 ' + m[4] + ':' + m[5] };
+}
+function effStatus_(tab) {
+  const s = (tab && tab.meta && tab.meta.status) || 'open';
+  if (s === 'wait') { const o = openAtInfo_(tab); if (o && o.passed) return 'open'; }
+  return s;
+}
 function statusLabel(s) {
   return s === 'open' ? '진행중' : s === 'wait' ? '대기' : '마감';
 }
@@ -442,8 +454,11 @@ async function boot() {
   const tab = state.config.tabs.find(function (t) { return t.sheetName === state.tab; });
   if (!tab) { return renderError('요청하신 과제를 찾을 수 없습니다.'); }
 
-  const status = (tab.meta && tab.meta.status) || 'open';
-  if (status === 'wait') { return renderBlocked(tab, '아직 시작 전인 과제입니다. 선생님이 시작하면 제출할 수 있어요.'); }
+  const status = effStatus_(tab);
+  if (status === 'wait') {
+    const o = openAtInfo_(tab);
+    return renderBlocked(tab, o ? o.text + '에 열리는 과제예요. 그때 다시 들어와 주세요.' : '아직 시작 전인 과제입니다. 선생님이 시작하면 제출할 수 있어요.');
+  }
   if (status === 'closed') { return renderBlocked(tab, '이 과제는 제출이 마감되었습니다.'); }
 
   // 로그인 없는 과제: 학생코드 없이 학번·이름만 적어서 냅니다.
@@ -1214,7 +1229,7 @@ function renderPicker() {
   }
 
   const items = open.map(function (t) {
-    const s = (t.meta && t.meta.status) || 'open';
+    const s = effStatus_(t);
     return '<a href="?tab=' + encodeURIComponent(t.sheetName) + '">' +
       '<span>' + escapeHtml(t.sheetName) + '</span>' +
       '<span class="pill ' + s + '">' + statusLabel(s) + '</span>' +
@@ -1323,7 +1338,7 @@ function renderError(message) {
 // ---------- 학생 로그인 ----------
 
 function renderLogin(tab, errorMsg) {
-  const status = (tab.meta && tab.meta.status) || 'open';
+  const status = effStatus_(tab);
   render(
     '<div class="topbar"><span class="brand">' + escapeHtml(brandLabel()) + '</span><span class="pill ' + status + '">' + statusLabel(status) + '</span></div>' +
     '<div class="head"><h1 class="serif">' + escapeHtml(tab.sheetName) + '</h1>' +
@@ -1469,7 +1484,7 @@ function wireFieldEvents(tab, inputs) {
 }
 
 function renderForm(tab, notice) {
-  const status = (tab.meta && tab.meta.status) || 'open';
+  const status = effStatus_(tab);
   const antiPaste = antiPasteMinOf_(tab);
   const inputs = fieldInputs(tab);
   const fieldsHtml = buildFieldsHtml(inputs, antiPaste);
