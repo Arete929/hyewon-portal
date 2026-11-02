@@ -65,6 +65,7 @@
 </head>
 <body>
 <div id="app"></div>
+<script src="../assets/ver.js"></script>
 <script>
 const TOKEN_KEY = 'hyewon_admin_token';          // 관리자 페이지와 같은 로그인(같은 주소에서 한 번 로그인하면 여기서도 유지)
 const LS_RECENT = 'note_recent_students', LS_SUBJECT = 'note_last_subject', LS_KIND = 'note_last_kind';
@@ -108,7 +109,8 @@ async function api(action, data, noToken) {
 function shell(inner, withBar) {
   document.getElementById('app').innerHTML =
     (withBar ? '<div class="bar"><div><b>학생 기록</b><small>' + (state.schoolYear ? state.schoolYear + '학년도' : '') + '</small></div><button id="logoutBtn" type="button">로그아웃</button></div>' : '') +
-    inner;
+    inner + '<div class="hv-foot"></div>';
+  if (window.HyewonVer) HyewonVer.load(state.exec);
   const lo = document.getElementById('logoutBtn');
   if (lo) lo.onclick = function () { state.token = ''; try { localStorage.removeItem(TOKEN_KEY); } catch (e) {} renderLogin(); };
 }

@@ -209,7 +209,11 @@ function wireBottomNav_() {
   document.getElementById('sheetOut').onclick = function () { close(); doLogout(); };
 }
 function render(inner) {
-  if (!state.token) { document.getElementById('app').innerHTML = inner; return; }
+  if (!state.token) {
+    document.getElementById('app').innerHTML = inner + '<div class="verfoot" id="verFoot" style="display:block;text-align:center;"></div>';
+    paintVer_(); loadVersionInfo_();
+    return;
+  }
   const items = [
     ['home', '현황', '<path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/>'],
     ['tasks', '과제', '<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 9h8M8 13h8M8 17h5"/>'],
@@ -282,11 +286,16 @@ function paintVer_() {
 }
 async function loadVersionInfo_() {
   const v = state.ver;
-  if (v.loaded || v.loading || !state.token) return;
+  if (v.loaded || v.loading || !state.exec) return;
   v.loading = true;
   try {
-    const st = await api('getPortalStatus');
-    if (st && st.success) v.server = { version: st.serverVersion, buildTime: st.buildTime || '', commit: st.buildCommit || '' };
+    if (state.token) {
+      const st = await api('getPortalStatus');
+      if (st && st.success) v.server = { version: st.serverVersion, buildTime: st.buildTime || '', commit: st.buildCommit || '' };
+    } else {
+      const st = await apiGet('authStatus');   // 로그인 전 — 공개 정보(버전·배포 시각)만
+      if (st && st.ok) v.server = { version: st.serverVersion, buildTime: st.buildTime || '', commit: '' };
+    }
   } catch (e) {}
   try {
     const r = await fetch('https://api.github.com/repos/' + WEB_REPO + '/commits/main', { headers: { Accept: 'application/vnd.github+json' } });

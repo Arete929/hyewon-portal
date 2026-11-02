@@ -1,7 +1,7 @@
 /* 학생 기록 서비스워커 — 홈 화면 설치(PWA) + 오프라인에서도 화면 열기.
    서버(Apps Script) 호출은 절대 캐시하지 않습니다. 화면은 «네트워크 먼저», 안 되면 저장본. */
-var CACHE = 'note-shell-v1';
-var SHELL = ['./', './index.html', './manifest.webmanifest', '../assets/favicon-192.png', '../assets/favicon-512.png', '../routes.json'];
+var CACHE = 'note-shell-v2';
+var SHELL = ['./', './index.html', './manifest.webmanifest', '../assets/favicon-192.png', '../assets/favicon-512.png', '../routes.json', '../assets/ver.js'];
 
 self.addEventListener('install', function (e) {
   e.waitUntil(caches.open(CACHE).then(function (c) {
