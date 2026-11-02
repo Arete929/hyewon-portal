@@ -726,7 +726,9 @@ async function renderDetail(tabName) {
         : '') +
       (function () {
         const code = tab.meta && tab.meta.shortCode;
-        const shortUrl = code ? new URL('../', location.href).href + '?' + code : '';
+        const hasPage = !!(tab.meta && tab.meta.sharePage);
+        // 썸네일 페이지가 있으면 «…/k7q2/» (카톡·밴드에 과제명 썸네일), 없으면 «…/?k7q2»
+        const shortUrl = code ? new URL('../', location.href).href + (hasPage ? code + '/' : '?' + code) : '';
         return '<div class="card wide linkcard" style="max-width:720px;margin-bottom:14px;padding:16px 18px;">' +
           '<b style="font-size:14px;">학생용 주소 · QR</b>' +
           (code
@@ -735,6 +737,9 @@ async function renderDetail(tabName) {
                 '<div class="hint" style="margin:2px 0 10px;">짧은 코드 <b class="code">' + escapeHtml(code) + '</b> · 칠판에 적거나 단톡방에 붙여 주세요.' + (openAcc ? '' : ' 학생은 이 주소로 들어와 학번·학생코드로 로그인해요.') + '</div>' +
                 '<input type="hidden" id="oaUrl" value="' + escapeHtml(shortUrl) + '">' +
                 '<div class="row" style="gap:8px;flex-wrap:wrap;"><button class="btn btn-sm" id="oaCopy" type="button">주소 복사</button><span id="oaQrDl"></span></div>' +
+                '<div class="hint" id="spMsg" style="margin-top:10px;">' + (hasPage
+                  ? '💬 카톡·밴드에 보내면 과제명 썸네일이 떠요. <a href="#" id="spMake">썸네일 다시 만들기</a>'
+                  : '💬 카톡·밴드 썸네일(과제명 표시)이 아직 없어요. <a href="#" id="spMake">썸네일 페이지 만들기</a>') + '</div>' +
               '</div></div>'
             : '<div class="row" style="margin-top:10px;gap:10px;flex-wrap:wrap;"><button class="btn btn-sm" id="scMake" type="button">짧은 주소 · QR 만들기</button>' +
               '<span class="hint">«…/hyewon-portal/?k7q2» 같은 짧은 주소와 QR이 생겨요.</span></div>') +
@@ -837,6 +842,21 @@ async function renderDetail(tabName) {
     box.innerHTML = '<img alt="QR" src="' + png + '">';
     document.getElementById('oaQrDl').innerHTML = '<a class="btn-outline btn-sm" style="text-decoration:none;" download="' + escapeHtml(tabName) + '_QR.gif" href="' + png + '">QR 이미지 저장</a>';
   }).catch(function () { const box = document.getElementById('oaQr'); if (box) box.textContent = 'QR을 만들지 못했어요. 주소를 복사해서 쓰세요.'; });
+  const spMake = document.getElementById('spMake');
+  if (spMake) spMake.onclick = async function (e) {
+    e.preventDefault();
+    const msg = document.getElementById('spMsg'); msg.textContent = '썸네일 페이지를 만드는 중…';
+    let r;
+    try { r = await api('publishSharePage', { tabName: tabName }); } catch (err) { msg.textContent = '서버에 연결하지 못했어요.'; return; }
+    if (!r || r.success !== true) {
+      msg.innerHTML = '<span style="color:var(--error-text);">' + escapeHtml((r && r.message) || '만들지 못했어요. 서버(Code.gs)가 버전 33 이상인지 확인해주세요.') + '</span>' +
+        (r && r.noToken ? ' <a href="#" id="goSetGh">설정에서 연결 방법 보기</a>' : '');
+      const gs = document.getElementById('goSetGh'); if (gs) gs.onclick = function (ev) { ev.preventDefault(); renderSettings(); };
+      return;
+    }
+    msg.textContent = r.unchanged ? '이미 최신이에요.' : '만들었어요. 1~2분 뒤부터 카톡·밴드에 과제명 썸네일이 떠요.';
+    setTimeout(function () { renderDetail(tabName); }, 1200);
+  };
   const scMake = document.getElementById('scMake');
   if (scMake) scMake.onclick = async function () {
     scMake.disabled = true; scMake.textContent = '만드는 중…';
@@ -1672,6 +1692,17 @@ async function renderSettings(notice) {
         '<p class="hint" style="margin:0 0 10px;">파이어베이스 데이터베이스(hyewon-portal)에 서버가 읽고 쓸 수 있는지 확인해요. 시험 문서 하나만 쓰고 다른 데이터는 건드리지 않아요.</p>' +
         '<button class="btn-outline" id="fsChk" style="width:auto;">연결 시험</button>' +
         '<div id="fsOut" style="margin-top:12px;font-size:13px;line-height:1.8;"></div>' +
+      '</div>' +
+      '<div class="card wide" style="margin-bottom:16px;">' +
+        '<h2>카톡·밴드 썸네일 (GitHub 연결) ' + (st.githubReady ? '<span class="pill open">연결됨</span>' : '<span class="pill wait">연결 안 됨</span>') + '</h2>' +
+        '<p class="hint" style="margin:0 0 10px;">과제 짧은 주소를 카톡·밴드에 보내면 과제명이 적힌 썸네일이 뜨게 해요. 서버가 혜원포털 저장소에 과제마다 작은 페이지를 써야 해서 GitHub 토큰이 필요해요.</p>' +
+        (st.githubReady ? '' :
+          '<ol style="margin:0;padding-left:20px;font-size:13px;line-height:1.9;">' +
+            '<li><a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">GitHub 새 토큰 만들기(Fine-grained)</a>를 열어요.</li>' +
+            '<li>Token name «혜원포털 썸네일», Expiration 1년, Repository access → <b>Only select repositories</b> → <b>hyewon-portal</b></li>' +
+            '<li>Permissions → Repository permissions → <b>Contents: Read and write</b> (나머지는 그대로) → Generate token</li>' +
+            '<li>나온 토큰(github_pat_…)을 복사해서 Apps Script 편집기 → 프로젝트 설정 → 스크립트 속성 → <b>GITHUB_TOKEN</b> 으로 넣어요. <span class="hint">채팅이나 다른 곳에는 붙이지 마세요.</span></li>' +
+          '</ol>') +
       '</div>' +
       '<div class="card">' +
         '<h2>관리자 비밀번호 변경</h2>' +
