@@ -5,7 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <title>혜원포털 관리자</title>
 <link rel="icon" type="image/png" sizes="32x32" href="../assets/favicon-32.png">
-<link rel="apple-touch-icon" sizes="180x180" href="../assets/favicon-180.png">
+<link rel="apple-touch-icon" sizes="180x180" href="../assets/admin-180.png">
+<link rel="manifest" href="./manifest.webmanifest">
+<meta name="theme-color" content="#0F3B34">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="혜원 관리자">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gugi&family=Noto+Sans+KR:wght@400;500;600;700&family=Noto+Serif+KR:wght@600;700&display=swap">
 <style>
   :root {
@@ -272,6 +277,7 @@ function bottomNavHtml_() {
   }).join('') + '</nav>' +
   '<div class="sheetbg" id="sheetBg"></div><div class="sheet" id="moreSheet">' +
     '<button data-bn="notice">공지 보내기</button><button data-bn="settings">설정</button>' +
+    '<button class="installBtn" type="button" style="display:none;">📲 관리자 앱으로 설치</button>' +
     '<a href="../report/" id="sheetStu" target="_blank" rel="noopener">학생 화면 보기</a><button id="sheetOut">로그아웃</button></div>';
 }
 function wireBottomNav_() {
@@ -319,6 +325,7 @@ function render(inner) {
       '<div class="brandbox"><img src="../assets/logo.png" alt=""><div><span class="gugi">혜원포털</span><small>관리자</small></div></div>' +
       nav +
       '<div class="spacer"></div>' +
+      '<button class="sub installBtn" type="button" style="display:none;color:#FFD84A;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><polyline points="7 10 12 15 17 10"/><path d="M5 21h14"/></svg>앱으로 설치</button>' +
       '<a class="sub" id="navStudentView" href="../report/" target="_blank" rel="noopener"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7"/><path d="M8 7h9v9"/></svg>학생 화면 보기</a>' +
       '<button class="sub" id="navLogout"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><path d="M21 12H9"/></svg>로그아웃</button>' +
       '<div class="verbox" id="verBox"></div>' +
@@ -333,8 +340,32 @@ function render(inner) {
   document.getElementById('navLogout').onclick = doLogout;
   document.getElementById('navStudentView').onclick = openStudentPreview;
   wireBottomNav_();
+  document.querySelectorAll('.installBtn').forEach(function (b) { b.onclick = doInstall_; });
+  paintInstall_();
   paintVer_();
   loadVersionInfo_();
+}
+
+// ---------- 앱으로 설치 (PWA) ----------
+// 안드로이드 크롬·삼성 인터넷: 설치 버튼을 누르면 설치 창이 떠요. 아이폰 사파리: 공유 → «홈 화면에 추가» 안내.
+let installEvt = null;
+if ('serviceWorker' in navigator) { window.addEventListener('load', function () { navigator.serviceWorker.register('./sw.js').catch(function () {}); }); }
+window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); installEvt = e; paintInstall_(); });
+window.addEventListener('appinstalled', function () { installEvt = null; paintInstall_(); });
+function isStandalone_() { return (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true; }
+function isIOS_() { return /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1); }
+function canOfferInstall_() { return !isStandalone_() && (!!installEvt || isIOS_()); }
+function paintInstall_() {
+  document.querySelectorAll('.installBtn').forEach(function (b) { b.style.display = canOfferInstall_() ? '' : 'none'; });
+}
+async function doInstall_() {
+  if (installEvt) {
+    installEvt.prompt();
+    try { await installEvt.userChoice; } catch (e) {}
+    installEvt = null; paintInstall_();
+  } else if (isIOS_()) {
+    alert('아이폰·아이패드는 사파리 아래 공유 버튼(□↑) → «홈 화면에 추가»를 누르면 앱처럼 설치돼요.');
+  }
 }
 
 // ---------- 버전 · 배포 시각 표시 ----------
@@ -477,9 +508,12 @@ function renderLogin(errorMsg) {
         '<input type="checkbox" id="remember" style="width:auto;"><label for="remember" style="margin:0;">이 기기 기억하기 (30일)</label>' +
       '</div>' +
       '<button class="btn" id="loginBtn" style="width:100%;justify-content:center;">로그인</button>' +
+      '<button class="btn-outline installBtn" type="button" style="display:none;width:100%;justify-content:center;margin-top:10px;">📲 관리자 앱으로 설치</button>' +
     '</div></div>'
   );
   document.getElementById('loginBtn').onclick = doLogin;
+  document.querySelectorAll('.installBtn').forEach(function (b) { b.onclick = doInstall_; });
+  paintInstall_();
   document.getElementById('pw').addEventListener('keydown', function (e) { if (e.key === 'Enter') doLogin(); });
 }
 
