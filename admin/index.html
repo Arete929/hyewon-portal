@@ -205,6 +205,12 @@
   .up-path { font-size: 15px; font-weight: 700; color: var(--accent); overflow-wrap: anywhere; }
   .tile { padding: 16px 18px; margin-bottom: 14px; }
   .tile-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+  .set-nav { position: sticky; top: 0; z-index: 30; display: flex; gap: 8px; overflow-x: auto; padding: 10px 2px; margin: 6px 0 12px; background: var(--bg); scrollbar-width: none; }
+  .set-nav::-webkit-scrollbar { display: none; }
+  .set-nav button { flex: none; border: 1px solid var(--border); background: #fff; color: var(--text2); border-radius: 999px; padding: 9px 16px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; white-space: nowrap; }
+  .set-nav button.on { background: var(--accent); border-color: var(--accent); color: #fff; box-shadow: 0 4px 12px rgba(8,122,85,.18); }
+  .set-sec-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin: 2px 0 10px; font-size: 16px; }
+  .set-sec .card { max-width: none; }
   .dt-head { display: flex; align-items: center; gap: 12px; margin-top: 10px; }
   .dt-title { margin: 0; font-size: clamp(24px, 4.2vw, 34px); line-height: 1.25; word-break: keep-all; overflow-wrap: anywhere; }
   .dt-icon { position: relative; flex: none; width: 60px; height: 60px; border-radius: 18px; border: 1px solid var(--border); background: #fff; display: grid; place-items: center; cursor: pointer; padding: 0; }
@@ -1527,7 +1533,7 @@ async function renderDetail(tabName) {
     if (!r || r.success !== true) {
       msg.innerHTML = '<span style="color:var(--error-text);">' + escapeHtml((r && r.message) || '만들지 못했어요. 서버(Code.gs)가 버전 33 이상인지 확인해주세요.') + '</span>' +
         (r && r.noToken ? ' <a href="#" id="goSetGh">설정에서 연결 방법 보기</a>' : '');
-      const gs = document.getElementById('goSetGh'); if (gs) gs.onclick = function (ev) { ev.preventDefault(); renderSettings(); };
+      const gs = document.getElementById('goSetGh'); if (gs) gs.onclick = function (ev) { ev.preventDefault(); state.setTab = 'link'; renderSettings(); };
       return;
     }
     msg.textContent = r.unchanged ? '이미 최신이에요.' : '만들었어요. 1~2분 뒤부터 카톡·밴드에 과제명 썸네일이 떠요.';
@@ -2430,7 +2436,7 @@ async function toggleIconPanel_(tabName, tab) {
     renderDetail(tabName);
   }
   document.getElementById('ipClose').onclick = function () { box.style.display = 'none'; };
-  document.getElementById('ipGoSet').onclick = function (e) { e.preventDefault(); renderSettings(); };
+  document.getElementById('ipGoSet').onclick = function (e) { e.preventDefault(); state.setTab = 'task'; renderSettings(); };
   box.querySelectorAll('[data-img]').forEach(function (b) { b.onclick = function () { setIcon({ type: 'img', id: b.getAttribute('data-img') }); }; });
   box.querySelectorAll('[data-emo]').forEach(function (b) { b.onclick = function () { setIcon({ type: 'emoji', v: b.getAttribute('data-emo') }); }; });
   document.getElementById('ipTextOk').onclick = function () { const v = document.getElementById('ipText').value.trim(); if (v) setIcon({ type: 'emoji', v: v }); };
@@ -2639,6 +2645,64 @@ async function loadAutoPushBox_() {
   };
 }
 
+// ---------- 설정 화면 묶기 (위쪽 탭 버튼) ----------
+// 카드 제목(h2)으로 무리를 나눠요. 새 카드는 제목 낱말만 아래에 더하면 돼요(맞는 게 없으면 «기타»).
+const SETTING_GROUPS = [
+  ['basic', '👤 기본', '교사 정보 · 비밀번호 · 학생 접속', ['교사 정보', '비밀번호', '마스터코드', '학생 접속 주소']],
+  ['task', '📝 과제', '이모지 · 제출 파일 저장 위치', ['과제 이모지', '제출 파일 저장 위치']],
+  ['noti', '🔔 알림', '선생님 알림 · 학생 자동 알림', ['선생님 알림', '학생 자동 알림']],
+  ['link', '🔗 연결', '성적 · Firestore · 썸네일', ['성적 조회', 'Firestore', '썸네일']],
+  ['server', '🛠 서버', '서버 이전 · 버전', ['서버 이전', '버전']]
+];
+const SET_TAB_KEY = 'hyewon_admin_settab';
+function organizeSettings_() {
+  const wrap = document.querySelector('#app .wrap'); if (!wrap) return;
+  const cards = Array.prototype.slice.call(wrap.querySelectorAll('.card')).filter(function (c) { return c.querySelector('h2'); });
+  if (!cards.length) return;
+  const secs = {};
+  const nav = document.createElement('div'); nav.className = 'set-nav';
+  const host = document.createElement('div');
+  SETTING_GROUPS.concat([['etc', '📦 기타', '', []]]).forEach(function (g) {
+    const sec = document.createElement('div'); sec.className = 'set-sec'; sec.setAttribute('data-sg', g[0]);
+    sec.innerHTML = '<div class="set-sec-head"><b>' + g[1] + '</b>' + (g[2] ? '<span class="hint">' + escapeHtml(g[2]) + '</span>' : '') + '</div>';
+    secs[g[0]] = sec; host.appendChild(sec);
+  });
+  cards.forEach(function (c) {
+    const t = c.querySelector('h2').textContent;
+    const g = SETTING_GROUPS.find(function (x) { return x[3].some(function (w) { return t.indexOf(w) >= 0; }); });
+    c.style.marginBottom = '14px';
+    secs[g ? g[0] : 'etc'].appendChild(c);
+  });
+  // 묶음 안에서는 위 목록 순서대로
+  SETTING_GROUPS.forEach(function (g) {
+    const sec = secs[g[0]];
+    const list = Array.prototype.slice.call(sec.querySelectorAll(':scope > .card'));
+    const rank = function (c) { const t = c.querySelector('h2').textContent; const i = g[3].findIndex(function (w) { return t.indexOf(w) >= 0; }); return i < 0 ? 99 : i; };
+    list.sort(function (a, b) { return rank(a) - rank(b); }).forEach(function (c) { sec.appendChild(c); });
+  });
+  // 비어 있는 묶음(카드 없는 grid2 등)은 정리
+  wrap.querySelectorAll('.grid2').forEach(function (g) { if (!g.querySelector('.card')) g.remove(); });
+  const used = SETTING_GROUPS.concat([['etc', '📦 기타']]).filter(function (g) { return secs[g[0]].querySelector('.card'); });
+  nav.innerHTML = used.map(function (g) { return '<button type="button" data-st="' + g[0] + '">' + g[1] + '</button>'; }).join('');
+  const lead = wrap.querySelector('.lead') || wrap.querySelector('h1');
+  lead.insertAdjacentElement('afterend', nav);
+  nav.insertAdjacentElement('afterend', host);
+  Object.keys(secs).forEach(function (k) { if (!secs[k].querySelector('.card')) secs[k].remove(); });
+  let cur = state.setTab || '';
+  if (!cur) { try { cur = localStorage.getItem(SET_TAB_KEY) || ''; } catch (e) {} }
+  if (!used.some(function (g) { return g[0] === cur; })) cur = used[0][0];
+  state.setTab = '';
+  function show(k) {
+    host.querySelectorAll('.set-sec').forEach(function (s) { s.style.display = s.getAttribute('data-sg') === k ? '' : 'none'; });
+    nav.querySelectorAll('[data-st]').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-st') === k); });
+    try { localStorage.setItem(SET_TAB_KEY, k); } catch (e) {}
+  }
+  nav.querySelectorAll('[data-st]').forEach(function (b) {
+    b.onclick = function () { show(b.getAttribute('data-st')); const top = nav.getBoundingClientRect().top + window.scrollY - 8; if (window.scrollY > top) window.scrollTo({ top: top, behavior: 'smooth' }); };
+  });
+  show(cur);
+}
+
 async function renderSettings(notice) {
   state.nav = 'settings';
   render('<div class="wrap"><h1 class="serif">설정</h1><p class="hint">불러오는 중…</p></div>');
@@ -2733,6 +2797,7 @@ async function renderSettings(notice) {
     '</div>'
   );
   document.getElementById('changePwBtn').onclick = doChangePassword;
+  organizeSettings_();
   paintVer_();
   loadUploadBox_();
   loadAutoPushBox_();
