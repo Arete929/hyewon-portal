@@ -140,6 +140,50 @@
   .linkcard .lc-body { display: flex; gap: 16px; align-items: center; margin-top: 12px; flex-wrap: wrap; }
   .linkcard .lc-qr img { width: 132px; height: 132px; image-rendering: pixelated; background: #fff; border: 1px solid var(--border); border-radius: 12px; display: block; }
   .linkcard .lc-short { font-size: 20px; font-weight: 800; color: var(--accent); letter-spacing: .01em; word-break: break-all; }
+
+  /* ===== 반응형: 폴드(펼침 ≈ 880px)·태블릿 / 터치 화면 ===== */
+  .row > .btn, .row > .btn-outline { flex: none; white-space: nowrap; }
+  @media (min-width: 761px) and (max-width: 1180px) {
+    .side { width: 204px; padding: 0 10px 14px; }
+    .side .photo { height: 140px; margin: 0 -10px; }
+    .side .brandbox { margin: -40px 2px 14px; }
+    .side .brandbox .gugi { font-size: 19px; }
+    .side button.nav { font-size: 14px; padding: 6px 8px; gap: 10px; }
+    .wrap { padding: 22px 20px 48px; }
+    .grid2 { grid-template-columns: 1fr; }
+  }
+  @media (pointer: coarse) {
+    .btn-sm { padding: 9px 13px; font-size: 13px; }
+    .pillbtn { padding: 8px 14px; }
+    .tp-chip { padding: 8px 13px; }
+    input[type=text], input[type=password], input[type=number], input[type=datetime-local], select { min-height: 44px; }
+    .tabs button { padding: 12px 14px; }
+  }
+  @media (max-width: 760px) {
+    .row { flex-wrap: wrap; }
+    .linkcard .lc-body { gap: 12px; flex-direction: column; align-items: stretch; }
+    .linkcard .lc-qr img { width: 160px; height: 160px; margin: 0 auto; }
+    .linkcard .lc-body > div:last-child { text-align: center; }
+    .linkcard .lc-body .row { justify-content: center; }
+    .linkcard .lc-short { font-size: 16px; }
+    h1.serif { font-size: 20px; }
+  }
+  .linkcard .lc-short { overflow-wrap: anywhere; word-break: normal; }
+
+  /* QR 크게 보기 (교실 화면·폰 보여주기용) */
+  .qrbig { position: fixed; inset: 0; z-index: 100; background: #0B2C27; color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; padding: 24px; text-align: center; }
+  .qrbig .qb-title { font-size: clamp(20px, 4vw, 40px); font-weight: 800; line-height: 1.3; max-width: 92vw; }
+  .qrbig .qb-code { background: #fff; padding: clamp(12px, 2vw, 24px); border-radius: 24px; box-shadow: 0 10px 40px rgba(0,0,0,.4); }
+  .qrbig .qb-code svg { display: block; width: min(72vw, 62vh); height: min(72vw, 62vh); }
+  .qrbig .qb-url { font-size: clamp(18px, 3.6vw, 40px); font-weight: 800; color: #5FE3D8; letter-spacing: .01em; overflow-wrap: anywhere; }
+  .qrbig .qb-hint { font-size: 14px; color: #A9C4B9; }
+  .qrbig .qb-close { position: absolute; top: 14px; right: 14px; width: 48px; height: 48px; border-radius: 50%; border: none; background: rgba(255,255,255,.14); color: #fff; font-size: 24px; cursor: pointer; }
+  .qrbig .qb-full { position: absolute; top: 14px; left: 14px; height: 48px; padding: 0 16px; border-radius: 999px; border: none; background: rgba(255,255,255,.14); color: #fff; font-family: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
+  @media (orientation: landscape) and (min-width: 700px) {
+    .qrbig { flex-direction: row; gap: 5vw; text-align: left; }
+    .qrbig .qb-text { max-width: 40vw; display: flex; flex-direction: column; gap: 14px; }
+    .qrbig .qb-code svg { width: min(44vw, 78vh); height: min(44vw, 78vh); }
+  }
   .tp-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
   .tp-chip { border: 1px solid var(--border); background: #fff; color: var(--text2); border-radius: 999px; padding: 6px 12px; font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
   .tp-chip i { font-style: normal; font-size: 11px; opacity: .7; margin-left: 2px; }
@@ -491,6 +535,32 @@ async function renderDashboard() {
     a.onclick = function (e) { e.preventDefault(); renderDetail(a.getAttribute('data-tab')); };
   });
   document.getElementById('newTabBtn').onclick = function () { renderNewTab(); };
+}
+
+// 과제 QR 을 화면 가득 크게 보여줘요(교실 TV·폴드 펼친 화면·폰을 학생에게 보여줄 때). 바깥을 누르거나 ✕·Esc 로 닫아요.
+function showBigQr_(title, url) {
+  if (!window.qrcode) return;
+  const q = qrcode(0, 'M'); q.addData(url); q.make();
+  const svg = q.createSvgTag({ cellSize: 8, margin: 2, scalable: true });
+  const el = document.createElement('div');
+  el.className = 'qrbig';
+  el.innerHTML = '<button class="qb-full" type="button">⛶ 전체 화면</button><button class="qb-close" type="button" aria-label="닫기">✕</button>' +
+    '<div class="qb-code">' + svg + '</div>' +
+    '<div class="qb-text"><div class="qb-title">' + escapeHtml(title) + '</div>' +
+    '<div class="qb-url">' + escapeHtml(url.replace(/^https?:\/\//, '')) + '</div>' +
+    '<div class="qb-hint">휴대폰 카메라로 QR을 비추세요 · 화면 밝기를 높이면 더 잘 찍혀요</div></div>';
+  document.body.appendChild(el);
+  function close() {
+    try { if (document.fullscreenElement) document.exitFullscreen(); } catch (e) {}
+    el.remove(); document.removeEventListener('keydown', onKey);
+  }
+  function onKey(e) { if (e.key === 'Escape') close(); }
+  document.addEventListener('keydown', onKey);
+  el.querySelector('.qb-close').onclick = close;
+  el.onclick = function (e) { if (e.target === el) close(); };
+  const fs = el.querySelector('.qb-full');
+  if (!el.requestFullscreen) fs.style.display = 'none';
+  fs.onclick = function () { try { el.requestFullscreen(); fs.style.display = 'none'; } catch (e) {} };
 }
 
 // ---------- 대상 고르기 (학년 전체 / 반) — 새 과제 만들기·과제 화면에서 같이 써요 ----------
@@ -849,7 +919,11 @@ async function renderDetail(tabName) {
     const q = qrcode(0, 'M'); q.addData(document.getElementById('oaUrl').value); q.make();
     const png = q.createDataURL(10, 12);
     box.innerHTML = '<img alt="QR" src="' + png + '">';
-    document.getElementById('oaQrDl').innerHTML = '<a class="btn-outline btn-sm" style="text-decoration:none;" download="' + escapeHtml(tabName) + '_QR.gif" href="' + png + '">QR 이미지 저장</a>';
+    document.getElementById('oaQrDl').innerHTML = '<button class="btn-outline btn-sm" id="qrBigBtn" type="button">🔍 QR 크게 보기</button> ' +
+      '<a class="btn-outline btn-sm" style="text-decoration:none;" download="' + escapeHtml(tabName) + '_QR.gif" href="' + png + '">QR 이미지 저장</a>';
+    document.getElementById('qrBigBtn').onclick = function () { showBigQr_(tabName, document.getElementById('oaUrl').value); };
+    box.style.cursor = 'zoom-in';
+    box.onclick = function () { showBigQr_(tabName, document.getElementById('oaUrl').value); };
   }).catch(function () { const box = document.getElementById('oaQr'); if (box) box.textContent = 'QR을 만들지 못했어요. 주소를 복사해서 쓰세요.'; });
   const spMake = document.getElementById('spMake');
   if (spMake) spMake.onclick = async function (e) {
