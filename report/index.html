@@ -35,7 +35,7 @@
   }
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--text); font-family: 'Noto Sans KR', sans-serif; }
-  .serif { font-family: 'Noto Serif KR', serif; }
+  .serif { font-family: 'Gugi', 'Noto Sans KR', sans-serif; font-weight: 400; letter-spacing: .01em; }
   .gugi { font-family: 'Gugi', sans-serif; font-weight: 400; letter-spacing: 0.01em; }
   .dongle { font-family: 'Dongle', sans-serif; font-weight: 700; display: block; margin: 0; line-height: 1; }
   #app { max-width: 480px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; }
@@ -290,6 +290,27 @@
   html[data-theme="dark"] .theme-pick button.on { box-shadow: 0 0 0 3px rgba(53,211,200,.25); }
   html[data-theme="dark"] .msg.ok, html[data-theme="dark"] .identity { border-color: transparent; }
   html[data-theme="dark"] .rpill.rejected, html[data-theme="dark"] .status-chip.rejected { background: rgba(255,107,129,.16); color: #FF8A9B; }
+
+  /* 제출 기한 타일 */
+  .dl-tile { display: flex; align-items: center; gap: 12px; border-radius: 18px; padding: 16px 14px; margin-bottom: 12px; border: 1.5px solid; }
+  .dl-tile .dl-ic { width: 46px; height: 46px; border-radius: 14px; display: grid; place-items: center; flex: none; background: rgba(255,255,255,.7); }
+  .dl-tile .dl-main { flex: 1; min-width: 0; }
+  .dl-tile .dl-label { font-size: 12px; font-weight: 800; letter-spacing: .02em; opacity: .85; }
+  .dl-tile .dl-when { font-size: clamp(16px, 4.8vw, 20px); font-weight: 800; line-height: 1.3; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .dl-tile .dl-sub { font-size: 13px; font-weight: 600; margin-top: 2px; opacity: .9; }
+  .dl-tile .dl-badge { flex: none; font-size: 17px; font-weight: 900; padding: 10px 10px; border-radius: 14px; color: #fff; min-width: 58px; text-align: center; }
+  .dl-tile.compact { padding: 12px 14px; } .dl-tile.compact .dl-ic { width: 38px; height: 38px; } .dl-tile.compact .dl-when { font-size: 16px; } .dl-tile.compact .dl-badge { font-size: 15px; padding: 7px 10px; min-width: 54px; }
+  .dl-tile.ok { background: #E8F6F0; border-color: #BFE4D3; color: #0B5F45; } .dl-tile.ok .dl-badge { background: #087A55; }
+  .dl-tile.soon { background: #FFF5E0; border-color: #F5D58E; color: #8A5A00; } .dl-tile.soon .dl-badge { background: #E89B0C; }
+  .dl-tile.today { background: #FDEAEC; border-color: #F6B4BE; color: #B3243A; } .dl-tile.today .dl-badge { background: #F04E68; }
+  .dl-tile.over { background: #F1F1EF; border-color: #DADAD6; color: #6B6B66; } .dl-tile.over .dl-badge { background: #8C8C86; }
+  .dl-chip { align-self: flex-start; font-size: 11px; font-weight: 800; padding: 3px 9px; border-radius: 999px; }
+  .dl-chip.ok { background: #E8F6F0; color: #0B5F45; } .dl-chip.soon { background: #FFF1D0; color: #8A5A00; } .dl-chip.today { background: #FDEAEC; color: #C22B3E; } .dl-chip.over { background: #EFEFEC; color: #77776F; }
+  html[data-theme="dark"] .dl-tile.ok { background: rgba(53,211,200,.1); border-color: rgba(53,211,200,.3); color: #7EEADF; }
+  html[data-theme="dark"] .dl-tile.soon { background: rgba(255,216,74,.1); border-color: rgba(255,216,74,.3); color: #FFD84A; }
+  html[data-theme="dark"] .dl-tile.today { background: rgba(255,107,129,.12); border-color: rgba(255,107,129,.35); color: #FF9AAA; }
+  html[data-theme="dark"] .dl-tile.over { background: rgba(255,255,255,.05); border-color: rgba(255,255,255,.12); color: #A9B8B3; }
+  html[data-theme="dark"] .dl-tile .dl-ic { background: rgba(255,255,255,.08); }
 </style>
 </head>
 <body>
@@ -646,11 +667,43 @@ function deadlineInfo_(tab) {
     dday: left < 0 ? '마감' : (dday <= 0 ? 'D-DAY' : 'D-' + dday)
   };
 }
-function metaRowsHtml_(tab) {
-  const dl = deadlineInfo_(tab);
+// 제출 기한 타일 — 기한이 있으면 큼직하게(남은 시간·D-day). 남은 시간에 따라 색이 바뀌어요.
+function deadlineTileHtml_(tab, compact) {
+  const v = String((tab && tab.meta && tab.meta.deadline) || '');
+  const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/.exec(v);
+  if (!m) return '';
+  const at = new Date(v + ':59.999+09:00').getTime(), left = at - Date.now();
+  const days = ['일', '월', '화', '수', '목', '금', '토'];
+  const dow = days[new Date(Date.UTC(+m[1], +m[2] - 1, +m[3])).getUTCDay()];
+  const when = Number(m[2]) + '월 ' + Number(m[3]) + '일 (' + dow + ') ' + m[4] + ':' + m[5];
+  let level, badge, sub;
+  if (left < 0) { level = 'over'; badge = '마감'; sub = '제출 기한이 지났어요'; }
+  else {
+    const h = Math.floor(left / 3600000), d = Math.floor(h / 24);
+    const todayKst = new Date(Date.now() + 9 * 3600000).toISOString().slice(0, 10);
+    const isToday = todayKst === m[1] + '-' + m[2] + '-' + m[3];
+    const dd = Math.round((Date.UTC(+m[1], +m[2] - 1, +m[3]) - Date.UTC(+todayKst.slice(0, 4), +todayKst.slice(5, 7) - 1, +todayKst.slice(8, 10))) / 86400000);
+    badge = isToday ? 'D-DAY' : 'D-' + dd;
+    level = isToday || h < 24 ? 'today' : dd <= 3 ? 'soon' : 'ok';
+    sub = h < 1 ? Math.max(1, Math.ceil(left / 60000)) + '분 남았어요 · 서둘러요!' : h < 24 ? (isToday ? '오늘 마감 · ' : '') + h + '시간 남았어요' : d + '일 ' + (h % 24) + '시간 남았어요';
+  }
+  return '<div class="dl-tile ' + level + (compact ? ' compact' : '') + '">' +
+    '<div class="dl-ic">' + ic_('cal', compact ? 20 : 24, 'currentColor', 2.2) + '</div>' +
+    '<div class="dl-main"><div class="dl-label">제출 기한</div><div class="dl-when">' + when + '</div><div class="dl-sub">' + sub + '</div></div>' +
+    '<div class="dl-badge">' + badge + '</div></div>';
+}
+// 과제 목록 카드용 작은 기한 표시
+function deadlineChipHtml_(tab) {
+  const t = deadlineTileHtml_(tab, true); if (!t) return '';
+  const lv = /dl-tile (\w+)/.exec(t)[1], badge = /dl-badge">([^<]+)</.exec(t)[1], when = /dl-when">([^<]+)</.exec(t)[1];
+  return '<span class="dl-chip ' + lv + '">⏰ ' + badge + ' · ' + when.replace(/월 /, '/').replace(/일 /, ' ').replace(/\s*\(.\)/, '') + '</span>';
+}
+function metaRowsHtml_(tab, hideDeadline) {
+  const dl = hideDeadline ? null : deadlineInfo_(tab);
   return '<div class="detail-card meta-rows">' +
     (dl ? '<div class="meta-row">' + ic_('cal', 15, 'var(--text2)') + '<span class="k">제출 기한</span><span class="v' + (dl.over ? ' over' : '') + '">' + escapeHtml(dl.text) + (dl.over ? ' · 마감됨' : '') + '</span></div>' : '') +
     '<div class="meta-row">' + ic_('doc', 15, 'var(--text2)') + '<span class="k">과제 유형</span><span class="v">' + escapeHtml(assignmentTypeLabel_(tab)) + '</span></div>' +
+    (function () { const tp = (state.config && state.config.teacher) || {}; return tp.name ? '<div class="meta-row"><span style="width:15px;text-align:center;">🧑‍🏫</span><span class="k">출제</span><span class="v">' + escapeHtml(tp.name) + ' 선생님' + (tp.subject ? ' · ' + escapeHtml(tp.subject) : '') + '</span></div>' : ''; })() +
   '</div>';
 }
 function titleCardHtml_(name) {
@@ -1005,6 +1058,7 @@ function renderToday() {
         '<span class="assign-title">' + escapeHtml(t.sheetName) + '</span>' +
         (sub ? '<span class="assign-sub">' + escapeHtml(sub) + '</span>' : '') +
         reviewPillHtml_(t) +
+        (function () { const tb = (state.config.tabs || []).find(function (x) { return x.sheetName === t.sheetName; }); return tb ? deadlineChipHtml_(tb) : ''; })() +
       '</div>' +
       '<svg class="assign-chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>' +
     '</a>';
@@ -1128,7 +1182,8 @@ function renderAssignmentForm(tab, entry, notice) {
     '<div class="main" style="padding-top:16px;">' +
       (notice ? '<div class="msg error">' + escapeHtml(notice) + '</div>' : '') +
       titleCardHtml_(tab.sheetName) +
-      metaRowsHtml_(tab) +
+      deadlineTileHtml_(tab) +
+      metaRowsHtml_(tab, true) +
       (tab.description
         ? '<div class="detail-card mint"><div class="sec-head" style="color:var(--hyewon-emerald);">' + ic_('mega', 18, 'var(--hyewon-emerald)') + '교사 안내</div>' +
             '<p style="margin:0;font-size:14px;line-height:1.7;color:var(--text);white-space:pre-wrap;">' + escapeHtml(tab.description) + '</p></div>'
@@ -1182,6 +1237,7 @@ function renderSubmissionStatus(tab, entry) {
     appbarHtml_('제출 현황', true) +
     '<div class="main" style="padding-top:16px;">' +
       titleCardHtml_(tab.sheetName) +
+      deadlineTileHtml_(tab, true) +
       '<div class="detail-card rowbetween" style="gap:10px;">' +
         '<div style="display:flex;align-items:center;gap:10px;">' + ic_('clock', 18, 'var(--text2)') +
           '<div><div style="font-size:12px;color:var(--text2);">제출 시간</div><div style="font-size:15px;font-weight:700;">' + escapeHtml(entry.submittedAt) + '</div></div></div>' +
@@ -1572,7 +1628,8 @@ function renderForm(tab, notice) {
         '<button class="ib" id="themeBtn2" type="button" aria-label="밝게/어둡게 바꾸기">' + themeIcon_() + '</button></div>' +
       '<div class="hh-ttl"><h1 style="font-size:22px;line-height:1.3;">' + escapeHtml(tab.sheetName) + '</h1></div></div>' +
     '<div class="main" style="padding-top:8px;">' +
-      metaRowsHtml_(tab) +
+      deadlineTileHtml_(tab) +
+      metaRowsHtml_(tab, true) +
       (tab.description
         ? '<div class="detail-card mint"><div class="sec-head" style="color:var(--hyewon-emerald);">' + ic_('mega', 18, 'var(--hyewon-emerald)') + '교사 안내</div>' +
             '<p style="margin:0;font-size:14px;line-height:1.7;color:var(--text);white-space:pre-wrap;">' + escapeHtml(tab.description) + '</p></div>'
