@@ -224,6 +224,10 @@
   .tp-ind { margin-top: 10px; padding: 12px; border: 1px dashed var(--border); border-radius: 14px; background: #FAFCFB; }
   .tp-ind-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 13px; font-weight: 700; margin-bottom: 8px; }
   .tp-ind-head select { width: auto; padding: 6px 10px; min-height: 36px; }
+  .tp-pick { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+  .tp-pb { border: 1.5px solid var(--border); background: #fff; color: var(--text2); border-radius: 10px; padding: 7px 14px; font-family: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+  .tp-pb.on { border-color: var(--accent); color: var(--accent); background: #E8F3EF; }
+  .tp-pb i { font-style: normal; font-size: 11px; background: var(--accent); color: #fff; border-radius: 999px; padding: 0 6px; margin-left: 3px; }
   .tp-stu { display: flex; flex-wrap: wrap; gap: 6px; }
   .tp-stu .tp-chip { font-weight: 500; font-size: 12.5px; }
   .tp-stu .tp-chip.cov { background: #E8F3EF; color: var(--accent); border-color: transparent; }
@@ -794,10 +798,12 @@ async function mountTargetPicker_(id, initial, onChange) {
         }).join('')) + '</div>';
     }).join('') + '</div>' +
     (showOnes && ones.length ? '<div class="tp-picked"><span class="hint">고른 학생 ' + ones.length + '명:</span> ' + ones.map(function (x) { return '<button type="button" class="tp-chip on" data-s="' + escapeHtml(x.studentId) + '">' + escapeHtml(x.studentId) + ' ' + escapeHtml(x.name) + ' ✕</button>'; }).join('') + '</div>' : '') +
-    (showOnes && students.length ? '<div class="tp-ind"><div class="tp-ind-head">👤 학생 한 명씩 고르기' +
-        '<select id="' + id + '_g">' + gKeys.map(function (g) { return '<option value="' + g + '"' + (g === pickG ? ' selected' : '') + '>' + g + '학년</option>'; }).join('') + '</select>' +
-        '<select id="' + id + '_c">' + Object.keys(grades[pickG] || {}).sort(function (a, b) { return a - b; }).map(function (c) { return '<option value="' + c + '"' + (c === pickC ? ' selected' : '') + '>' + c + '반</option>'; }).join('') + '</select>' +
-        '<span class="hint" style="font-weight:400;">눌러서 넣고 빼요</span></div>' +
+    (showOnes && students.length ? '<div class="tp-ind"><div class="tp-ind-head">👤 학생 한 명씩 고르기 <span class="hint" style="font-weight:400;">학년·반을 누르고 학생을 눌러서 넣고 빼요</span></div>' +
+        '<div class="tp-pick">' + gKeys.map(function (g) { return '<button type="button" class="tp-pb' + (g === pickG ? ' on' : '') + '" data-pg="' + g + '">' + g + '학년</button>'; }).join('') + '</div>' +
+        '<div class="tp-pick">' + Object.keys(grades[pickG] || {}).sort(function (a, b) { return a - b; }).map(function (c) {
+          const n = onesIn(pickG, c);
+          return '<button type="button" class="tp-pb' + (c === pickC ? ' on' : '') + '" data-pc="' + c + '">' + c + '반' + (n ? ' <i>' + n + '</i>' : '') + '</button>';
+        }).join('') + '</div>' +
       '<div class="tp-stu">' + ((grades[pickG] || {})[pickC] || []).map(function (x) {
           const cov = covered(x);
           return '<button type="button" class="tp-chip' + (cov ? ' cov' : sel[x.studentId] ? ' on' : '') + '" data-s="' + escapeHtml(x.studentId) + '">' + escapeHtml(x.studentId) + ' ' + escapeHtml(x.name) + '</button>';
@@ -836,9 +842,8 @@ async function mountTargetPicker_(id, initial, onChange) {
         changed();
       };
     });
-    const gs = document.getElementById(id + '_g'), cs = document.getElementById(id + '_c');
-    if (gs) gs.onchange = function () { pickG = gs.value; pickC = Object.keys(grades[pickG]).sort(function (a, b) { return a - b; })[0]; paint(); };
-    if (cs) cs.onchange = function () { pickC = cs.value; paint(); };
+    el.querySelectorAll('[data-pg]').forEach(function (b) { b.onclick = function () { pickG = b.getAttribute('data-pg'); pickC = Object.keys(grades[pickG]).sort(function (a, b) { return a - b; })[0]; paint(); }; });
+    el.querySelectorAll('[data-pc]').forEach(function (b) { b.onclick = function () { pickC = b.getAttribute('data-pc'); paint(); }; });
   }
   function wireSeg() { el.querySelectorAll('[data-mode]').forEach(function (b) { b.onclick = function () { if (b.getAttribute('data-mode') !== mode) setMode(b.getAttribute('data-mode')); }; }); }
   function changed() { paint(); if (onChange) onChange(targets(), count()); }
