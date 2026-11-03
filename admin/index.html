@@ -624,7 +624,7 @@ const SAVE_LABELS = {
   regenerateStudentCode: '학생코드', publishSharePage: '썸네일 페이지', notifyTask: '과제 알림 발송', ensureShortCode: '짧은 주소',
   deleteTab: '과제 삭제', addTab: '새 과제', addRosterStudent: '명단 학생 추가', changePassword: '비밀번호',
   setUploadFolder: '저장 위치', createUploadFolder: '새 저장 폴더', setPerTaskFolders: '과제별 폴더', updateHeaders: '과제 항목',
-  renameTab: '과제 이름', setScoreSource: '성적 시트 연결', setTaskIcon: '과제 이모지', addIcon: '이모지 올리기', deleteIcon: '이모지 삭제'
+  renameTab: '과제 이름', setScoreSource: '성적 시트 연결', setTaskIcon: '과제 이모지', addIcon: '이모지 올리기', deleteIcon: '이모지 삭제', setTestStudent: '테스트 계정'
 };
 const SAVED_KEY = 'hyewon_admin_saved';
 function stampNow_() {
@@ -1179,7 +1179,7 @@ async function mountTargetPicker_(id, initial, onChange) {
         }).join('') + '</div>' +
       '<div class="tp-stu">' + ((grades[pickG] || {})[pickC] || []).map(function (x) {
           const cov = covered(x);
-          return '<button type="button" class="tp-chip' + (cov ? ' cov' : sel[x.studentId] ? ' on' : '') + '" data-s="' + escapeHtml(x.studentId) + '">' + escapeHtml(x.studentId) + ' ' + escapeHtml(x.name) + '</button>';
+          return '<button type="button" class="tp-chip' + (cov ? ' cov' : sel[x.studentId] ? ' on' : '') + '" data-s="' + escapeHtml(x.studentId) + '">' + escapeHtml(x.studentId) + ' ' + escapeHtml(x.name) + (x.test ? ' 🧪' : '') + '</button>';
         }).join('') + '</div></div>' : '') +
     '<p class="hint" style="margin:6px 0 0;">' + (targets().length ? '고른 대상: <b>' + escapeHtml(targetsLabel_(targets())) + '</b>' + (students.length ? ' · ' + count() + '명' : '') : '아무것도 안 고르면 대상 제한이 없어요(전교생).') + '</p>';
     wireSeg();
@@ -2682,6 +2682,35 @@ async function loadAutoPushBox_() {
   };
 }
 
+// ---------- 테스트 계정 ----------
+async function loadTestBox_() {
+  const box = document.getElementById('tsBox'); if (!box) return;
+  let r = null;
+  try { r = await api('getTestStudents'); } catch (e) {}
+  if (!document.getElementById('tsBox')) return;
+  if (!r || r.success !== true) { box.innerHTML = '<span class="hint">서버(Code.gs) 버전 45 이상에서 쓸 수 있어요.</span>'; return; }
+  const list = r.students || [];
+  box.innerHTML = (list.length ? '<div class="sh-list">' + list.map(function (x) {
+      const id = String(x.studentId);
+      return '<div class="sh-row"><div class="sh-main"><b>🧪 ' + escapeHtml(id) + ' ' + escapeHtml(x.name) + '</b><small>' + id.charAt(0) + '학년 ' + id.charAt(1) + '반 · 학생코드 <b class="code">' + escapeHtml(x.code || '5452') + '</b></small></div>' +
+        '<div class="sh-btns"><button type="button" class="btn-outline btn-sm btn-danger" data-tsdel="' + escapeHtml(id) + '">삭제</button></div></div>';
+    }).join('') + '</div>' : '<p class="hint">테스트 계정이 없어요.</p>') +
+    '<div class="row" style="gap:8px;flex-wrap:wrap;margin-top:10px;align-items:flex-end;">' +
+      '<div class="field" style="margin:0;width:90px;"><label>학번</label><input id="tsId" type="text" maxlength="4" inputmode="numeric" placeholder="3277"></div>' +
+      '<div class="field" style="margin:0;width:120px;"><label>이름</label><input id="tsName" type="text" maxlength="20" placeholder="김체육"></div>' +
+      '<div class="field" style="margin:0;width:110px;"><label>학생코드</label><input id="tsCode" type="text" maxlength="12" value="5452"></div>' +
+      '<button type="button" class="btn btn-sm" id="tsAdd">추가 · 바꾸기</button><span class="hint" id="tsMsg"></span></div>';
+  async function set(id, name, on, code) {
+    const msg = document.getElementById('tsMsg'); if (msg) msg.textContent = '저장 중…';
+    let res; try { res = await api('setTestStudent', { studentId: id, name: name, on: on, code: code }); } catch (e) { res = null; }
+    if (!res || res.success !== true) { if (msg) msg.textContent = (res && res.message) || '저장하지 못했어요.'; return; }
+    srcState.students = [];   // 대상 고르기 명단도 새로 읽게
+    loadTestBox_();
+  }
+  document.getElementById('tsAdd').onclick = function () { set(document.getElementById('tsId').value.trim(), document.getElementById('tsName').value.trim(), true, document.getElementById('tsCode').value.trim()); };
+  box.querySelectorAll('[data-tsdel]').forEach(function (b) { b.onclick = function () { if (confirm(b.getAttribute('data-tsdel') + ' 테스트 계정을 지울까요? (이미 들어간 과제 명단·제출은 그대로예요)')) set(b.getAttribute('data-tsdel'), '', false); }; });
+}
+
 // ---------- 연결된 시트 ----------
 async function loadSheetsBox_() {
   const box = document.getElementById('shBox'); if (!box) return;
@@ -2705,7 +2734,7 @@ async function loadSheetsBox_() {
 // ---------- 설정 화면 묶기 (위쪽 탭 버튼) ----------
 // 카드 제목(h2)으로 무리를 나눠요. 새 카드는 제목 낱말만 아래에 더하면 돼요(맞는 게 없으면 «기타»).
 const SETTING_GROUPS = [
-  ['basic', '👤 기본', '교사 정보 · 비밀번호 · 학생 접속', ['교사 정보', '비밀번호', '마스터코드', '학생 접속 주소']],
+  ['basic', '👤 기본', '교사 정보 · 비밀번호 · 학생 접속 · 테스트 계정', ['교사 정보', '비밀번호', '마스터코드', '학생 접속 주소', '테스트 계정']],
   ['task', '📝 과제', '이모지 · 제출 파일 저장 위치', ['과제 이모지', '제출 파일 저장 위치']],
   ['noti', '🔔 알림', '선생님 알림 · 학생 자동 알림', ['선생님 알림', '학생 자동 알림']],
   ['link', '🔗 연결', '시트 · 성적 · Firestore · 썸네일', ['연결된 시트', '성적 조회', 'Firestore', '썸네일']],
@@ -2813,6 +2842,11 @@ async function renderSettings(notice) {
         '<p class="hint" id="tpMsg" style="margin:8px 0 0;"></p>' +
       '</div>' +
       '<div class="card wide" style="margin-bottom:16px;">' +
+        '<h2>🧪 테스트 계정</h2>' +
+        '<p class="hint" style="margin:0 0 10px;">진짜 학생과 똑같이 대상 고르기에 보이고, 대상에 들면 명단에 들어가 로그인·제출·회수·알림까지 해 볼 수 있어요. ' + tipHtml_('학번 4자리로 학년·반이 정해져요(3277 → 3학년 2반). 그 학년·반이 대상이거나 개별로 고르면 그 과제에 들어가요. 학생 화면에서 학번 + 아래 학생코드로 로그인해요. 제출 현황에도 다른 학생처럼 보이니, 시험이 끝나면 제출 내용을 지워 주세요.') + '</p>' +
+        '<div id="tsBox"><span class="hint">불러오는 중…</span></div>' +
+      '</div>' +
+      '<div class="card wide" style="margin-bottom:16px;">' +
         '<h2>🚚 서버 이전</h2>' +
         '<p class="hint" style="margin:0 0 10px;">다른 구글 계정(예: 학교 계정)에 새로 만든 서버로 설정·비밀값을 옮겨요. 값은 이 화면이 두 서버 사이에서 바로 옮기고, 어디에도 표시되지 않아요. ' + tipHtml_('① 새 서버 프로젝트에 코드가 올라가고 웹앱 배포가 만들어진 뒤 ② 새 서버 편집기에서 «권한승인»을 실행하면 60분 동안 받을 준비가 돼요. ③ 여기에 새 서버 주소(…/exec)를 넣고 «확인» → «설정 옮기기». 관리자 비밀번호·마스터코드·학생 알림·GitHub 토큰·교사 정보 같은 설정이 그대로 옮겨져요. 제출 파일 저장 위치는 새 계정 드라이브의 «혜원포털 제출물»로 새로 잡혀요.') + '</p>' +
         '<div class="row" style="gap:8px;flex-wrap:wrap;"><input id="mgUrl" type="text" placeholder="https://script.google.com/macros/s/…/exec" style="flex:1;min-width:220px;"><button class="btn-outline btn-sm" id="mgCheck" type="button">확인</button></div>' +
@@ -2864,6 +2898,7 @@ async function renderSettings(notice) {
   loadUploadBox_();
   loadAutoPushBox_();
   loadTeacherPushBox_();
+  loadTestBox_();
   loadSheetsBox_();
   loadIconBox_();
   wireMigration_();
