@@ -119,7 +119,7 @@ if ('serviceWorker' in navigator) { window.addEventListener('load', function () 
 window.addEventListener('online', function () { if (state.token && outbox().length) flushOutbox(true); });
 
 async function boot() {
-  try { const r = await (await fetch('../routes.json')).json(); state.exec = r.tools && r.tools.report && r.tools.report.exec; } catch (e) {}
+  try { const r = await (await fetch('../routes.json', { cache: 'no-store' })).json(); state.exec = r.tools && r.tools.report && r.tools.report.exec; } catch (e) {}
   if (!state.exec) { shell('<div class="center"><div class="card"><div class="msg err">연결 주소를 찾지 못했어요.</div></div></div>', false); return; }
   state.token = lsGet(TOKEN_KEY, '');
   state.kind = lsGet(LS_KIND, '행발'); state.subject = lsGet(LS_SUBJECT, '');

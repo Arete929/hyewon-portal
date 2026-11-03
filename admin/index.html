@@ -662,7 +662,7 @@ async function boot() {
     state.exec = override;
   } else {
     try {
-      const routes = await (await fetch('../routes.json')).json();
+      const routes = await (await fetch('../routes.json', { cache: 'no-store' })).json();
       state.exec = routes.tools && routes.tools.report && routes.tools.report.exec;
     } catch (e) {}
   }

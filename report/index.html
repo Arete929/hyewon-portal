@@ -447,7 +447,7 @@ async function boot() {
     state.exec = override;
   } else {
     try {
-      const routes = await (await fetch('../routes.json')).json();
+      const routes = await (await fetch('../routes.json', { cache: 'no-store' })).json();
       const tool = routes.tools && routes.tools.report;
       if (!tool || !tool.exec) throw new Error('not-configured');
       state.toolCfg = tool;
