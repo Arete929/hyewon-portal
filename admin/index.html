@@ -202,6 +202,7 @@
   .tl-dot { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font-size: 13px; flex: none; color: #fff; }
   .tl-body { font-size: 13px; line-height: 1.5; min-width: 0; }
   .tl-note { margin-top: 4px; background: var(--bg); border-radius: 8px; padding: 6px 10px; white-space: pre-wrap; }
+  .up-path { font-size: 15px; font-weight: 700; color: var(--accent); overflow-wrap: anywhere; }
   .tp-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
   .tp-chip { border: 1px solid var(--border); background: #fff; color: var(--text2); border-radius: 999px; padding: 6px 12px; font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
   .tp-chip i { font-style: normal; font-size: 11px; opacity: .7; margin-left: 2px; }
@@ -667,6 +668,44 @@ function openReviewSheet_(tabName, sid, name, status, feedback, onSaved) {
     box.innerHTML = (r && r.success) ? historyHtml_(r.items) : '<span class="hint">' + escapeHtml((r && r.message) || '기록을 불러오지 못했어요. 서버(Code.gs)가 버전 35 이상인지 확인해주세요.') + '</span>';
   }
   loadHist();
+}
+
+// ---------- 설정: 제출 파일 저장 위치 ----------
+async function loadUploadBox_(msg) {
+  const box = document.getElementById('upBox'); if (!box) return;
+  let r;
+  try { r = await api('getUploadSettings', {}); } catch (e) { return; }
+  if (!document.getElementById('upBox')) return;
+  if (!r || r.success !== true) { box.innerHTML = '<div class="msg error">' + escapeHtml((r && r.message) || '불러오지 못했어요. 서버(Code.gs)가 버전 36 이상인지 확인해주세요.') + '</div>'; return; }
+  box.innerHTML =
+    (msg ? '<div class="msg ok">' + escapeHtml(msg) + '</div>' : '') +
+    '<div class="up-path">📁 ' + escapeHtml(r.path) + (r.perTask ? ' / <i>과제 이름</i>' : '') + '</div>' +
+    '<div class="row" style="gap:8px;flex-wrap:wrap;margin:8px 0 14px;"><a class="btn-outline btn-sm" href="' + escapeHtml(r.folderUrl) + '" target="_blank" rel="noopener" style="text-decoration:none;">드라이브에서 열기</a>' +
+      (r.custom ? '<button class="btn-outline btn-sm" id="upReset" type="button">기본 위치로 되돌리기</button>' : '<span class="hint">지금은 기본 위치(혜원포털 시트가 있는 폴더 / 첨부파일)예요.</span>') + '</div>' +
+    '<label style="display:flex;gap:8px;align-items:center;font-weight:600;color:var(--text);font-size:14px;margin-bottom:6px;"><input type="checkbox" id="upPer" style="width:auto;"' + (r.perTask ? ' checked' : '') + '> 과제마다 폴더 나누기</label>' +
+    '<p class="hint" style="margin:0 0 14px;">켜면 «' + escapeHtml(r.path.split(' / ').pop()) + ' / 과제 이름» 폴더로 나눠서 쌓여요. 켤 때 지금 있는 과제 폴더를 미리 만들어 두고, 새 과제는 만들 때 폴더가 생겨요. (이미 쌓인 파일은 옮기지 않아요)</p>' +
+    '<details><summary style="cursor:pointer;font-weight:700;font-size:14px;">다른 폴더로 바꾸기</summary>' +
+      '<div class="field" style="margin-top:10px;"><label>새 폴더 만들기 (내 드라이브 맨 위)</label><div class="row" style="gap:8px;"><input id="upNew" type="text" value="혜원포털 제출물"><button class="btn btn-sm" id="upMake" type="button">만들고 여기에 저장</button></div></div>' +
+      '<div class="field"><label>이미 있는 폴더 쓰기 — 드라이브 폴더 주소를 붙여넣으세요</label><div class="row" style="gap:8px;"><input id="upUrl" type="text" placeholder="https://drive.google.com/drive/folders/…"><button class="btn-outline btn-sm" id="upSet" type="button">이 폴더로</button></div></div>' +
+    '</details>';
+  async function call(action, data, okMsg) {
+    let x;
+    try { x = await api(action, data); } catch (e) { return; }
+    if (!x || x.success !== true) { alert((x && x.message) || '바꾸지 못했어요.'); return; }
+    loadUploadBox_(typeof okMsg === 'function' ? okMsg(x) : okMsg);
+  }
+  const rs = document.getElementById('upReset');
+  if (rs) rs.onclick = function () { if (confirm('기본 위치(혜원포털 시트가 있는 폴더 / 첨부파일)로 되돌릴까요? 이미 쌓인 파일은 그대로예요.')) call('setUploadFolder', { folder: '' }, '기본 위치로 되돌렸어요.'); };
+  document.getElementById('upPer').onchange = function () {
+    const on = this.checked;
+    call('setPerTaskFolders', { on: on, createNow: on }, function (x) { return on ? '과제마다 폴더를 나눠요.' + (x.made ? ' 과제 폴더 ' + x.made + '개를 미리 만들었어요.' : '') : '한 폴더에 모아서 쌓아요.'; });
+  };
+  document.getElementById('upMake').onclick = function () { call('createUploadFolder', { name: document.getElementById('upNew').value }, '새 폴더를 만들고 저장 위치로 정했어요.'); };
+  document.getElementById('upSet').onclick = function () {
+    const v = document.getElementById('upUrl').value.trim();
+    if (!v) { alert('드라이브 폴더 주소를 붙여넣어 주세요.'); return; }
+    call('setUploadFolder', { folder: v }, '저장 위치를 바꿨어요. 앞으로 제출되는 파일은 이 폴더에 쌓여요.');
+  };
 }
 
 // ---------- 대상 고르기 (학년 전체 / 반) — 새 과제 만들기·과제 화면에서 같이 써요 ----------
@@ -1888,6 +1927,11 @@ async function renderSettings(notice) {
         '<div id="fsOut" style="margin-top:12px;font-size:13px;line-height:1.8;"></div>' +
       '</div>' +
       '<div class="card wide" style="margin-bottom:16px;">' +
+        '<h2>제출 파일 저장 위치</h2>' +
+        '<p class="hint" style="margin:0 0 10px;">학생이 올린 파일이 쌓이는 내 구글 드라이브 폴더예요. 미리 정해 두면 그 폴더에 쌓여요.</p>' +
+        '<div id="upBox"><span class="hint">불러오는 중…</span></div>' +
+      '</div>' +
+      '<div class="card wide" style="margin-bottom:16px;">' +
         '<h2>카톡·밴드 썸네일 (GitHub 연결) ' + (st.githubReady ? '<span class="pill open">연결됨</span>' : '<span class="pill wait">연결 안 됨</span>') + '</h2>' +
         '<p class="hint" style="margin:0 0 10px;">과제 짧은 주소를 카톡·밴드에 보내면 과제명이 적힌 썸네일이 뜨게 해요. 서버가 혜원포털 저장소에 과제마다 작은 페이지를 써야 해서 GitHub 토큰이 필요해요.</p>' +
         (st.githubReady ? '' :
@@ -1909,6 +1953,7 @@ async function renderSettings(notice) {
   );
   document.getElementById('changePwBtn').onclick = doChangePassword;
   paintVer_();
+  loadUploadBox_();
   document.getElementById('fsChk').onclick = async function () {
     const out = document.getElementById('fsOut');
     out.innerHTML = '<span class="hint">시험 중…</span>';
