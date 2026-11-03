@@ -672,7 +672,7 @@ function metaRowsHtml_(tab) {
 function titleCardHtml_(name) {
   const sub = sportCategoryLabel_(name);
   return '<div class="detail-card" style="display:flex;align-items:center;gap:12px;">' +
-    '<div class="sporticon">' + sportIconHtml_(name) + '</div>' +
+    '<div class="sporticon">' + taskIconHtml_(name) + '</div>' +
     '<div style="min-width:0;"><div style="font-weight:800;font-size:17px;">' + escapeHtml(name) + '</div>' +
     (sub ? '<div class="assign-sub">' + escapeHtml(sub) + '</div>' : '') + '</div></div>';
 }
@@ -799,6 +799,20 @@ function sportCategoryLabel_(name) {
 }
 
 // sportIcon_()이 고른 종류로 42px짜리 아이콘을 그립니다: 실제 이모지 문자, 또는 같은 화풍의 커스텀 SVG.
+// 선생님이 과제마다 고른 이모지(글자 또는 올린 그림)가 있으면 그걸, 없으면 과제 이름으로 고른 기본 아이콘.
+function taskIconHtml_(name, size) {
+  size = size || 42;
+  const tab = state.config && (state.config.tabs || []).find(function (t) { return t.sheetName === name; });
+  const ic = tab && tab.meta && tab.meta.icon;
+  if (ic && ic.type === 'img') {
+    const d = state.config.icons && state.config.icons[ic.id];
+    if (d) return '<img alt="" src="' + escapeHtml(d) + '" style="width:' + size + 'px;height:' + size + 'px;object-fit:contain;display:block;">';
+  }
+  if (ic && ic.type === 'emoji' && ic.v) {
+    return '<div style="width:' + size + 'px; height:' + size + 'px; display:flex; align-items:center; justify-content:center; font-size:' + Math.round(size * 0.72) + 'px; line-height:1;">' + escapeHtml(ic.v) + '</div>';
+  }
+  return sportIconHtml_(name, size);
+}
 function sportIconHtml_(name, size) {
   size = size || 42;
   const icon = sportIcon_(name);
@@ -1016,7 +1030,7 @@ function renderToday() {
   const items = (state.myTabs || []).map(function (t) {
     const sub = sportCategoryLabel_(t.sheetName);
     return '<a class="assign-card" href="#" data-tab="' + escapeHtml(t.sheetName) + '">' +
-      '<div class="sporticon">' + sportIconHtml_(t.sheetName) + '</div>' +
+      '<div class="sporticon">' + taskIconHtml_(t.sheetName) + '</div>' +
       '<div class="assign-main">' +
         '<span class="assign-title">' + escapeHtml(t.sheetName) + '</span>' +
         (sub ? '<span class="assign-sub">' + escapeHtml(sub) + '</span>' : '') +

@@ -205,6 +205,23 @@
   .up-path { font-size: 15px; font-weight: 700; color: var(--accent); overflow-wrap: anywhere; }
   .tile { padding: 16px 18px; margin-bottom: 14px; }
   .tile-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+  .dt-head { display: flex; align-items: center; gap: 12px; margin-top: 10px; }
+  .dt-title { margin: 0; font-size: clamp(24px, 4.2vw, 34px); line-height: 1.25; word-break: keep-all; overflow-wrap: anywhere; }
+  .dt-icon { position: relative; flex: none; width: 60px; height: 60px; border-radius: 18px; border: 1px solid var(--border); background: #fff; display: grid; place-items: center; cursor: pointer; padding: 0; }
+  .dt-icon i { position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); font-style: normal; font-size: 10px; background: var(--accent); color: #fff; border-radius: 999px; padding: 1px 6px; white-space: nowrap; opacity: .9; }
+  .dt-pills { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+  .tico { display: inline-flex; align-items: center; justify-content: center; line-height: 1; object-fit: contain; border-radius: 6px; vertical-align: middle; flex: none; }
+  .item-name { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
+  .icon-panel { margin-top: 12px; background: #fff; border: 1px solid var(--border); border-radius: 18px; padding: 14px; max-width: 720px; }
+  .ip-head { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; margin-bottom: 8px; }
+  .ip-sec { font-size: 13px; font-weight: 700; margin: 10px 0 6px; }
+  .ip-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(52px, 1fr)); gap: 6px; }
+  .ip-cell { position: relative; height: 52px; border: 1px solid var(--border); border-radius: 12px; background: #fff; display: grid; place-items: center; cursor: pointer; padding: 4px; font-size: 26px; }
+  .ip-cell img { width: 38px; height: 38px; object-fit: contain; }
+  .ip-cell.on { border: 2px solid var(--accent); background: var(--accent-soft, #E3F1EC); }
+  .ip-cell.lib { height: 74px; cursor: default; grid-template-rows: 1fr auto; }
+  .ip-cell.lib small { font-size: 10px; color: var(--text3); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ip-del { position: absolute; top: -6px; right: -6px; width: 20px; height: 20px; border-radius: 50%; border: 0; background: #E5484D; color: #fff; font-size: 11px; cursor: pointer; line-height: 20px; padding: 0; }
   #saveToast { position: fixed; left: 50%; top: 16px; transform: translate(-50%, -140%); background: #14231F; color: #fff; padding: 10px 16px; border-radius: 999px; font-size: 13.5px; box-shadow: 0 8px 24px rgba(0,0,0,.2); z-index: 300; transition: transform .25s ease; white-space: nowrap; max-width: 92vw; overflow: hidden; text-overflow: ellipsis; }
   #saveToast.show { transform: translate(-50%, 0); }
   #saveToast b { color: #FFD84A; }
@@ -590,7 +607,7 @@ const SAVE_LABELS = {
   regenerateStudentCode: '학생코드', publishSharePage: '썸네일 페이지', notifyTask: '과제 알림 발송', ensureShortCode: '짧은 주소',
   deleteTab: '과제 삭제', addTab: '새 과제', addRosterStudent: '명단 학생 추가', changePassword: '비밀번호',
   setUploadFolder: '저장 위치', createUploadFolder: '새 저장 폴더', setPerTaskFolders: '과제별 폴더', updateHeaders: '과제 항목',
-  renameTab: '과제 이름', setScoreSource: '성적 시트 연결'
+  renameTab: '과제 이름', setScoreSource: '성적 시트 연결', setTaskIcon: '과제 이모지', addIcon: '이모지 올리기', deleteIcon: '이모지 삭제'
 };
 const SAVED_KEY = 'hyewon_admin_saved';
 function stampNow_() {
@@ -720,7 +737,7 @@ async function renderDashboard() {
     const o = openAtInfo_(t);
     const label = s === 'open' ? '진행중' : s === 'wait' ? (o ? '예약 ' + o.text : '대기') : '마감';
     const tg = (t.meta && t.meta.targets) || [];
-    return '<a class="item" href="#" data-tab="' + escapeHtml(t.sheetName) + '"><span>' + escapeHtml(t.sheetName) +
+    return '<a class="item" href="#" data-tab="' + escapeHtml(t.sheetName) + '"><span class="item-name">' + taskIconHtml_(t.sheetName, 26) + escapeHtml(t.sheetName) +
       (tg.length ? ' <span class="hint" style="font-weight:500;">· ' + escapeHtml(targetsLabel_(tg)) + '</span>' : '') + '</span><span class="pill ' + s + '">' + label + '</span></a>';
   }).join('');
 
@@ -824,6 +841,7 @@ function openReviewSheet_(tabName, sid, name, status, feedback, onSaved) {
 }
 
 // ---------- 설정: 제출 파일 저장 위치 ----------
+function gbText_(b) { b = Number(b) || 0; return b >= 1e9 ? (b / 1e9).toFixed(1) + 'GB' : Math.round(b / 1e6) + 'MB'; }
 async function loadUploadBox_(msg) {
   const box = document.getElementById('upBox'); if (!box) return;
   let r;
@@ -833,6 +851,10 @@ async function loadUploadBox_(msg) {
   box.innerHTML =
     (msg ? '<div class="msg ok">' + escapeHtml(msg) + '</div>' : '') +
     '<div class="up-path">📁 ' + escapeHtml(r.path) + (r.perTask ? ' / <i>과제 이름</i>' : '') + '</div>' +
+    (r.runAs || r.storage ? '<div class="hint" style="margin-top:6px;line-height:1.7;">' +
+      (r.runAs ? '🔐 서버 실행 계정 <b>' + escapeHtml(r.runAs) + '</b> — 제출 파일 용량은 이 계정에서 빠져요.' : '') +
+      (r.storage ? '<br>💽 저장공간 ' + gbText_(r.storage.used) + ' 사용' + (r.storage.limit > 0 && r.storage.limit < 1e15 ? ' / ' + gbText_(r.storage.limit) + ' (' + Math.round(r.storage.used / r.storage.limit * 100) + '%)' : ' (학교·조직 공용 용량)') : '') +
+    '</div>' : '') +
     '<div class="row" style="gap:8px;flex-wrap:wrap;margin:8px 0 14px;"><a class="btn-outline btn-sm" href="' + escapeHtml(r.folderUrl) + '" target="_blank" rel="noopener" style="text-decoration:none;">드라이브에서 열기</a>' +
       (r.custom ? '<button class="btn-outline btn-sm" id="upReset" type="button">기본 위치로 되돌리기</button>' : '<span class="hint">지금은 기본 위치(혜원포털 시트가 있는 폴더 / 첨부파일)예요.</span>') + '</div>' +
     '<label style="display:flex;gap:8px;align-items:center;font-weight:600;color:var(--text);font-size:14px;margin-bottom:6px;"><input type="checkbox" id="upPer" style="width:auto;"' + (r.perTask ? ' checked' : '') + '> 과제마다 폴더 나누기</label>' +
@@ -1291,8 +1313,12 @@ async function renderDetail(tabName) {
   render(
     '<div class="wrap">' +
       '<a href="#" id="backBtn" class="hint">← 과제 목록</a>' +
-      '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:8px;">' +
-        '<h1 class="serif" style="margin:0;">' + escapeHtml(tabName) + '</h1>' +
+      '<div class="dt-head">' +
+        '<button type="button" class="dt-icon" id="iconPick" title="과제 이모지 바꾸기">' + taskIconHtml_(tabName, 44, true) + '<i>바꾸기</i></button>' +
+        '<h1 class="serif dt-title">' + escapeHtml(tabName) + '</h1>' +
+      '</div>' +
+      '<div id="iconPanel" class="icon-panel" style="display:none;"></div>' +
+      '<div class="dt-pills">' +
         '<button type="button" class="pillbtn' + (ap ? ' on' : '') + '" id="apToggle">복붙방지 ' + (ap ? '켜짐' : '꺼짐') + '</button>' +
         '<button type="button" class="pillbtn' + (openAcc ? ' on' : '') + '" id="oaToggle">로그인 없이 받기 ' + (openAcc ? '켜짐' : '꺼짐') + '</button>' +
         '<button type="button" class="pillbtn" id="previewBtn" style="background:#4B3BB5;border-color:#4B3BB5;color:#fff;">👀 학생 화면 미리보기</button>' +
@@ -1399,6 +1425,7 @@ async function renderDetail(tabName) {
   );
   document.getElementById('backBtn').onclick = function (e) { e.preventDefault(); renderDashboard(); };
   paintSaveStamp_();
+  document.getElementById('iconPick').onclick = function () { toggleIconPanel_(tabName, tab); };
   document.querySelectorAll('[data-status]').forEach(function (b) {
     if (b.getAttribute('data-status') === status) b.classList.add('on');
     b.onclick = function () { if (b.getAttribute('data-status') !== status) doSetStatus(tabName, b.getAttribute('data-status')); };
@@ -1937,7 +1964,7 @@ async function loadHomeDash_(st) {
     '<div class="hnav">진행 중 과제<span>눌러서 상세 보기</span></div>' +
     (stats.map(function (x) {
       const p = Math.round(pct(x) * 100);
-      return '<div class="tcard" ' + go(x.name) + '><div class="top"><span>' + escapeHtml(x.name) + '</span>' +
+      return '<div class="tcard" ' + go(x.name) + '><div class="top"><span class="item-name">' + taskIconHtml_(x.name, 24) + escapeHtml(x.name) + '</span>' +
         (x.total ? '<span class="tag ' + (p >= 80 ? 'ok' : p >= 40 ? 'wr' : 'no') + '">' + p + '%</span>' : '<span class="tag ok">' + x.done + '건</span>') + '</div>' +
         '<div class="pbar"><i style="width:' + (x.total ? p : (x.done ? 100 : 0)) + '%"></i></div><div class="sub"><span>' + (x.total ? '제출 ' + x.done + ' / ' + x.total : '제출 ' + x.done + '건 · 명단 없는 과제(QR)') + '</span><span>' + (x.flagged ? '복붙 의심 ' + x.flagged + '명' : '') + '</span></div></div>';
     }).join('') || '<p class="hint">진행 중인 과제가 없어요.</p>');
@@ -2320,6 +2347,116 @@ async function doSendNotice() {
 
 // ---------- 설정 ----------
 
+// ---------- 과제 이모지 ----------
+// meta.icon = { type:'emoji', v:'🏀' } 또는 { type:'img', id } (설정에서 올린 그림). 없으면 기본 📘.
+const ICON_PRESETS = ['🏀', '⚽', '🏐', '🏸', '🏓', '⚾', '🎾', '🏃‍♀️', '🤸‍♀️', '🧘‍♀️', '🚴‍♀️', '🏊‍♀️', '💪', '🥇', '🏆', '📝', '📚', '🎤', '🎬', '📷', '🎨', '🎵', '💡', '🧠', '❤️', '🌱', '🍎', '📊', '🗂️', '📢'];
+function iconDataOf_(id) {
+  return (state.config && state.config.icons && state.config.icons[id]) || (state.iconLib && (state.iconLib.find(function (x) { return x.id === id; }) || {}).data) || '';
+}
+function taskIconHtml_(tabName, size, big) {
+  size = size || 24;
+  const tab = state.config && (state.config.tabs || []).find(function (t) { return t.sheetName === tabName; });
+  const ic = tab && tab.meta && tab.meta.icon;
+  const st = 'width:' + size + 'px;height:' + size + 'px;';
+  if (ic && ic.type === 'img' && iconDataOf_(ic.id)) return '<img class="tico" alt="" style="' + st + '" src="' + escapeHtml(iconDataOf_(ic.id)) + '">';
+  const ch = ic && ic.type === 'emoji' && ic.v ? ic.v : (big ? '📘' : '');
+  if (!ch) return '';
+  return '<span class="tico" style="' + st + 'font-size:' + Math.round(size * 0.8) + 'px;">' + escapeHtml(ch) + '</span>';
+}
+async function loadIconLib_() {
+  try { const r = await api('listIcons'); if (r && r.success) state.iconLib = r.icons || []; } catch (e) {}
+  return state.iconLib || [];
+}
+async function toggleIconPanel_(tabName, tab) {
+  const box = document.getElementById('iconPanel'); if (!box) return;
+  if (box.style.display !== 'none') { box.style.display = 'none'; return; }
+  box.style.display = '';
+  box.innerHTML = '<span class="hint">이모지를 불러오는 중…</span>';
+  const lib = await loadIconLib_();
+  const cur = (tab.meta && tab.meta.icon) || null;
+  box.innerHTML =
+    '<div class="ip-head"><b>과제 이모지</b><span class="hint">학생 화면 과제 목록·과제 정보에 보여요.</span><button type="button" class="btn-outline btn-sm" id="ipClose" style="margin-left:auto;">닫기</button></div>' +
+    '<div class="ip-sec">📁 내가 올린 이모지 <a href="#" id="ipGoSet" class="hint" style="margin-left:6px;">설정에서 올리기</a></div>' +
+    (lib.length ? '<div class="ip-grid">' + lib.map(function (x) {
+      return '<button type="button" class="ip-cell' + (cur && cur.type === 'img' && cur.id === x.id ? ' on' : '') + '" data-img="' + escapeHtml(x.id) + '" title="' + escapeHtml(x.name) + '"><img alt="" src="' + escapeHtml(x.data) + '"></button>';
+    }).join('') + '</div>' : '<p class="hint" style="margin:4px 0 10px;">아직 올린 이모지가 없어요. 설정 → 과제 이모지에서 그림을 올려 두면 여기서 골라요.</p>') +
+    '<div class="ip-sec">😀 기본 이모지</div>' +
+    '<div class="ip-grid">' + ICON_PRESETS.map(function (e) {
+      return '<button type="button" class="ip-cell emo' + (cur && cur.type === 'emoji' && cur.v === e ? ' on' : '') + '" data-emo="' + escapeHtml(e) + '">' + e + '</button>';
+    }).join('') + '</div>' +
+    '<div class="row" style="gap:8px;margin-top:10px;flex-wrap:wrap;align-items:center;"><input id="ipText" type="text" maxlength="8" placeholder="직접 입력 (예: 🤾‍♀️)" style="width:170px;"><button type="button" class="btn-outline btn-sm" id="ipTextOk">이걸로</button>' +
+      '<button type="button" class="btn-outline btn-sm" id="ipReset">기본으로</button><span class="hint" id="ipMsg"></span></div>';
+  async function setIcon(icon) {
+    document.getElementById('ipMsg').textContent = '저장 중…';
+    let r;
+    try { r = await api('setTaskIcon', { tabName: tabName, icon: icon }); } catch (e) { return; }
+    if (!r || r.success !== true) { document.getElementById('ipMsg').textContent = (r && r.message) || '저장하지 못했어요. 서버(Code.gs)가 버전 42 이상인지 확인해주세요.'; return; }
+    if (icon && icon.type === 'img') { state.config.icons = state.config.icons || {}; state.config.icons[icon.id] = iconDataOf_(icon.id); }
+    renderDetail(tabName);
+  }
+  document.getElementById('ipClose').onclick = function () { box.style.display = 'none'; };
+  document.getElementById('ipGoSet').onclick = function (e) { e.preventDefault(); renderSettings(); };
+  box.querySelectorAll('[data-img]').forEach(function (b) { b.onclick = function () { setIcon({ type: 'img', id: b.getAttribute('data-img') }); }; });
+  box.querySelectorAll('[data-emo]').forEach(function (b) { b.onclick = function () { setIcon({ type: 'emoji', v: b.getAttribute('data-emo') }); }; });
+  document.getElementById('ipTextOk').onclick = function () { const v = document.getElementById('ipText').value.trim(); if (v) setIcon({ type: 'emoji', v: v }); };
+  document.getElementById('ipReset').onclick = function () { setIcon(null); };
+}
+// 그림 파일 → 가운데를 정사각형으로 잘라 128px WebP(안 되면 PNG)로 줄여요.
+function shrinkIcon_(file) {
+  return new Promise(function (res, rej) {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = function () {
+      const S = 128, c = document.createElement('canvas'); c.width = S; c.height = S;
+      const g = c.getContext('2d');
+      const m = Math.min(img.width, img.height);
+      g.drawImage(img, (img.width - m) / 2, (img.height - m) / 2, m, m, 0, 0, S, S);
+      URL.revokeObjectURL(url);
+      let d = c.toDataURL('image/webp', 0.86);
+      if (!/^data:image\/webp/.test(d)) d = c.toDataURL('image/png');
+      res(d);
+    };
+    img.onerror = function () { URL.revokeObjectURL(url); rej(new Error('그림을 읽지 못했어요')); };
+    img.src = url;
+  });
+}
+async function loadIconBox_() {
+  const box = document.getElementById('icBox'); if (!box) return;
+  const lib = await loadIconLib_();
+  if (!document.getElementById('icBox')) return;
+  box.innerHTML =
+    '<div class="row" style="gap:8px;flex-wrap:wrap;align-items:center;">' +
+      '<label class="btn btn-sm" style="cursor:pointer;">🖼️ 그림 올리기<input type="file" id="icFile" accept="image/png,image/jpeg,image/webp,image/gif" multiple style="display:none;"></label>' +
+      tipHtml_('PNG·JPG·WebP·GIF 그림을 여러 장 한꺼번에 고를 수 있어요. 가운데를 정사각형으로 잘라 작게(128px) 줄여서 올려요. 배경이 투명한 PNG가 가장 예뻐요. 올린 그림은 과제 화면의 이모지(제목 왼쪽)를 눌러 골라요.') +
+      '<span class="hint" id="icMsg">' + lib.length + '개 올려 둠</span></div>' +
+    (lib.length ? '<div class="ip-grid" style="margin-top:12px;">' + lib.map(function (x) {
+      return '<div class="ip-cell lib" title="' + escapeHtml(x.name) + '"><img alt="" src="' + escapeHtml(x.data) + '"><button type="button" class="ip-del" data-del="' + escapeHtml(x.id) + '" aria-label="지우기">✕</button><small>' + escapeHtml(x.name) + '</small></div>';
+    }).join('') + '</div>' : '<p class="hint" style="margin:10px 0 0;">아직 올린 이모지가 없어요.</p>');
+  document.getElementById('icFile').onchange = async function (e) {
+    const files = Array.prototype.slice.call(e.target.files || []);
+    const msg = document.getElementById('icMsg');
+    let ok = 0, fail = [];
+    for (let i = 0; i < files.length; i++) {
+      msg.textContent = '올리는 중… ' + (i + 1) + ' / ' + files.length;
+      try {
+        const d = await shrinkIcon_(files[i]);
+        const r = await api('addIcon', { name: files[i].name.replace(/\.[^.]+$/, ''), data: d });
+        if (r && r.success) ok++; else fail.push(files[i].name + ': ' + ((r && r.message) || '실패'));
+      } catch (err) { fail.push(files[i].name + ': ' + (err.message || err)); }
+    }
+    await loadIconBox_();
+    const m2 = document.getElementById('icMsg');
+    if (m2) m2.textContent = ok + '개 올렸어요.' + (fail.length ? ' 실패: ' + fail.join(' / ') : '');
+  };
+  box.querySelectorAll('[data-del]').forEach(function (b) {
+    b.onclick = async function () {
+      if (!confirm('이 이모지를 지울까요? 이 이모지를 쓰던 과제는 기본 아이콘으로 보여요.')) return;
+      try { await api('deleteIcon', { id: b.getAttribute('data-del') }); } catch (e) {}
+      loadIconBox_();
+    };
+  });
+}
+
 // 툴팁: ⓘ 를 누르면(마우스는 올리면) 설명이 떠요. 휴대폰에서도 눌러서 볼 수 있어요.
 function tipHtml_(text) {
   return '<span class="tip" tabindex="0" role="button" aria-label="설명 보기" onmouseenter="tipPlace_(this)" onclick="tipToggle_(event,this)">ⓘ<span class="tip-box">' + escapeHtml(text) + '</span></span>';
@@ -2515,6 +2652,11 @@ async function renderSettings(notice) {
         '<p class="hint" id="tpMsg" style="margin:8px 0 0;"></p>' +
       '</div>' +
       '<div class="card wide" style="margin-bottom:16px;">' +
+        '<h2>😀 과제 이모지</h2>' +
+        '<p class="hint" style="margin:0 0 10px;">자주 쓰는 그림을 미리 올려 두면, 과제 화면에서 제목 왼쪽 아이콘을 눌러 골라요. 기본 이모지(🏀📝…)도 쓸 수 있어요.</p>' +
+        '<div id="icBox"><span class="hint">불러오는 중…</span></div>' +
+      '</div>' +
+      '<div class="card wide" style="margin-bottom:16px;">' +
         '<h2>📱 선생님 알림 <span class="hint" style="font-weight:500;font-size:13px;">학생이 제출하면 이 폰으로</span></h2>' +
         '<p class="hint" style="margin:0 0 10px;">관리자 앱을 폰에 설치하고 «이 기기에서 알림 받기»를 누르세요. 받을 항목은 아래에서 골라요. ⓘ를 누르면 자세한 설명이 나와요.</p>' +
         '<div id="tpushBox"><span class="hint">불러오는 중…</span></div>' +
@@ -2554,6 +2696,7 @@ async function renderSettings(notice) {
   loadUploadBox_();
   loadAutoPushBox_();
   loadTeacherPushBox_();
+  loadIconBox_();
   document.getElementById('tpSave').onclick = async function () {
     const msg = document.getElementById('tpMsg'); msg.textContent = '저장 중…';
     let r;
