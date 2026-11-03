@@ -22,7 +22,7 @@
   }
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--text); font-family: 'Noto Sans KR', sans-serif; }
-  .serif { font-family: 'Noto Serif KR', serif; }
+  .serif { font-family: 'Gugi', 'Noto Sans KR', sans-serif; font-weight: 400; letter-spacing: .01em; }
   #app { min-height: 100vh; }
   .shell { display: flex; min-height: 100vh; }
   .side { width: 232px; flex-shrink: 0; background: linear-gradient(180deg, #0F3B34 0%, #0B2C27 100%); color: #CFE3DC; padding: 0 14px 18px; display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
@@ -221,6 +221,14 @@
   .sched-row > b { font-size: 14px; min-width: 70px; }
   .sched-row input { width: auto; flex: 1; min-width: 200px; padding: 8px 10px; }
   .sched-row .hint { width: 100%; }
+  .mhero { display: none; }
+  @media (max-width: 760px) {
+    .mhero { display: flex; align-items: flex-end; gap: 12px; position: relative; height: 150px; padding: 0 18px 16px; margin-bottom: 4px;
+      background: linear-gradient(180deg, rgba(15,59,52,0) 35%, rgba(15,59,52,.85) 100%), url(../assets/login-bg.webp) 34% 22% / cover; border-radius: 0 0 26px 26px; }
+    .mhero .mh-logo { width: 58px; height: 58px; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 4px 14px rgba(0,0,0,.35); background: #fff; flex: none; }
+    .mhero .gugi { display: block; color: #fff; font-size: 26px; line-height: 1.1; text-shadow: 0 2px 8px rgba(0,0,0,.45); }
+    .mhero small { display: inline-block; margin-top: 4px; font-size: 12px; font-weight: 800; color: #0F3B34; background: #FFD84A; border-radius: 999px; padding: 2px 10px; }
+  }
   .tp-seg { display: inline-flex; flex-wrap: wrap; gap: 4px; background: #EEF2F1; border-radius: 14px; padding: 4px; }
   .tp-seg button { border: none; background: none; padding: 8px 14px; border-radius: 10px; font-family: inherit; font-size: 13px; font-weight: 700; color: var(--text2); cursor: pointer; }
   .tp-seg button.on { background: #fff; color: var(--accent); box-shadow: 0 1px 4px rgba(0,0,0,.1); }
@@ -381,7 +389,9 @@ function render(inner) {
       '<a class="sub" id="navStudentView" href="../report/" target="_blank" rel="noopener"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7"/><path d="M8 7h9v9"/></svg>학생 화면 보기</a>' +
       '<button class="sub" id="navLogout"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><path d="M21 12H9"/></svg>로그아웃</button>' +
       '<div class="verbox" id="verBox"></div>' +
-    '</aside><main class="main">' + inner + '<div class="verfoot" id="verFoot"></div></main></div>' + bottomNavHtml_();
+    '</aside><main class="main">' +
+      '<div class="mhero" aria-hidden="true"><img class="mh-logo" src="../assets/logo.png" alt=""><div><span class="gugi">혜원포털</span><small>관리자</small></div></div>' +
+      inner + '<div class="verfoot" id="verFoot"></div></main></div>' + bottomNavHtml_();
   document.querySelectorAll('[data-nav]').forEach(function (b) {
     b.onclick = function () {
       const k = b.getAttribute('data-nav');
@@ -1583,7 +1593,8 @@ async function loadHomeDash_(st) {
   if (!box) return;
   const d = new Date();
   const days = ['일', '월', '화', '수', '목', '금', '토'];
-  const head = '<div class="hello"><div class="av">체</div><h1>안녕하세요, 선생님<small>' + (d.getMonth() + 1) + '월 ' + d.getDate() + '일 ' + days[d.getDay()] + '요일</small></h1></div>';
+  const tp = (st && st.teacher) || {};
+  const head = '<div class="hello"><div class="av">' + escapeHtml((tp.subject || tp.name || '체').charAt(0)) + '</div><h1>안녕하세요, ' + (tp.name ? escapeHtml(tp.name) + ' ' : '') + '선생님' + (tp.subject ? ' <span class="hint" style="font-weight:600;">· ' + escapeHtml(tp.subject) + '</span>' : '') + '<small>' + (d.getMonth() + 1) + '월 ' + d.getDate() + '일 ' + days[d.getDay()] + '요일</small></h1></div>';
   box.innerHTML = head + '<div class="hint" style="margin-bottom:12px;">과제 현황을 불러오는 중…</div>';
   let cfg;
   try { cfg = state.config || await apiGet('getConfig'); state.config = cfg; } catch (e) { box.innerHTML = head; return; }
@@ -1609,13 +1620,16 @@ async function loadHomeDash_(st) {
   box.innerHTML = head +
     '<div class="kpis"><div class="kpi"><span>진행 중 과제</span><b>' + open.length + '</b><em class="up">전체 ' + tabs.length + '개</em></div>' +
     '<div class="kpi"><span>미제출 학생(합계)</span><b>' + missing + '</b>' + (flaggedAll ? '<em class="dn">복붙 의심 ' + flaggedAll + '</em>' : '<em class="up">의심 0</em>') + '</div></div>' +
-    (lead ? '<div class="focus" ' + go(lead.name) + '>' + ringSvg_(pct(lead), Math.round(pct(lead) * 100) + '%') +
-      '<div><h3>' + escapeHtml(lead.name) + '</h3><p>제출 ' + lead.done + ' / ' + lead.total + '명<br>미제출 ' + (lead.total - lead.done) + '명 · 알림 켠 기기 ' + st.tokenCount + '대</p></div></div>' : '') +
+    (lead ? '<div class="focus" ' + go(lead.name) + '>' + ringSvg_(lead.total ? pct(lead) : (lead.done ? 1 : 0), lead.total ? Math.round(pct(lead) * 100) + '%' : lead.done + '건') +
+      '<div><h3>' + escapeHtml(lead.name) + '</h3><p>' + (lead.total
+        ? '제출 ' + lead.done + ' / ' + lead.total + '명<br>미제출 ' + (lead.total - lead.done) + '명 · 알림 켠 기기 ' + st.tokenCount + '대'
+        : '제출 ' + lead.done + '건<br>명단 없는 과제(QR) · 누가 안 냈는지는 셀 수 없어요') + '</p></div></div>' : '') +
     '<div class="hnav">진행 중 과제<span>눌러서 상세 보기</span></div>' +
     (stats.map(function (x) {
       const p = Math.round(pct(x) * 100);
-      return '<div class="tcard" ' + go(x.name) + '><div class="top"><span>' + escapeHtml(x.name) + '</span><span class="tag ' + (p >= 80 ? 'ok' : p >= 40 ? 'wr' : 'no') + '">' + p + '%</span></div>' +
-        '<div class="pbar"><i style="width:' + p + '%"></i></div><div class="sub"><span>제출 ' + x.done + ' / ' + x.total + '</span><span>' + (x.flagged ? '복붙 의심 ' + x.flagged + '명' : '') + '</span></div></div>';
+      return '<div class="tcard" ' + go(x.name) + '><div class="top"><span>' + escapeHtml(x.name) + '</span>' +
+        (x.total ? '<span class="tag ' + (p >= 80 ? 'ok' : p >= 40 ? 'wr' : 'no') + '">' + p + '%</span>' : '<span class="tag ok">' + x.done + '건</span>') + '</div>' +
+        '<div class="pbar"><i style="width:' + (x.total ? p : (x.done ? 100 : 0)) + '%"></i></div><div class="sub"><span>' + (x.total ? '제출 ' + x.done + ' / ' + x.total : '제출 ' + x.done + '건 · 명단 없는 과제(QR)') + '</span><span>' + (x.flagged ? '복붙 의심 ' + x.flagged + '명' : '') + '</span></div></div>';
     }).join('') || '<p class="hint">진행 중인 과제가 없어요.</p>');
   box.querySelectorAll('[data-go]').forEach(function (el) { el.onclick = function () { renderDetail(el.getAttribute('data-go')); }; });
 }
@@ -2035,6 +2049,15 @@ async function renderSettings(notice) {
         '<div id="fsOut" style="margin-top:12px;font-size:13px;line-height:1.8;"></div>' +
       '</div>' +
       '<div class="card wide" style="margin-bottom:16px;">' +
+        '<h2>교사 정보</h2>' +
+        '<p class="hint" style="margin:0 0 10px;">학생 화면의 과제 상세에 «출제: ○○○ 선생님 · 과목»으로 보이고, 홈 인사말에도 쓰여요.</p>' +
+        '<div class="row" style="gap:10px;flex-wrap:wrap;align-items:flex-end;">' +
+          '<div class="field" style="flex:1;min-width:160px;margin:0;"><label for="tpName">이름</label><input id="tpName" type="text" maxlength="20" placeholder="예: 김진호" value="' + escapeHtml((st.teacher && st.teacher.name) || '') + '"></div>' +
+          '<div class="field" style="flex:1;min-width:140px;margin:0;"><label for="tpSubj">과목</label><input id="tpSubj" type="text" maxlength="20" placeholder="예: 체육" value="' + escapeHtml((st.teacher && st.teacher.subject) || '') + '"></div>' +
+          '<button class="btn" id="tpSave" type="button">저장</button></div>' +
+        '<p class="hint" id="tpMsg" style="margin:8px 0 0;"></p>' +
+      '</div>' +
+      '<div class="card wide" style="margin-bottom:16px;">' +
         '<h2>제출 파일 저장 위치</h2>' +
         '<p class="hint" style="margin:0 0 10px;">학생이 올린 파일이 쌓이는 내 구글 드라이브 폴더예요. 미리 정해 두면 그 폴더에 쌓여요.</p>' +
         '<div id="upBox"><span class="hint">불러오는 중…</span></div>' +
@@ -2062,6 +2085,13 @@ async function renderSettings(notice) {
   document.getElementById('changePwBtn').onclick = doChangePassword;
   paintVer_();
   loadUploadBox_();
+  document.getElementById('tpSave').onclick = async function () {
+    const msg = document.getElementById('tpMsg'); msg.textContent = '저장 중…';
+    let r;
+    try { r = await api('setTeacherProfile', { name: document.getElementById('tpName').value, subject: document.getElementById('tpSubj').value }); } catch (e) { msg.textContent = '서버에 연결하지 못했어요.'; return; }
+    if (!r || r.success !== true) { msg.textContent = (r && r.message) || '저장하지 못했어요. 서버(Code.gs)가 버전 39 이상인지 확인해주세요.'; return; }
+    msg.textContent = '저장했어요. 학생 화면에 «출제: ' + (r.teacher.name || '') + ' 선생님' + (r.teacher.subject ? ' · ' + r.teacher.subject : '') + '»로 보여요.';
+  };
   document.getElementById('fsChk').onclick = async function () {
     const out = document.getElementById('fsOut');
     out.innerHTML = '<span class="hint">시험 중…</span>';
