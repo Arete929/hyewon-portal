@@ -856,7 +856,7 @@ async function loadUploadBox_(msg) {
       (r.storage ? '<br>💽 저장공간 ' + gbText_(r.storage.used) + ' 사용' + (r.storage.limit > 0 && r.storage.limit < 1e15 ? ' / ' + gbText_(r.storage.limit) + ' (' + Math.round(r.storage.used / r.storage.limit * 100) + '%)' : ' (학교·조직 공용 용량)') : '') +
     '</div>' : '') +
     '<div class="row" style="gap:8px;flex-wrap:wrap;margin:8px 0 14px;"><a class="btn-outline btn-sm" href="' + escapeHtml(r.folderUrl) + '" target="_blank" rel="noopener" style="text-decoration:none;">드라이브에서 열기</a>' +
-      (r.custom ? '<button class="btn-outline btn-sm" id="upReset" type="button">기본 위치로 되돌리기</button>' : '<span class="hint">지금은 기본 위치(혜원포털 시트가 있는 폴더 / 첨부파일)예요.</span>') + '</div>' +
+      (r.custom ? '<button class="btn-outline btn-sm" id="upReset" type="button">기본 위치로 되돌리기</button>' : '<span class="hint">지금은 기본 위치(' + (/혜원포털 제출물/.test(r.path) ? '서버 계정 내 드라이브 / 혜원포털 제출물' : '혜원포털 시트가 있는 폴더 / 첨부파일') + ')예요.</span>') + '</div>' +
     '<label style="display:flex;gap:8px;align-items:center;font-weight:600;color:var(--text);font-size:14px;margin-bottom:6px;"><input type="checkbox" id="upPer" style="width:auto;"' + (r.perTask ? ' checked' : '') + '> 과제마다 폴더 나누기</label>' +
     '<p class="hint" style="margin:0 0 14px;">켜면 «' + escapeHtml(r.path.split(' / ').pop()) + ' / 과제 이름» 폴더로 나눠서 쌓여요. 켤 때 지금 있는 과제 폴더를 미리 만들어 두고, 새 과제는 만들 때 폴더가 생겨요. (이미 쌓인 파일은 옮기지 않아요)</p>' +
     '<details><summary style="cursor:pointer;font-weight:700;font-size:14px;">다른 폴더로 바꾸기</summary>' +
