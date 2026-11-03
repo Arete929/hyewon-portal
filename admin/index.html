@@ -273,6 +273,9 @@
   .sh-main { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
   .sh-main small { font-size: 12px; color: var(--text2); overflow-wrap: anywhere; }
   .sh-btns { display: flex; gap: 6px; flex: none; }
+  .om-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
+  .om-btn { border: 1.5px solid #E5C77A; background: #fff; color: #6B4E00; border-radius: 999px; padding: 6px 14px; font-family: inherit; font-size: 13px; font-weight: 800; cursor: pointer; }
+  .om-btn.on { background: #6B4E00; border-color: #6B4E00; color: #fff; }
   .set-nav { position: sticky; top: 0; z-index: 30; display: flex; gap: 8px; overflow-x: auto; padding: 10px 2px; margin: 6px 0 12px; background: var(--bg); scrollbar-width: none; }
   .set-nav::-webkit-scrollbar { display: none; }
   .set-nav button { flex: none; border: 1px solid var(--border); background: #fff; color: var(--text2); border-radius: 999px; padding: 9px 16px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; white-space: nowrap; }
@@ -682,7 +685,7 @@ const SAVE_LABELS = {
   regenerateStudentCode: '학생코드', publishSharePage: '썸네일 페이지', notifyTask: '과제 알림 발송', ensureShortCode: '짧은 주소',
   deleteTab: '과제 삭제', addTab: '새 과제', addRosterStudent: '명단 학생 추가', changePassword: '비밀번호',
   setUploadFolder: '저장 위치', createUploadFolder: '새 저장 폴더', setPerTaskFolders: '과제별 폴더', updateHeaders: '과제 항목',
-  renameTab: '과제 이름', setScoreSource: '성적 시트 연결', setTaskIcon: '과제 이모지', addIcon: '이모지 올리기', deleteIcon: '이모지 삭제', setTestStudent: '테스트 계정', setLateOk: '늦은 제출', setScoreMax: '점수 만점'
+  renameTab: '과제 이름', setScoreSource: '성적 시트 연결', setTaskIcon: '과제 이모지', addIcon: '이모지 올리기', deleteIcon: '이모지 삭제', setTestStudent: '테스트 계정', setLateOk: '늦은 제출', setScoreMax: '점수 만점', setOpenMode: 'QR 제출자'
 };
 const SAVED_KEY = 'hyewon_admin_saved';
 function stampNow_() {
@@ -1597,7 +1600,12 @@ async function renderDetail(tabName) {
         '</div>';
       })() +
       (openAcc
-        ? '<div class="msg warn" style="max-width:720px;">로그인 없이 받는 과제예요. 학생은 아래 짧은 주소나 QR로 들어와 학번·이름만 적어 제출해요(본인 확인이 안 되니 민감한 과제에는 쓰지 마세요).</div>'
+        ? '<div class="msg warn" style="max-width:720px;display:block;">로그인 없이 받는 과제예요. 아래 짧은 주소나 QR로 들어와 적어서 내요. 로그인한 학생은 «오늘의 과제»에서도 보고 바로 내요.' +
+            '<div class="om-row"><b>누가 낼 수 있나요?</b>' +
+              '<button type="button" class="om-btn' + (tab.meta.openMode === 'anyone' ? '' : ' on') + '" data-om="student">🎓 학생만</button>' +
+              '<button type="button" class="om-btn' + (tab.meta.openMode === 'anyone' ? ' on' : '') + '" data-om="anyone">🌐 누구나</button>' +
+              tipHtml_('«학생만»: 학번·이름을 명렬과 맞춰 보고, 대상(학년·반·학생)에 드는 학생만 받아요. «누구나»: 학부모·선생님·외부 강사처럼 학생이 아닌 사람도 이름만 적으면 받아요. 소속(예: 학부모)을 적을 수 있고, 학생 학번을 맞게 적으면 그 학생 제출로 들어가요. 누구나 받기에서는 대상 설정을 보지 않아요.') +
+              '<span class="hint" id="omMsg"></span></div></div>'
         : '') +
       (function () {
         const code = tab.meta && tab.meta.shortCode;
@@ -1748,6 +1756,16 @@ async function renderDetail(tabName) {
     const win = window.open(url, 'hyewonTaskPreview', 'popup=yes,width=' + w + ',height=' + h + ',left=' + left + ',top=40,resizable=yes,scrollbars=yes');
     if (win) { try { win.focus(); } catch (e) {} } else { location.href = url; }
   };
+  document.querySelectorAll('[data-om]').forEach(function (b) {
+    b.onclick = async function () {
+      const mode = b.getAttribute('data-om'), msg = document.getElementById('omMsg'); msg.textContent = '저장 중…';
+      let r; try { r = await api('setOpenMode', { tabName: tabName, mode: mode }); } catch (e) { msg.textContent = '서버에 연결하지 못했어요.'; return; }
+      if (!r || r.success !== true) { msg.textContent = (r && r.message) || '저장하지 못했어요. 서버(Code.gs)가 버전 51 이상인지 확인해주세요.'; return; }
+      document.querySelectorAll('[data-om]').forEach(function (x) { x.classList.toggle('on', x === b); });
+      msg.textContent = mode === 'anyone' ? '학생이 아닌 사람도 낼 수 있어요.' : '학생만(명렬 확인) 받아요.';
+      tab.meta.openMode = mode === 'anyone' ? 'anyone' : undefined;
+    };
+  });
   document.getElementById('oaToggle').onclick = async function () {
     const btn = this; btn.disabled = true;
     if (!openAcc && !confirm('로그인 없이 받을까요?\n\n학생코드 확인이 없어서 학번과 이름을 아는 누구나 제출할 수 있어요.')) { btn.disabled = false; return; }
