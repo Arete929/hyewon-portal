@@ -82,6 +82,15 @@
   .hnav { margin: 4px 0 10px; font-size: 14px; font-weight: 700; display: flex; justify-content: space-between; }
   .hnav span { font-size: 12px; color: var(--text3); font-weight: 400; }
   .subm { display: none; }
+  .fchip { display: inline-flex; align-items: center; gap: 3px; margin: 4px 6px 0 0; padding: 3px 10px; border-radius: 999px; background: #E3F1EC; color: #0F5A44; font-size: 12px; font-weight: 700; text-decoration: none; white-space: nowrap; }
+  .fchip:hover { background: #CFE9DE; }
+  .fchip.miss { background: #FDECEC; color: #B4232A; font-weight: 600; }
+  .s-files { display: flex; flex-wrap: wrap; }
+  .s-ans { display: block; margin-top: 4px; font-size: 12px; color: var(--text2); font-weight: 400; overflow-wrap: anywhere; }
+  .s-ans b { color: var(--text); font-weight: 700; margin-right: 2px; }
+  .rv-content { display: flex; flex-direction: column; gap: 10px; background: var(--bg); border-radius: 12px; padding: 12px; }
+  .rv-label { font-size: 12px; font-weight: 800; color: var(--text2); margin-bottom: 4px; }
+  .rv-text { white-space: pre-wrap; font-size: 14px; line-height: 1.6; background: #fff; border: 1px solid var(--border); border-radius: 10px; padding: 10px; max-height: 260px; overflow: auto; }
   @media (max-width: 1180px) { .subm { display: block; } .subm ~ .tablewrap { display: none; } .subm ~ .hint { display: none; } }
   .chips { display: flex; gap: 8px; margin: 0 0 12px; overflow-x: auto; }
   .chips button { border: 0; background: #fff; border-radius: 999px; padding: 8px 14px; font-family: inherit; font-size: 12px; font-weight: 600; color: var(--text2); cursor: pointer; white-space: nowrap; }
@@ -873,11 +882,52 @@ function historyHtml_(items) {
       (it.note ? '<div class="tl-note">' + escapeHtml(it.note) + '</div>' : '') + '</div></li>';
   }).join('') + '</ol>';
 }
-function openReviewSheet_(tabName, sid, name, status, feedback, onSaved) {
+// 제출 칸에서 파일 주소 뽑기 (여러 개면 줄바꿈·쉼표로 이어져 있어요)
+function fileUrls_(v) { return String(v || '').match(/https?:\/\/[^\s,]+/g) || []; }
+function fileChipsHtml_(label, v, compact) {
+  const urls = fileUrls_(v);
+  if (!urls.length) return '';
+  return urls.map(function (u, i) {
+    return '<a class="fchip" href="' + escapeHtml(u) + '" target="_blank" rel="noopener" onclick="event.stopPropagation()">📎 ' + escapeHtml(label) + (urls.length > 1 ? ' ' + (i + 1) : '') + '</a>';
+  }).join('');
+}
+// 답 칸(학번·이름·시각·검토·피드백 말고)
+function answerCols_(fields) {
+  return fields.map(function (f, i) { return { f: f, i: i }; }).filter(function (x) {
+    return x.i >= 2 && ['submittedAt', 'reviewStatus', 'feedback', 'confirm'].indexOf(x.f.type) < 0;
+  });
+}
+// 카드용 — 파일 칩(없으면 «없음»)과 글 답 앞부분
+function submissionPreviewHtml_(fields, r) {
+  const cols = answerCols_(fields);
+  if (!cols.length) return '';
+  const files = cols.filter(function (x) { return x.f.type === 'file'; }).map(function (x) {
+    return fileChipsHtml_(x.f.name, r[x.i]) || '<span class="fchip miss">' + escapeHtml(x.f.name) + ' 없음</span>';
+  }).join('');
+  const texts = cols.filter(function (x) { return x.f.type !== 'file' && String(r[x.i] || '').trim(); }).slice(0, 2).map(function (x) {
+    const t = String(r[x.i]).replace(/\s+/g, ' ').trim();
+    return '<span class="s-ans"><b>' + escapeHtml(x.f.name) + '</b> ' + escapeHtml(t.length > 70 ? t.slice(0, 70) + '…' : t) + '</span>';
+  }).join('');
+  return (files ? '<span class="s-files">' + files + '</span>' : '') + texts;
+}
+// 검토 창용 — 낸 내용 전부
+function submissionContentHtml_(fields, r) {
+  const cols = answerCols_(fields);
+  if (!cols.length) return '';
+  return '<div class="rv-content">' + cols.map(function (x) {
+    const v = r[x.i];
+    const body = x.f.type === 'file'
+      ? (fileChipsHtml_(x.f.name, v) || '<span class="hint">안 냄</span>')
+      : (String(v || '').trim() ? '<div class="rv-text">' + escapeHtml(v) + '</div>' : '<span class="hint">빈칸</span>');
+    return '<div class="rv-item"><div class="rv-label">' + escapeHtml(x.f.name) + '</div>' + body + '</div>';
+  }).join('') + '</div>';
+}
+function openReviewSheet_(tabName, sid, name, status, feedback, onSaved, contentHtml) {
   const el = document.createElement('div');
   el.className = 'rvsheet';
   el.innerHTML = '<div class="rv-panel"><div class="rv-head"><b>' + escapeHtml(sid + (name ? ' ' + name : '')) + '</b> ' + reviewPill_(status) +
       '<button class="rv-x" type="button" aria-label="닫기">✕</button></div>' +
+    (contentHtml ? '<h3 style="font-size:14px;margin:14px 0 8px;">낸 내용</h3>' + contentHtml : '') +
     '<label style="display:block;margin:12px 0 6px;">피드백 <span class="hint">(반려할 땐 이유를 꼭 적어 주세요 · 학생 화면에 보여요)</span></label>' +
     '<textarea id="rvFb" style="min-height:90px;font-family:inherit;font-size:14px;">' + escapeHtml(feedback || '') + '</textarea>' +
     '<div class="rv-btns"><button class="btn" data-st="검토완료" type="button">✅ 검토 완료</button>' +
@@ -1838,6 +1888,7 @@ async function renderSubmissions(tab) {
           (v ? escapeHtml(v) : '<span class="hint">없음</span>') + '</div>' +
           '<button class="btn-outline btn-sm fbEditBtn" data-row="' + ri + '">피드백 작성</button></td>';
       }
+      if (fields[ci] && fields[ci].type === 'file') return '<td>' + (fileChipsHtml_(fields[ci].name, v, true) || '<span class="hint">—</span>') + '</td>';
       return '<td>' + escapeHtml(v) + '</td>';
     }).join('') + (showTrace ? traceCellHtml_(traces[traceKey_(sid)], apMin) : '') + '</tr>';
   }).join('');
@@ -1852,7 +1903,7 @@ async function renderSubmissions(tab) {
     const nm = nameIdx >= 0 ? r[nameIdx] : '';
     const sub = [timeIdx >= 0 ? r[timeIdx] : '', flag && t.maxChunk ? '한 번에 ' + t.maxChunk + '자' : ''].filter(Boolean).join(' · ');
     return '<div class="srow" data-ri="' + ri + '" style="cursor:pointer;" data-flag="' + (flag ? 1 : 0) + '" data-done="' + (done ? 1 : 0) + '"><div class="dot">' + escapeHtml(String(nm || r[0] || '?').slice(-2)) + '</div>' +
-      '<div class="t">' + escapeHtml(nm ? r[0] + ' ' + nm : r[0]) + '<small>' + escapeHtml(sub) + '</small></div>' +
+      '<div class="t">' + escapeHtml(nm ? r[0] + ' ' + nm : r[0]) + '<small>' + escapeHtml(sub) + '</small>' + submissionPreviewHtml_(fields, r) + '</div>' +
       '<span class="tag ' + (rv === '반려' ? 'no' : flag ? 'wr' : 'ok') + '">' + (rv === '반려' ? '반려' : flag ? '복붙 의심' : done ? '검토완료' : '제출') + '</span></div>';
   }).join('');
   const mobileList =
@@ -1884,7 +1935,7 @@ async function renderSubmissions(tab) {
 
   function openRev_(ri) {
     const r = rows[ri];
-    openReviewSheet_(tab.sheetName, r[0], nameIdx >= 0 ? r[nameIdx] : '', reviewIdx >= 0 ? r[reviewIdx] : '', feedbackIdx >= 0 ? r[feedbackIdx] : '', function () { renderSubmissions(tab); });
+    openReviewSheet_(tab.sheetName, r[0], nameIdx >= 0 ? r[nameIdx] : '', reviewIdx >= 0 ? r[reviewIdx] : '', feedbackIdx >= 0 ? r[feedbackIdx] : '', function () { renderSubmissions(tab); }, submissionContentHtml_(fields, r));
   }
   document.querySelectorAll('.revOpen').forEach(function (b) { b.onclick = function () { openRev_(Number(b.getAttribute('data-row'))); }; });
   document.querySelectorAll('#subCards .srow').forEach(function (el) { el.onclick = function () { openRev_(Number(el.getAttribute('data-ri'))); }; });
