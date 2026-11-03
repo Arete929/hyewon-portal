@@ -205,6 +205,32 @@
   .up-path { font-size: 15px; font-weight: 700; color: var(--accent); overflow-wrap: anywhere; }
   .tile { padding: 16px 18px; margin-bottom: 14px; }
   .tile-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+  .ap-opt { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border: 1px solid var(--border); border-radius: 12px; margin-bottom: 8px; cursor: pointer; }
+  .ap-opt input { width: auto; margin-top: 3px; }
+  .ap-opt span { display: flex; flex-direction: column; }
+  .ap-opt small { color: var(--text3); font-size: 12px; }
+  .ts { font-size: 13px; line-height: 1.6; }
+  .ts-total { margin-bottom: 8px; color: var(--text2); }
+  .ts-total b { color: var(--accent); font-size: 15px; }
+  .ts-grade { margin-top: 8px; }
+  .ts-gh { font-weight: 800; color: var(--text); margin-bottom: 6px; }
+  .ts-gh span { font-weight: 500; color: var(--text3); margin-left: 4px; font-size: 12px; }
+  .ts-cls-wrap { display: flex; flex-wrap: wrap; gap: 6px; }
+  .ts-cls { background: var(--bg2, #F2F5F4); border: 1px solid var(--border); border-radius: 10px; padding: 5px 10px; color: var(--text2); }
+  .ts-cls b { color: var(--text); }
+  .ts-cls.has-ex { flex-basis: 100%; background: #FFF7E6; border-color: #F3D9A4; }
+  .ts-ex { margin-top: 4px; color: #8a5a00; font-size: 12px; display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+  .ts-ones { margin: 6px 0; }
+  .ts-ones > div, .ts-grade > div:not(.ts-gh):not(.ts-cls-wrap) { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+  .ts-stu { display: inline-block; background: #fff; border: 1px solid var(--border); border-radius: 999px; padding: 2px 9px; font-size: 12px; color: var(--text); white-space: nowrap; }
+  .ts-stu i { font-style: normal; color: #B5651D; font-size: 11px; }
+  .ann { margin-top: 14px; border-top: 1px dashed var(--border); padding-top: 12px; }
+  .ann-head { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; margin-bottom: 8px; }
+  .ann-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+  .ann-chips button { border: 1px solid var(--border); background: #fff; border-radius: 999px; padding: 5px 12px; font-size: 13px; cursor: pointer; font-family: inherit; color: var(--text); }
+  .ann-chips button.on { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 700; }
+  .ann textarea { width: 100%; min-height: 220px; font-family: inherit; font-size: 13.5px; line-height: 1.6; padding: 12px; border-radius: 12px; border: 1px solid var(--border); background: #FFFDF2; box-sizing: border-box; text-align: left; }
+  .linkcard .lc-body > div:last-child .ann { text-align: left; }
   .tile-label { font-size: 13px; font-weight: 800; color: var(--accent); background: #E8F3EF; border-radius: 999px; padding: 4px 12px; }
   .tile-body { font-size: 15px; line-height: 1.7; white-space: normal; }
   .statebtns { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
@@ -756,10 +782,198 @@ async function loadUploadBox_(msg) {
   };
 }
 
+
+// ---------- 대상 학생 요약 (과제 화면 🎯 대상 타일) ----------
+// 개별 학생: 이름까지 전부 · 학년/학급/전교생: «몇 반 몇 명» · 빠진 학생은 «그 반에서 누구 제외»로.
+function idKey_(v) { const s = String(v == null ? '' : v).trim(); return /^\d+$/.test(s) ? String(Number(s)) : s; }
+function clsSort_(a, b) { const p = a.split('-'), q = b.split('-'); return (p[0] - q[0]) || (p[1] - q[1]); }
+function targetBreakdown_(tg, students, roster, excl) {
+  tg = (tg || []).map(String);
+  const inRoster = {}; roster.forEach(function (e) { inRoster[idKey_(e.studentId)] = e; });
+  const hasRoster = roster.length > 0;
+  const byId = {}, byClass = {}, exByClass = {};
+  students.forEach(function (x) { byId[idKey_(x.studentId)] = x; (byClass[x.grade + '-' + x.cls] = byClass[x.grade + '-' + x.cls] || []).push(x); });
+  (excl || []).forEach(function (x) { (exByClass[x.grade + '-' + x.cls] = exByClass[x.grade + '-' + x.cls] || []).push(x); });
+  const ones = tg.filter(function (t) { return t.length === 4; });
+  const groups = tg.filter(function (t) { return t.length !== 4; });
+  let classes = [];
+  if (!tg.length) classes = Object.keys(byClass).filter(function (k) { return !hasRoster || byClass[k].some(function (x) { return inRoster[idKey_(x.studentId)]; }); });
+  groups.forEach(function (t) {
+    if (/^\d$/.test(t)) Object.keys(byClass).forEach(function (k) { if (k.split('-')[0] === t) classes.push(k); });
+    else classes.push(t);
+  });
+  classes = classes.filter(function (k, i) { return classes.indexOf(k) === i; }).sort(clsSort_);
+  const covered = {}, out = { classes: [], ones: [], extras: [], hasRoster: hasRoster, total: 0 };
+  classes.forEach(function (k) {
+    const mem = byClass[k] || [];
+    const inc = hasRoster ? mem.filter(function (x) { return inRoster[idKey_(x.studentId)]; }) : mem;
+    const miss = hasRoster ? mem.filter(function (x) { return !inRoster[idKey_(x.studentId)]; }) : [];
+    inc.forEach(function (x) { covered[idKey_(x.studentId)] = 1; });
+    out.classes.push({ key: k, g: k.split('-')[0], c: k.split('-')[1], n: inc.length, miss: miss, ex: exByClass[k] || [] });
+    out.total += inc.length;
+  });
+  ones.forEach(function (id) {
+    const k = idKey_(id); if (covered[k]) return; covered[k] = 1;
+    const x = byId[k] || inRoster[k] || { studentId: id, name: '' };
+    out.ones.push({ studentId: String(x.studentId || id), name: x.name || '', cls: String(id).charAt(0) + '-' + String(id).charAt(1), noRoster: hasRoster && !inRoster[k], noSrc: !byId[k] });
+    out.total++;
+  });
+  if (hasRoster) roster.forEach(function (e) {
+    const k = idKey_(e.studentId); if (covered[k]) return; covered[k] = 1;
+    out.extras.push({ studentId: e.studentId, name: e.name }); out.total++;
+  });
+  out.ones.sort(function (a, b) { return a.studentId - b.studentId; });
+  return out;
+}
+function stuChip_(x, note) { return '<span class="ts-stu">' + escapeHtml(x.studentId) + ' ' + escapeHtml(x.name || '') + (note ? ' <i>' + escapeHtml(note) + '</i>' : '') + '</span>'; }
+function targetSummaryHtml_(b) {
+  let html = '<div class="ts-total">총 <b>' + b.total + '명</b>' + (b.hasRoster ? '' : ' <span class="hint">(명렬표 기준)</span>') + '</div>';
+  if (b.classes.length) {
+    const byG = {};
+    b.classes.forEach(function (c) { (byG[c.g] = byG[c.g] || []).push(c); });
+    Object.keys(byG).sort().forEach(function (g) {
+      const list = byG[g], sum = list.reduce(function (a, c) { return a + c.n; }, 0);
+      html += '<div class="ts-grade"><div class="ts-gh">' + g + '학년 <span>' + list.length + '개 반 · ' + sum + '명</span></div><div class="ts-cls-wrap">' +
+        list.map(function (c) {
+          const out = c.miss.map(function (x) { return { x: x, note: '' }; }).concat(c.ex.map(function (x) { return { x: x, note: x.reason || '예외' }; }));
+          return '<div class="ts-cls' + (out.length ? ' has-ex' : '') + '"><b>' + c.c + '반</b> ' + c.n + '명' +
+            (out.length ? '<div class="ts-ex">제외 ' + out.map(function (o) { return stuChip_(o.x, o.note); }).join('') + '</div>' : '') + '</div>';
+        }).join('') + '</div></div>';
+    });
+  }
+  if (b.ones.length) {
+    const byC = {};
+    b.ones.forEach(function (x) { (byC[x.cls] = byC[x.cls] || []).push(x); });
+    html += '<div class="ts-grade"><div class="ts-gh">👤 개별 학생 <span>' + b.ones.length + '명</span></div>' +
+      Object.keys(byC).sort(clsSort_).map(function (k) {
+        const p = k.split('-');
+        return '<div class="ts-ones"><b>' + p[0] + '학년 ' + p[1] + '반</b> <span class="hint">' + byC[k].length + '명</span><div>' +
+          byC[k].map(function (x) { return stuChip_(x, x.noRoster ? '명단에 없음' : x.noSrc ? '명렬표에 없음' : ''); }).join('') + '</div></div>';
+      }).join('') + '</div>';
+  }
+  if (b.extras.length) {
+    html += '<div class="ts-grade"><div class="ts-gh">➕ 명단에 따로 넣은 학생 <span>' + b.extras.length + '명</span></div><div>' +
+      b.extras.map(function (x) { return stuChip_(x, ''); }).join('') + '</div></div>';
+  }
+  return html;
+}
+async function paintTargetSummary_(tabName, tab) {
+  const box = document.getElementById('tgSummary'); if (!box) return;
+  const tg = (tab.meta && tab.meta.targets) || [];
+  const res = await Promise.all([loadSourceStudents_(), api('getRoster', { tabName: tabName }).catch(function () { return null; })]);
+  const students = res[0], rr = res[1];
+  if (document.getElementById('tgSummary') !== box) return;
+  const roster = (rr && rr.success && rr.entries) || [];
+  if (!students.length && !roster.length) { box.innerHTML = '<span class="hint">명렬표를 읽지 못해 학생 수를 셀 수 없어요.</span>'; return; }
+  const b = targetBreakdown_(tg, students, roster, srcState.excluded || []);
+  box._breakdown = b;
+  box.innerHTML = targetSummaryHtml_(b);
+}
+
+// ---------- 안내문 복사 (학급 단톡방용) ----------
+function dlText_(v) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/.exec(String(v || ''));
+  if (!m) return '';
+  const dow = '일월화수목금토'.charAt(new Date(+m[1], +m[2] - 1, +m[3]).getDay());
+  return Number(m[2]) + '/' + Number(m[3]) + '(' + dow + ') ' + m[4] + ':' + m[5] + '까지';
+}
+function announceText_(o) {
+  const t = o.teacher || {};
+  const lines = [
+    '📢 [과제 안내] ' + o.tabName,
+    '',
+    '안녕하세요! ' + o.who + ' 학생 여러분.',
+    '아래 링크로 들어가 과제를 제출해 주세요.',
+    '',
+    '📌 과제: ' + o.tabName
+  ];
+  if (t.name) lines.push('👩‍🏫 출제: ' + t.name + ' 선생님' + (t.subject ? ' (' + t.subject + ')' : ''));
+  lines.push('⏰ 제출 기한: ' + (dlText_(o.deadline) || '선생님이 마감할 때까지'));
+  if (o.names && o.names.length) lines.push('🎯 제출 대상(' + o.names.length + '명): ' + o.names.join(', '));
+  else lines.push('🎯 대상: ' + o.who);
+  lines.push('🔐 제출 방법: ' + (o.openAcc ? '링크를 열고 학번·이름을 적어 제출' : '학번과 학생코드로 로그인해서 제출'));
+  lines.push('🔗 제출 링크: ' + o.url);
+  if (o.desc) { lines.push('', '📝 안내', String(o.desc).trim()); }
+  lines.push('', '※ 링크가 바로 안 열리면, 주소를 복사해서 크롬 브라우저에 붙여넣어 열어 주세요.');
+  if (!o.openAcc) lines.push('※ 학생코드를 모르면 담임 선생님이나 ' + (t.name ? t.name + ' 선생님' : '과목 선생님') + '께 물어보세요.');
+  lines.push('※ 기한 안에 빠짐없이 꼭! 제출해 주세요. ✨');
+  return lines.join('\n');
+}
+function toggleAnnounce_(tabName, tab, openAcc) {
+  const box = document.getElementById('annBox'); if (!box) return;
+  if (box.style.display !== 'none') { box.style.display = 'none'; return; }
+  const sum = document.getElementById('tgSummary');
+  const b = (sum && sum._breakdown) || { classes: [], ones: [], extras: [] };
+  const tg = (tab.meta && tab.meta.targets) || [];
+  // 단톡방 단위 = 반. 대상에 걸친 반마다 칩을 만들어요.
+  const keys = b.classes.map(function (c) { return c.key; });
+  b.ones.forEach(function (x) { if (keys.indexOf(x.cls) < 0) keys.push(x.cls); });
+  keys.sort(clsSort_);
+  const allWho = tg.length ? targetsLabel_(tg).replace(/, 개별 학생 \d+명/, '').replace(/^개별 학생 \d+명$/, '') : '';
+  const chips = [['all', '전체']].concat(keys.map(function (k) { const p = k.split('-'); return [k, p[0] + '-' + p[1]]; }));
+  let cur = keys.length === 1 ? keys[0] : 'all';
+  function build(k) {
+    const names = (k === 'all' ? b.ones : b.ones.filter(function (x) { return x.cls === k; })).map(function (x) { return x.studentId + ' ' + x.name; });
+    let who;
+    if (k === 'all') who = allWho || (b.ones.length ? '' : '혜원여중');
+    else { const p = k.split('-'); who = p[0] + '학년 ' + p[1] + '반'; }
+    if (!who) who = keys.length === 1 ? (keys[0].split('-')[0] + '학년 ' + keys[0].split('-')[1] + '반') : (function () {
+      const gs = keys.map(function (q) { return q.split('-')[0]; }).filter(function (g, i, a) { return a.indexOf(g) === i; });
+      return gs.map(function (g) { return g + '학년'; }).join('·');
+    })();
+    // 반 전체가 대상인 반에서는 이름을 늘어놓지 않아요(개별 학생만 이름).
+    return announceText_({ tabName: tabName, who: who, names: names, deadline: tab.meta && tab.meta.deadline,
+      teacher: (state.config && state.config.teacher) || {}, openAcc: openAcc, desc: tab.description,
+      url: document.getElementById('oaUrl').value });
+  }
+  function paint() {
+    box.innerHTML = '<div class="ann-head"><b>💬 단톡방 안내문</b><span class="hint">반을 고르면 그 반 단톡방용으로 바뀌어요. 고쳐서 복사해도 돼요.</span></div>' +
+      (keys.length > 1 ? '<div class="ann-chips">' + chips.map(function (c) { return '<button type="button" data-ak="' + c[0] + '"' + (cur === c[0] ? ' class="on"' : '') + '>' + c[1] + '</button>'; }).join('') + '</div>' : '') +
+      '<textarea id="annText" spellcheck="false"></textarea>' +
+      '<div class="row" style="gap:8px;margin-top:8px;flex-wrap:wrap;"><button class="btn btn-sm" id="annCopy" type="button">안내문 복사</button><button class="btn-outline btn-sm" id="annClose" type="button">닫기</button><span class="hint" id="annMsg"></span></div>';
+    const ta = document.getElementById('annText'); ta.value = build(cur);
+    ta.style.height = Math.min(520, ta.scrollHeight + 4) + 'px';
+    box.querySelectorAll('[data-ak]').forEach(function (btn) { btn.onclick = function () { cur = btn.getAttribute('data-ak'); paint(); }; });
+    document.getElementById('annClose').onclick = function () { box.style.display = 'none'; };
+    document.getElementById('annCopy').onclick = async function () {
+      const v = document.getElementById('annText').value, msg = document.getElementById('annMsg');
+      try { await navigator.clipboard.writeText(v); msg.textContent = '복사했어요 ✓ 카카오톡·밴드 단톡방에 붙여넣으세요.'; }
+      catch (e) { const t = document.getElementById('annText'); t.focus(); t.select(); msg.textContent = '자동 복사가 막혔어요. 선택된 글을 길게 눌러(Ctrl+C) 복사해 주세요.'; }
+    };
+  }
+  box.style.display = '';
+  paint();
+}
+
+// ---------- 과제 알림 보내기 (🔔 학생 알림 타일) ----------
+async function wirePushTile_(tabName) {
+  const info = document.getElementById('pushInfo'); if (!info) return;
+  let r = null;
+  try { r = await api('getTaskPushInfo', { tabName: tabName }); } catch (e) {}
+  if (document.getElementById('pushInfo') !== info) return;
+  const btnA = document.getElementById('pushAll'), btnM = document.getElementById('pushMiss');
+  if (!r || r.success !== true) { info.textContent = '서버(Code.gs) 버전 40 이상에서 쓸 수 있어요.'; btnA.disabled = btnM.disabled = true; return; }
+  if (!r.pushReady) { info.innerHTML = '푸시 서버가 아직 설정되지 않았어요.'; btnA.disabled = btnM.disabled = true; return; }
+  info.innerHTML = (r.all ? '대상이 정해지지 않아 <b>알림 켠 모든 학생</b>에게 가요 · ' : '대상 ' + r.targets + '명 중 ') + '알림 켠 학생 <b>' + r.notiOn + '명</b>' +
+    ' · 안 낸 학생 중 <b>' + r.missingOn + '명</b>' + (r.auto && r.auto.open ? ' · <span style="color:var(--accent);">자동 알림 켜짐</span>' : '');
+  async function send(onlyMissing) {
+    const n = onlyMissing ? r.missingOn : r.notiOn;
+    if (!n) { document.getElementById('pushMsg').textContent = '받을 학생이 없어요(알림을 켠 학생이 없어요).'; return; }
+    if (!confirm((onlyMissing ? '아직 안 낸 학생 ' : '대상 학생 ') + n + '명의 휴대폰으로 알림을 보낼까요?')) return;
+    const msg = document.getElementById('pushMsg'); msg.textContent = '보내는 중…'; btnA.disabled = btnM.disabled = true;
+    let res;
+    try { res = await api('notifyTask', { tabName: tabName, title: document.getElementById('pushTitle').value, body: document.getElementById('pushBody').value, onlyMissing: onlyMissing }); } catch (e) { res = null; }
+    btnA.disabled = btnM.disabled = false;
+    msg.textContent = (res && res.message) || '보내지 못했어요.';
+  }
+  btnA.onclick = function () { send(false); };
+  btnM.onclick = function () { send(true); };
+}
+
 // ---------- 대상 고르기 (학년 전체 / 반) — 새 과제 만들기·과제 화면에서 같이 써요 ----------
 async function loadSourceStudents_() {
   if (srcState.students && srcState.students.length) return srcState.students;
-  try { const r = await api('getSourceRoster'); if (r && r.success) { srcState.students = r.students || []; srcState.title = r.title || ''; } } catch (e) {}
+  try { const r = await api('getSourceRoster'); if (r && r.success) { srcState.students = r.students || []; srcState.title = r.title || ''; srcState.excluded = r.excludedList || []; } } catch (e) {}
   return srcState.students || [];
 }
 // 화면에 <div id="..."></div> 를 두고 부르면 칩을 그려요. el._targets() 로 고른 값(['3'] 또는 ['3-1','3-2'])을 읽어요.
@@ -1031,6 +1245,7 @@ async function renderDetail(tabName) {
         '<div class="card wide tile" style="max-width:720px;">' +
           '<div class="tile-head"><span class="tile-label">🎯 대상</span><span class="hint">' + (tg.length ? escapeHtml(targetsLabel_(tg)) : '제한 없음 (전교생)') + '</span>' +
             '<button class="btn-outline btn-sm" id="tgEdit" type="button" style="margin-left:auto;">대상 바꾸기</button></div>' +
+          '<div id="tgSummary" class="ts"><span class="hint">대상 학생을 세는 중…</span></div>' +
           '<div id="tgBox" style="display:none;"><div id="tgPick"></div>' +
             (openAcc ? '' : '<label style="display:flex;gap:8px;align-items:center;font-weight:500;color:var(--text);font-size:13px;margin-top:10px;"><input type="checkbox" id="tgRoster" checked style="width:auto;"> 이 대상으로 명단도 다시 만들기 (혜원핏 명렬 · 기존 명단은 바뀌어요)</label>') +
             '<div class="row" style="margin-top:10px;gap:8px;"><button class="btn btn-sm" id="tgSave" type="button">대상 저장</button><span class="hint" id="tgMsg"></span></div></div>' +
@@ -1051,11 +1266,12 @@ async function renderDetail(tabName) {
                 '<div class="lc-short" id="lcShort">' + escapeHtml(shortUrl.replace(/^https?:\/\//, '')) + '</div>' +
                 '<div class="hint" style="margin:2px 0 10px;">짧은 코드 <b class="code">' + escapeHtml(code) + '</b> · 칠판에 적거나 단톡방에 붙여 주세요.' + (openAcc ? '' : ' 학생은 이 주소로 들어와 학번·학생코드로 로그인해요.') + '</div>' +
                 '<input type="hidden" id="oaUrl" value="' + escapeHtml(shortUrl) + '">' +
-                '<div class="row" style="gap:8px;flex-wrap:wrap;"><button class="btn btn-sm" id="oaCopy" type="button">주소 복사</button><span id="oaQrDl"></span></div>' +
+                '<div class="row" style="gap:8px;flex-wrap:wrap;"><button class="btn btn-sm" id="oaCopy" type="button">주소 복사</button><button class="btn btn-sm" id="annOpen" type="button" style="background:#FEE500;color:#191600;border-color:#FEE500;">💬 안내문 복사</button><span id="oaQrDl"></span></div>' +
                 '<div class="hint" id="spMsg" style="margin-top:10px;">' + (hasPage
                   ? '💬 카톡·밴드에 보내면 과제명 썸네일이 떠요. <a href="#" id="spMake">썸네일 다시 만들기</a>'
                   : '💬 카톡·밴드 썸네일(과제명 표시)이 아직 없어요. <a href="#" id="spMake">썸네일 페이지 만들기</a>') + '</div>' +
-              '</div></div>'
+              '</div></div>' +
+              '<div id="annBox" class="ann" style="display:none;"></div>'
             : '<div class="row" style="margin-top:10px;gap:10px;flex-wrap:wrap;"><button class="btn btn-sm" id="scMake" type="button">짧은 주소 · QR 만들기</button>' +
               '<span class="hint">«…/hyewon-portal/?k7q2» 같은 짧은 주소와 QR이 생겨요.</span></div>') +
         '</div>';
@@ -1074,6 +1290,12 @@ async function renderDetail(tabName) {
           '<button class="state-btn" data-status="open"><b>▶ 진행중</b><span>학생이 보고 제출해요</span></button>' +
           '<button class="state-btn" data-status="closed"><b>⏹ 마감</b><span>제출을 그만 받아요 · 결과는 볼 수 있어요</span></button>' +
         '</div>' +
+      '</div>' +
+      '<div class="card wide tile" style="max-width:720px;">' +
+        '<div class="tile-head"><span class="tile-label">🔔 학생 알림</span><span class="hint" id="pushInfo">확인 중…</span></div>' +
+        '<div class="field" style="margin:0 0 8px;"><input id="pushTitle" type="text" maxlength="60" value="' + escapeHtml('📌 ' + tabName) + '"></div>' +
+        '<div class="field" style="margin:0 0 10px;"><input id="pushBody" type="text" maxlength="160" value="' + escapeHtml(dlText_(tab.meta && tab.meta.deadline) ? dlText_(tab.meta.deadline) + ' 제출해 주세요.' : '혜원포털에서 확인해 주세요.') + '"></div>' +
+        '<div class="row" style="gap:8px;flex-wrap:wrap;"><button class="btn btn-sm" id="pushAll" type="button">대상 학생에게 보내기</button><button class="btn-outline btn-sm" id="pushMiss" type="button">안 낸 학생에게만</button><span class="hint" id="pushMsg"></span></div>' +
       '</div>' +
       '<div class="card wide" style="margin-bottom:16px;">' +
         '<h2>안내 파일 (학생이 내려받는 파일)</h2>' +
@@ -1217,6 +1439,10 @@ async function renderDetail(tabName) {
     try { await navigator.clipboard.writeText(v); btn.textContent = '복사됨 ✓'; }
     catch (e) { window.prompt('아래 주소를 복사해 주세요', v); }
   };
+  paintTargetSummary_(tabName, tab);
+  const annOpen = document.getElementById('annOpen');
+  if (annOpen) annOpen.onclick = function () { toggleAnnounce_(tabName, tab, openAcc); };
+  wirePushTile_(tabName);
   document.getElementById('apToggle').onclick = async function () {
     const btn = this; btn.disabled = true;
     let r;
@@ -2010,6 +2236,31 @@ async function doSendNotice() {
 
 // ---------- 설정 ----------
 
+async function loadAutoPushBox_() {
+  const box = document.getElementById('apBox'); if (!box) return;
+  let r = null;
+  try { r = await api('getAutoPush'); } catch (e) {}
+  if (!document.getElementById('apBox')) return;
+  if (!r || r.success !== true) { box.innerHTML = '<span class="hint">서버(Code.gs) 버전 40 이상에서 쓸 수 있어요.</span>'; return; }
+  const a = r.auto || {};
+  const opt = function (k, t, d) { return '<label class="ap-opt"><input type="checkbox" data-ap="' + k + '"' + (a[k] ? ' checked' : '') + '><span><b>' + t + '</b><small>' + d + '</small></span></label>'; };
+  box.innerHTML =
+    (r.pushReady ? '' : '<div class="msg warn">푸시 서버(FCM_SERVICE_ACCOUNT)가 아직 설정되지 않아 알림이 나가지 않아요.</div>') +
+    opt('open', '📌 새 과제가 열리면', '바로 공개·예약 공개 모두 · 대상(명단) 학생에게') +
+    opt('due', '⏰ 마감 전날·당일 아침 8시', '아직 안 낸 학생에게만') +
+    opt('review', '↩️ 반려·✅ 검토 완료', '그 학생에게 (반려 사유·피드백 포함)') +
+    '<div class="row" style="gap:8px;margin-top:10px;flex-wrap:wrap;"><button class="btn btn-sm" id="apSave" type="button">저장</button><span class="hint" id="apMsg">' +
+    (r.trigger === false && (a.open || a.due) ? '⚠️ 예약 실행이 꺼져 있어요. 저장을 다시 눌러 주세요.' : '') + '</span></div>';
+  document.getElementById('apSave').onclick = async function () {
+    const v = {}; box.querySelectorAll('[data-ap]').forEach(function (c) { v[c.getAttribute('data-ap')] = c.checked; });
+    const msg = document.getElementById('apMsg'); msg.textContent = '저장 중…';
+    let res;
+    try { res = await api('setAutoPush', v); } catch (e) { msg.textContent = '서버에 연결하지 못했어요.'; return; }
+    if (!res || res.success !== true) { msg.textContent = (res && res.message) || '저장하지 못했어요.'; return; }
+    msg.textContent = '저장했어요.' + ((v.open || v.due) ? ' 15분마다 확인해서 보내요.' : '');
+  };
+}
+
 async function renderSettings(notice) {
   state.nav = 'settings';
   render('<div class="wrap"><h1 class="serif">설정</h1><p class="hint">불러오는 중…</p></div>');
@@ -2058,6 +2309,11 @@ async function renderSettings(notice) {
         '<p class="hint" id="tpMsg" style="margin:8px 0 0;"></p>' +
       '</div>' +
       '<div class="card wide" style="margin-bottom:16px;">' +
+        '<h2>🔔 자동 알림</h2>' +
+        '<p class="hint" style="margin:0 0 10px;">학생이 혜원포털 앱에서 «알림 받기»를 켜 두면, 앱을 닫아도 휴대폰에 알림이 떠요. 밤 10시~아침 7시에는 보내지 않고 아침으로 미뤄요.</p>' +
+        '<div id="apBox"><span class="hint">불러오는 중…</span></div>' +
+      '</div>' +
+      '<div class="card wide" style="margin-bottom:16px;">' +
         '<h2>제출 파일 저장 위치</h2>' +
         '<p class="hint" style="margin:0 0 10px;">학생이 올린 파일이 쌓이는 내 구글 드라이브 폴더예요. 미리 정해 두면 그 폴더에 쌓여요.</p>' +
         '<div id="upBox"><span class="hint">불러오는 중…</span></div>' +
@@ -2085,6 +2341,7 @@ async function renderSettings(notice) {
   document.getElementById('changePwBtn').onclick = doChangePassword;
   paintVer_();
   loadUploadBox_();
+  loadAutoPushBox_();
   document.getElementById('tpSave').onclick = async function () {
     const msg = document.getElementById('tpMsg'); msg.textContent = '저장 중…';
     let r;

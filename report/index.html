@@ -113,6 +113,16 @@
   .extras button { width: 100%; padding: 12px; border-radius: 12px; border: 1px solid var(--border); background: #fff; color: var(--text); font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; }
   .extras button.on { background: var(--hyewon-mint); color: var(--hyewon-emerald); border-color: transparent; }
   .extras .hint { text-align: center; }
+  .extras:empty { display: none; }
+  .noti-card { display: flex; align-items: center; gap: 12px; background: linear-gradient(135deg, #E6F7F0, #FFF8DC); border: 1px solid #CDEBDD; border-radius: 16px; padding: 12px 14px; }
+  .noti-ic { font-size: 26px; }
+  .noti-tx { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  .noti-tx b { font-size: 15px; color: var(--text); }
+  .noti-tx small { font-size: 12px; color: var(--text-secondary, #5F6F6B); line-height: 1.5; margin-top: 2px; }
+  .extras .noti-card button { width: auto; padding: 9px 16px; border-radius: 999px; background: var(--hyewon-emerald, #087A55); color: #fff; border: 0; font-weight: 800; flex: none; }
+  .extras .noti-on { margin: 0; font-size: 12px; }
+  html[data-theme="dark"] .extras .noti-card button { background: #2FBF8A; color: #062B20; }
+  html[data-theme="dark"] .noti-card { background: linear-gradient(135deg, #12332B, #2B2A18); border-color: #2A4A40; }
   .peekbar { background: #4B3BB5; color: #fff; font-size: 12.5px; font-weight: 700; text-align: center; padding: 6px 10px; flex-shrink: 0; }
   .appbar { flex-shrink: 0; background: var(--hyewon-emerald); padding: 16px 18px 18px; display: flex; align-items: center; justify-content: space-between; border-radius: 0 0 22px 22px; box-shadow: 0 4px 14px rgba(8,122,85,.18); }
   .appbar .brand { display: flex; align-items: center; gap: 8px; color: #fff; font-weight: 800; font-size: 16px; }
@@ -1013,11 +1023,11 @@ function renderToday() {
   render(
     homeHeroHtml_() +
     '<div id="noticeArea" style="padding-top:4px;"></div>' +
+    '<div class="extras" id="extras"></div>' +
     stepperHtml_() +
     '<div class="main"><div class="assign-list">' +
       (items || '<p class="hint">표시할 과제가 없습니다.</p>') +
     '</div></div>' +
-    '<div class="extras" id="extras"></div>' +
     footerHtml_() +
     bottombarHtml_('home')
   );
@@ -1032,6 +1042,7 @@ function renderToday() {
   wireChrome_();
   loadNotices_();
   paintExtras_();
+  notiRefresh_();
 }
 
 function openAssignment(entry) {
@@ -1852,17 +1863,22 @@ function paintExtras_() {
   const box = document.getElementById('extras');
   if (!box) return;
   let html = '';
+  const canPush = pushSupported_() && !isPeek_() && !(state.login && state.login.master);
+  const on = canPush && notiOn_();
   if (!isStandalone_()) {
-    if (deferredInstall) html += '<button id="installBtn">홈 화면에 앱 설치하기</button>';
-    else if (isIOS_()) html += '<p class="hint">아이폰: 공유 버튼 → «홈 화면에 추가»를 누르면 앱처럼 쓸 수 있어요.</p>';
+    if (deferredInstall) html += '<button id="installBtn" class="install-btn">📲 홈 화면에 앱 설치하기</button>';
+    else if (isIOS_()) html += '<p class="hint">아이폰: Safari 공유 버튼 → «홈 화면에 추가»를 누르면 앱처럼 쓰고 알림도 받을 수 있어요.</p>';
   }
-  if (pushSupported_() && !isPeek_()) {
-    const on = notiOn_();
-    html += '<button id="notiBtn" class="' + (on ? 'on' : '') + '">' + (on ? '알림 받는 중 (끄려면 누르세요)' : '알림 받기') + '</button>';
-    html += '<p class="hint">' + (Notification.permission === 'denied'
-      ? '알림이 차단돼 있어요 — 브라우저 설정에서 이 앱의 알림을 허용해 주세요.'
-      : (isStandalone_() || !isIOS_() ? '켜 두면 앱을 닫아도 선생님 공지가 휴대폰에 떠요.' : '알림은 홈 화면에 설치한 뒤에 켤 수 있어요.')) + '</p>';
+  if (canPush && !on) {
+    const denied = window.Notification && Notification.permission === 'denied';
+    const needInstall = isIOS_() && !isStandalone_();
+    html += '<div class="noti-card"><div class="noti-ic">🔔</div><div class="noti-tx"><b>알림 받기</b>' +
+      '<small>' + (denied ? '알림이 차단돼 있어요. 휴대폰 설정 → 앱(또는 브라우저) → 알림에서 혜원포털을 허용해 주세요.'
+        : needInstall ? '아이폰은 먼저 홈 화면에 설치한 뒤 앱에서 켤 수 있어요.'
+        : '새 과제 · 마감 알림 · 반려 소식을 앱을 닫아도 휴대폰으로 받아요.') + '</small></div>' +
+      (denied || needInstall ? '' : '<button id="notiBtn" type="button">켜기</button>') + '</div>';
   }
+  if (on) html += '<p class="hint noti-on">🔔 알림 받는 중 · <a href="#" id="notiOff">끄기</a></p>';
   box.innerHTML = html;
   const ib = document.getElementById('installBtn');
   if (ib) ib.onclick = function () {
@@ -1871,7 +1887,29 @@ function paintExtras_() {
     deferredInstall.userChoice.finally(function () { deferredInstall = null; paintExtras_(); });
   };
   const nb = document.getElementById('notiBtn');
-  if (nb) nb.onclick = function () { notiOn_() ? notiDisable_() : notiEnable_(); };
+  if (nb) nb.onclick = function () { notiEnable_(); };
+  const no = document.getElementById('notiOff');
+  if (no) no.onclick = function (e) { e.preventDefault(); if (confirm('알림을 끌까요? 새 과제·마감 알림이 오지 않아요.')) notiDisable_(); };
+}
+
+// 알림을 켜 둔 기기는 앱을 열 때마다 토큰을 다시 등록해요(토큰이 바뀌었거나, 같은 폰에서 다른 학생이 로그인한 경우).
+async function notiRefresh_() {
+  try {
+    if (!notiOn_() || !state.login || !state.login.code || state.login.master || isPeek_()) return;
+    const key = 'hyewon_noti_sync';
+    const mark = state.login.studentId + '|' + new Date().toDateString();
+    if (sessionStorage.getItem(key) === mark) return;
+    if (!window.firebase || !firebase.messaging) {
+      await loadScript_('https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js');
+      await loadScript_('https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js');
+    }
+    if (!firebase.apps || !firebase.apps.length) firebase.initializeApp(FCM_CONFIG);
+    const reg = await navigator.serviceWorker.ready;
+    const token = await firebase.messaging().getToken({ vapidKey: FCM_VAPID_KEY, serviceWorkerRegistration: reg });
+    if (!token) return;
+    const r = await api('saveNotiToken', { studentId: state.login.studentId, code: state.login.code, token: token, ua: navigator.userAgent });
+    if (r && r.success) sessionStorage.setItem(key, mark);
+  } catch (e) {}
 }
 
 function loadScript_(src) {
