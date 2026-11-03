@@ -1,8 +1,8 @@
 /* 혜원포털 관리자 서비스워커 — 홈 화면 설치(PWA)용.
    서버(Apps Script)·GitHub 호출은 캐시하지 않고 그대로 통과(다른 주소). 화면 파일은 «네트워크 먼저», 안 되면 저장본. */
-var CACHE = 'admin-shell-v1';
+var CACHE = 'admin-shell-v2';
 var SHELL = ['./', './index.html', './manifest.webmanifest', './qrcode.js', '../routes.json',
-  '../assets/admin-192.png', '../assets/admin-512.png', '../assets/logo.png', '../assets/login-bg.webp'];
+  '../assets/admin-192.png', '../assets/admin-512.png', '../assets/admin-maskable-512.png', '../assets/logo.png', '../assets/login-bg.webp'];
 
 self.addEventListener('install', function (e) {
   e.waitUntil(caches.open(CACHE).then(function (c) {
