@@ -527,7 +527,7 @@ function render(inner) {
   document.getElementById('app').innerHTML =
     '<div class="shell"><aside class="side">' +
       '<div class="photo" aria-hidden="true"></div>' +
-      '<div class="brandbox"><img src="../assets/logo.png" alt=""><div><span class="gugi">혜원포털</span><small>관리자</small><em class="tline">' + tlineHtml_() + '</em></div></div>' +
+      '<div class="brandbox"><div><span class="gugi">혜원포털</span><small>관리자</small><em class="tline">' + tlineHtml_() + '</em></div></div>' +
       nav +
       '<div class="spacer"></div>' +
       '<button class="sub installBtn" type="button" style="display:none;color:#FFD84A;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><polyline points="7 10 12 15 17 10"/><path d="M5 21h14"/></svg>앱으로 설치</button>' +
@@ -535,7 +535,7 @@ function render(inner) {
       '<button class="sub" id="navLogout"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><path d="M21 12H9"/></svg>로그아웃</button>' +
       '<div class="verbox" id="verBox"></div>' +
     '</aside><main class="main">' +
-      '<div class="mhero" aria-hidden="true"><img class="mh-logo" src="../assets/logo.png" alt=""><div><span class="gugi">혜원포털</span><small>관리자</small><em class="tline">' + tlineHtml_() + '</em></div></div>' +
+      '<div class="mhero" aria-hidden="true"><div><span class="gugi">혜원포털</span><small>관리자</small><em class="tline">' + tlineHtml_() + '</em></div></div>' +
       inner + '<div class="verfoot" id="verFoot"></div></main></div>' + bottomNavHtml_();
   document.querySelectorAll('[data-nav]').forEach(function (b) {
     b.onclick = function () {
