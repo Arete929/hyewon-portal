@@ -81,7 +81,48 @@
   .tcard .sub { display: flex; justify-content: space-between; font-size: 12px; color: var(--text2); }
   .hnav { margin: 4px 0 10px; font-size: 14px; font-weight: 700; display: flex; justify-content: space-between; }
   .hnav span { font-size: 12px; color: var(--text3); font-weight: 400; }
-  .subm { display: none; }
+  .subm { display: none !important; }
+  .kpis5 { grid-template-columns: repeat(5, 1fr) !important; }
+  .kpis5 .kpi small { font-size: 12px; color: var(--text3); font-weight: 600; }
+  @media (max-width: 640px) { .kpis5 { grid-template-columns: repeat(3, 1fr) !important; } }
+  details.sacc { margin: 4px 0 10px; }
+  details.sacc > summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 8px; padding: 10px 14px; background: #fff; border-radius: 14px; font-size: 14px; font-weight: 700; color: var(--text2); }
+  details.sacc > summary::-webkit-details-marker { display: none; }
+  details.sacc > summary::after { content: '▾'; margin-left: auto; color: var(--text3); transition: transform .2s; }
+  details.sacc:not([open]) > summary::after { transform: rotate(-90deg); }
+  details.sacc > summary b { color: var(--text); }
+  .sgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(165px, 1fr)); gap: 10px; margin-top: 10px; }
+  @media (min-width: 1300px) { .sgrid { grid-template-columns: repeat(4, 1fr); } }
+  .stile { background: #fff; border-radius: 16px; padding: 12px; display: flex; flex-direction: column; gap: 6px; border: 1.5px solid transparent; cursor: pointer; min-width: 0; }
+  .stile:hover { border-color: var(--accent); }
+  .stile.rej { border-color: #F6C4C4; }
+  .stile.latet { border-color: #F6D2B8; }
+  .stile.miss { background: #F7F8F9; border: 1.5px dashed var(--border); cursor: default; color: var(--text2); }
+  .stile.miss .dot { background: #C5CFCC; }
+  .st-top { display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .st-top .dot { width: 34px; height: 34px; border-radius: 50%; background: var(--accent); color: #fff; display: grid; place-items: center; font-weight: 700; font-size: 12px; flex: none; }
+  .st-nm { font-weight: 800; font-size: 13.5px; min-width: 0; overflow-wrap: anywhere; }
+  .st-nm small { display: block; font-weight: 500; color: var(--text3); font-size: 11px; }
+  .st-badges { display: flex; gap: 4px; flex-wrap: wrap; }
+  .stile .pill, .rv-head .pill.late-p { font-size: 11px; padding: 2px 8px; border-radius: 999px; font-weight: 800; }
+  .p-wait { background: #FFF1C7; color: #8a6500; } .p-done { background: #DDF5EB; color: #12805B; } .p-rej { background: #FDE3E1; color: #C2232A; }
+  .p-flag { background: #FFF1C7; color: #8a6500; } .p-none { background: #EEF1F0; color: var(--text2); } .late-p { background: #FFE7D6; color: #B4501D; }
+  .stile .s-files .fchip { font-size: 11px; padding: 2px 8px; margin-top: 0; }
+  .stile .s-ans { font-size: 11px; }
+  .t-score { font-size: 22px; font-weight: 900; color: #0F3B34; line-height: 1.1; margin-top: 2px; }
+  .t-score small { font-size: 11px; font-weight: 600; color: var(--text3); margin-left: 3px; }
+  .t-score.none { font-size: 13px; color: var(--text3); font-weight: 600; }
+  .late-box { display: flex; gap: 8px; align-items: flex-start; background: #FFF3EA; border: 1px solid #F6D2B8; border-radius: 12px; padding: 10px 12px; font-size: 13px; color: #8A3D12; margin-top: 10px; line-height: 1.6; }
+  #rvScore { padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; font-size: 15px; font-family: inherit; min-width: 0; background: #FCFDFC; }
+  .seg2 { display: inline-flex; border: 1.5px solid var(--border); border-radius: 10px; overflow: hidden; }
+  .seg2 button { border: 0; background: #fff; padding: 7px 18px; font-family: inherit; font-size: 13px; font-weight: 700; color: var(--text2); cursor: pointer; }
+  .seg2 button.on { background: #E3F1EC; color: #0F5A44; }
+  .hn-row { margin-top: 2px; }
+  .hn-row b { color: var(--text2); font-weight: 700; margin-right: 4px; }
+  .hn-add { color: #12805B; font-weight: 700; }
+  .hn-del { color: #C2232A; text-decoration: line-through; }
+  .hn-keep { color: var(--text3); }
+  .hn-late { display: inline-block; margin-top: 4px; font-size: 11px; font-weight: 800; background: #FFE7D6; color: #B4501D; border-radius: 999px; padding: 1px 8px; }
   .fchip { display: inline-flex; align-items: center; gap: 3px; margin: 4px 6px 0 0; padding: 3px 10px; border-radius: 999px; background: #E3F1EC; color: #0F5A44; font-size: 12px; font-weight: 700; text-decoration: none; white-space: nowrap; }
   .fchip:hover { background: #CFE9DE; }
   .fchip.miss { background: #FDECEC; color: #B4232A; font-weight: 600; }
@@ -641,7 +682,7 @@ const SAVE_LABELS = {
   regenerateStudentCode: '학생코드', publishSharePage: '썸네일 페이지', notifyTask: '과제 알림 발송', ensureShortCode: '짧은 주소',
   deleteTab: '과제 삭제', addTab: '새 과제', addRosterStudent: '명단 학생 추가', changePassword: '비밀번호',
   setUploadFolder: '저장 위치', createUploadFolder: '새 저장 폴더', setPerTaskFolders: '과제별 폴더', updateHeaders: '과제 항목',
-  renameTab: '과제 이름', setScoreSource: '성적 시트 연결', setTaskIcon: '과제 이모지', addIcon: '이모지 올리기', deleteIcon: '이모지 삭제', setTestStudent: '테스트 계정'
+  renameTab: '과제 이름', setScoreSource: '성적 시트 연결', setTaskIcon: '과제 이모지', addIcon: '이모지 올리기', deleteIcon: '이모지 삭제', setTestStudent: '테스트 계정', setLateOk: '늦은 제출', setScoreMax: '점수 만점'
 };
 const SAVED_KEY = 'hyewon_admin_saved';
 function stampNow_() {
@@ -865,7 +906,32 @@ function showBigQr_(title, url) {
 }
 
 // ---------- 검토·반려·피드백 + 제출 기록 (학생 한 명) ----------
-const HIST_STYLE = { '제출': ['#087A55', '📤'], '다시 제출': ['#2F6FED', '🔁'], '회수': ['#8A6D3B', '↩️'], '반려': ['#E5484D', '⛔'], '검토 완료': ['#087A55', '✅'], '검토중으로 되돌림': ['#9A6400', '⏳'], '피드백': ['#6B4BD8', '💬'] };
+// 기록 내용 «PPT파일: ＋새.pptx · －옛.pptx | PDF파일: ＝그대로.pdf | 소감: 수정 5자→8자 [1일 초과]» 를 색으로
+function histNoteHtml_(note) {
+  note = String(note || '');
+  let lateTag = '';
+  note = note.replace(/\s*\[(\d+)일 초과\]\s*$/, function (m, d) { lateTag = '<span class="hn-late">⏰ ' + d + '일 초과</span>'; return ''; });
+  const segs = note.split(' | ').filter(function (x) { return x.trim(); });
+  const out = segs.map(function (seg) {
+    const m = /^([^:]{1,40}): (.*)$/.exec(seg);
+    if (!m) return '<div class="hn-row">' + escapeHtml(seg) + '</div>';
+    const toks = m[2].split(' · ').map(function (t) {
+      if (t.charAt(0) === '＋') return '<span class="hn-add">＋ ' + escapeHtml(t.slice(1)) + '</span>';
+      if (t.charAt(0) === '－') return '<span class="hn-del">' + escapeHtml(t.slice(1)) + '</span>';
+      if (t.charAt(0) === '＝') return '<span class="hn-keep">' + escapeHtml(t.slice(1)) + ' (그대로)</span>';
+      return '<span>' + escapeHtml(t) + '</span>';
+    }).join(' ');
+    return '<div class="hn-row"><b>' + escapeHtml(m[1]) + '</b> ' + toks + '</div>';
+  }).join('');
+  return out + lateTag;
+}
+function histTime_(at) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})/.exec(String(at || ''));
+  if (!m) return String(at || '');
+  const dow = '일월화수목금토'.charAt(new Date(+m[1], +m[2] - 1, +m[3]).getDay());
+  return m[1] + '-' + m[2] + '-' + m[3] + '(' + dow + ') ' + m[4] + ':' + m[5];
+}
+const HIST_STYLE = { '점수': ['#0F3B34', '🏅'], '제출': ['#087A55', '📤'], '다시 제출': ['#2F6FED', '🔁'], '회수': ['#8A6D3B', '↩️'], '반려': ['#E5484D', '⛔'], '검토 완료': ['#087A55', '✅'], '검토중으로 되돌림': ['#9A6400', '⏳'], '피드백': ['#6B4BD8', '💬'] };
 function reviewPill_(v) {
   v = String(v || '');
   if (v === '반려') return '<span class="pill" style="color:#C22B2B;background:#FDEAEC;">반려</span>';
@@ -878,11 +944,26 @@ function historyHtml_(items) {
     const st = HIST_STYLE[it.kind] || ['#72827E', '•'];
     return '<li><span class="tl-dot" style="background:' + st[0] + ';">' + st[1] + '</span><div class="tl-body">' +
       '<div><b style="color:' + st[0] + ';">' + escapeHtml(it.kind) + '</b> <span class="hint">' + escapeHtml(it.actor || '') + '</span>' +
-      (it.at ? ' <span class="hint">· ' + escapeHtml(it.at) + '</span>' : '') + '</div>' +
-      (it.note ? '<div class="tl-note">' + escapeHtml(it.note) + '</div>' : '') + '</div></li>';
+      (it.at ? ' <span class="hint">· ' + escapeHtml(histTime_(it.at)) + '</span>' : '') + '</div>' +
+      (it.note ? '<div class="tl-note">' + histNoteHtml_(it.note) + '</div>' : '') + '</div></li>';
   }).join('') + '</ol>';
 }
 // 제출 칸에서 파일 주소 뽑기 (여러 개면 줄바꿈·쉼표로 이어져 있어요)
+function dlPassed_(dl) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/.exec(String(dl || ''));
+  return !!m && Date.now() > new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], 59).getTime();
+}
+function lateMinText_(min) {
+  min = Number(min) || 0;
+  const d = Math.floor(min / 1440), h = Math.floor((min % 1440) / 60), m = min % 60;
+  return (d ? d + '일 ' : '') + (h ? h + '시간 ' : '') + m + '분';
+}
+function scoreHtml_(v, max) {
+  v = String(v || '').trim();
+  if (!v) return '<div class="t-score none">점수 없음</div>';
+  const num = /^\d+(\.\d+)?$/.test(v);
+  return '<div class="t-score">' + escapeHtml(v) + '<small>' + (num ? (max ? '/' + max + '점' : '점') : '글자 점수') + '</small></div>';
+}
 function fileUrls_(v) { return String(v || '').match(/https?:\/\/[^\s,]+/g) || []; }
 function fileChipsHtml_(label, v, compact) {
   const urls = fileUrls_(v);
@@ -894,7 +975,7 @@ function fileChipsHtml_(label, v, compact) {
 // 답 칸(학번·이름·시각·검토·피드백 말고)
 function answerCols_(fields) {
   return fields.map(function (f, i) { return { f: f, i: i }; }).filter(function (x) {
-    return x.i >= 2 && ['submittedAt', 'reviewStatus', 'feedback', 'confirm'].indexOf(x.f.type) < 0;
+    return x.i >= 2 && ['submittedAt', 'reviewStatus', 'feedback', 'confirm', 'score'].indexOf(x.f.type) < 0;
   });
 }
 // 카드용 — 파일 칩(없으면 «없음»)과 글 답 앞부분
@@ -922,12 +1003,20 @@ function submissionContentHtml_(fields, r) {
     return '<div class="rv-item"><div class="rv-label">' + escapeHtml(x.f.name) + '</div>' + body + '</div>';
   }).join('') + '</div>';
 }
-function openReviewSheet_(tabName, sid, name, status, feedback, onSaved, contentHtml) {
+function openReviewSheet_(tabName, sid, name, status, feedback, onSaved, contentHtml, opt) {
+  opt = opt || {};
+  const scoreTxt = String(opt.score || ''), isNum = !scoreTxt || /^\d+(\.\d+)?$/.test(scoreTxt);
   const el = document.createElement('div');
   el.className = 'rvsheet';
   el.innerHTML = '<div class="rv-panel"><div class="rv-head"><b>' + escapeHtml(sid + (name ? ' ' + name : '')) + '</b> ' + reviewPill_(status) +
+      (opt.late && opt.late.days ? '<span class="pill late-p">⏰ ' + opt.late.days + '일 초과</span>' : '') +
       '<button class="rv-x" type="button" aria-label="닫기">✕</button></div>' +
+    (opt.late && opt.late.days ? '<div class="late-box">⏰ <span>기한 <b>' + escapeHtml(histTime_(String(opt.deadline || '').replace('T', ' '))) + '</b> → 제출 <b>' + escapeHtml(histTime_(opt.submittedAt)) + '</b><br><b>' + opt.late.days + '일 초과</b> · ' + lateMinText_(opt.late.minutes) + ' 늦음 (자동 계산)</span></div>' : '') +
     (contentHtml ? '<h3 style="font-size:14px;margin:14px 0 8px;">낸 내용</h3>' + contentHtml : '') +
+    '<label style="display:block;margin:12px 0 6px;">점수 ' + tipHtml_('«숫자»는 점수(예: 18), «글자»는 A·통과·다시 해 보기처럼 자유롭게 적어요. 검토 완료·반려·검토중 버튼을 누를 때 함께 저장되고, «점수만 저장»으로 따로 저장할 수도 있어요. 학생에게는 «검토 완료»일 때만 보여요.') + '</label>' +
+    '<div class="seg2"><button type="button" data-sm="num"' + (isNum ? ' class="on"' : '') + '>숫자</button><button type="button" data-sm="txt"' + (isNum ? '' : ' class="on"') + '>글자</button></div>' +
+    '<div class="row" style="gap:8px;align-items:center;margin-top:6px;"><input id="rvScore" type="' + (isNum ? 'number' : 'text') + '" step="0.5" min="0" maxlength="20" value="' + escapeHtml(scoreTxt) + '" placeholder="' + (isNum ? '예: 18' : '예: A, 통과') + '" style="flex:1;">' +
+      '<span class="hint" id="rvMax">' + (opt.scoreMax ? '/ ' + opt.scoreMax + '점' : '') + '</span><button class="btn-outline btn-sm" type="button" id="rvScoreSave">점수만 저장</button></div>' +
     '<label style="display:block;margin:12px 0 6px;">피드백 <span class="hint">(반려할 땐 이유를 꼭 적어 주세요 · 학생 화면에 보여요)</span></label>' +
     '<textarea id="rvFb" style="min-height:90px;font-family:inherit;font-size:14px;">' + escapeHtml(feedback || '') + '</textarea>' +
     '<div class="rv-btns"><button class="btn" data-st="검토완료" type="button">✅ 검토 완료</button>' +
@@ -947,7 +1036,7 @@ function openReviewSheet_(tabName, sid, name, status, feedback, onSaved, content
       if (st === '반려' && !confirm(sid + ' 학생의 제출을 반려할까요?\\n학생 화면에 «반려 · 다시 제출해 주세요»와 피드백이 보여요.')) return;
       document.getElementById('rvMsg').textContent = '저장 중…';
       let r;
-      try { r = await api('setReview', { tabName: tabName, studentId: sid, reviewStatus: st, feedback: fb }); } catch (e) { return; }
+      try { r = await api('setReview', { tabName: tabName, studentId: sid, reviewStatus: st, feedback: fb, score: document.getElementById('rvScore').value.trim() }); } catch (e) { return; }
       if (!r || !r.success) { document.getElementById('rvMsg').innerHTML = '<span style="color:var(--error-text);">' + escapeHtml((r && r.message) || '저장 실패 — 서버(Code.gs)가 버전 35 이상인지 확인해주세요.') + '</span>'; return; }
       changed = true;
       el.querySelector('.rv-head .pill').outerHTML = reviewPill_(st);
@@ -955,6 +1044,25 @@ function openReviewSheet_(tabName, sid, name, status, feedback, onSaved, content
       loadHist();
     };
   });
+  el.querySelectorAll('[data-sm]').forEach(function (b) {
+    b.onclick = function () {
+      el.querySelectorAll('[data-sm]').forEach(function (x) { x.classList.toggle('on', x === b); });
+      const inp = document.getElementById('rvScore'), num = b.getAttribute('data-sm') === 'num';
+      if (num && inp.value && !/^\d+(\.\d+)?$/.test(inp.value)) inp.value = '';
+      inp.type = num ? 'number' : 'text'; inp.placeholder = num ? '예: 18' : '예: A, 통과';
+      document.getElementById('rvMax').textContent = num && opt.scoreMax ? '/ ' + opt.scoreMax + '점' : '';
+      inp.focus();
+    };
+  });
+  document.getElementById('rvScoreSave').onclick = async function () {
+    const cur = el.querySelector('.rv-head .pill');
+    const st = status || '검토중';
+    document.getElementById('rvMsg').textContent = '저장 중…';
+    let r;
+    try { r = await api('setReview', { tabName: tabName, studentId: sid, reviewStatus: st, feedback: document.getElementById('rvFb').value.trim(), score: document.getElementById('rvScore').value.trim() }); } catch (e) { return; }
+    if (!r || !r.success) { document.getElementById('rvMsg').textContent = (r && r.message) || '저장하지 못했어요.'; return; }
+    changed = true; document.getElementById('rvMsg').textContent = '점수를 저장했어요.'; loadHist();
+  };
   async function loadHist() {
     let r;
     try { r = await api('getSubmissionHistory', { tabName: tabName, studentId: sid }); } catch (e) { return; }
@@ -1468,8 +1576,16 @@ async function renderDetail(tabName) {
             '<input id="dlIn" type="datetime-local" value="' + escapeHtml(dl) + '">' +
             '<button class="btn-outline btn-sm" id="dlSave" type="button">저장</button>' +
             (dl ? '<button class="btn-outline btn-sm" id="dlClear" type="button">기한 없애기</button>' : '') +
-            '<span class="hint" id="dlMsg">' + (dl ? '이 시각이 지나면 서버가 제출을 받지 않아요(학생 화면에도 표시).' : '정하지 않으면 «마감»으로 바꿀 때까지 받아요.') + '</span>' +
+            '<span class="hint" id="dlMsg">' + (dl ? (tab.meta && tab.meta.lateOk === false ? '이 시각이 지나면 서버가 제출을 받지 않아요.' : '이 시각이 지나도 받되 «⏰ N일 초과»로 표시해요.') : '정하지 않으면 «마감»으로 바꿀 때까지 받아요.') + '</span>' +
           '</div>' +
+          '<div class="sched-row"><b>늦은 제출</b>' +
+            '<label style="display:flex;gap:8px;align-items:center;font-weight:600;font-size:14px;"><input type="checkbox" id="lateOk" style="width:auto;"' + (tab.meta && tab.meta.lateOk === false ? '' : ' checked') + '> 기한이 지나도 받기 (⏰ 초과로 표시)</label>' +
+            tipHtml_('켜 두면 기한 뒤에도 학생이 내거나 회수·다시 낼 수 있고, 제출 현황·검토 창·학생 화면에 «⏰ N일 초과»가 붙어요. 초과일은 기한 날의 남은 시간과 다음 날 하루까지 1일, 그 뒤로는 날짜가 바뀔 때마다 1일씩 늘어요(예: 수 22:00 기한 → 수 22:01~목 23:59 = 1일). 끄면 기한 뒤에는 서버가 제출을 받지 않아요.') +
+            '<span class="hint" id="lateMsg"></span></div>' +
+          '<div class="sched-row"><b>점수 만점</b>' +
+            '<input id="smIn" type="number" min="1" max="1000" step="1" placeholder="예: 20" value="' + escapeHtml((tab.meta && tab.meta.scoreMax) || '') + '" style="width:110px;">' +
+            '<button class="btn-outline btn-sm" id="smSave" type="button">저장</button>' +
+            '<span class="hint" id="smMsg">' + (tab.meta && tab.meta.scoreMax ? '제출 현황 타일에 «18/' + tab.meta.scoreMax + '점»처럼 보여요.' : '비워 두면 점수만 보여요(글자 점수도 돼요).') + '</span></div>' +
         '</div>' +
         '<div class="card wide tile" style="max-width:720px;">' +
           '<div class="tile-head"><span class="tile-label">🎯 대상</span><span class="hint">' + (tg.length ? escapeHtml(targetsLabel_(tg)) : '제한 없음 (전교생)') + '</span>' +
@@ -1571,6 +1687,16 @@ async function renderDetail(tabName) {
     if (!r || r.success !== true) { msg.textContent = (r && r.message) || '저장하지 못했어요. 서버(Code.gs)가 버전 30 이상인지 확인해주세요.'; return; }
     renderDetail(tabName);
   }
+  document.getElementById('lateOk').onchange = async function () {
+    const on = this.checked, msg = document.getElementById('lateMsg'); msg.textContent = '저장 중…';
+    let r; try { r = await api('setLateOk', { tabName: tabName, on: on }); } catch (e) { msg.textContent = '서버에 연결하지 못했어요.'; return; }
+    msg.textContent = (r && r.success) ? (on ? '기한 뒤에도 받아요.' : '기한 뒤에는 받지 않아요.') : ((r && r.message) || '저장하지 못했어요. 서버(Code.gs)가 버전 47 이상인지 확인해주세요.');
+  };
+  document.getElementById('smSave').onclick = async function () {
+    const msg = document.getElementById('smMsg'); msg.textContent = '저장 중…';
+    let r; try { r = await api('setScoreMax', { tabName: tabName, max: document.getElementById('smIn').value.trim() }); } catch (e) { msg.textContent = '서버에 연결하지 못했어요.'; return; }
+    msg.textContent = (r && r.success) ? (r.scoreMax ? '만점 ' + r.scoreMax + '점으로 저장했어요.' : '만점을 지웠어요.') : ((r && r.message) || '저장하지 못했어요. 서버(Code.gs)가 버전 47 이상인지 확인해주세요.');
+  };
   document.getElementById('dlSave').onclick = function () {
     const v = document.getElementById('dlIn').value;
     if (!v) { document.getElementById('dlMsg').textContent = '날짜와 시각을 골라주세요.'; return; }
@@ -1906,6 +2032,42 @@ async function renderSubmissions(tab) {
       '<div class="t">' + escapeHtml(nm ? r[0] + ' ' + nm : r[0]) + '<small>' + escapeHtml(sub) + '</small>' + submissionPreviewHtml_(fields, r) + '</div>' +
       '<span class="tag ' + (rv === '반려' ? 'no' : flag ? 'wr' : 'ok') + '">' + (rv === '반려' ? '반려' : flag ? '복붙 의심' : done ? '검토완료' : '제출') + '</span></div>';
   }).join('');
+  const lateArr = res.late || [], missing = res.missing || [];
+  const scoreIdx = fields.findIndex(function (f) { return f.type === 'score'; });
+  const scoreMax = res.scoreMax || null;
+  const lateN = lateArr.filter(function (x) { return x && x.days > 0; }).length;
+  const nums = rows.map(function (r) { return scoreIdx >= 0 ? String(r[scoreIdx] || '').trim() : ''; }).filter(function (v) { return /^\d+(\.\d+)?$/.test(v); }).map(Number);
+  const avg = nums.length ? (nums.reduce(function (a, b) { return a + b; }, 0) / nums.length) : null;
+  const rejN = rows.filter(function (r) { return reviewIdx >= 0 && r[reviewIdx] === '반려'; }).length;
+  const todoN = rows.filter(function (r) { const v = reviewIdx >= 0 ? r[reviewIdx] : ''; return v !== '검토완료' && v !== '반려'; }).length;
+  const tiles = rows.map(function (r, ri) {
+    const t = traces[traceKey_(r[0])];
+    const flag = !!t && (t.pasteTries > 0 || t.maxChunk >= apMin);
+    const rv = reviewIdx >= 0 ? String(r[reviewIdx] || '') : '';
+    const lt = lateArr[ri];
+    const nm = nameIdx >= 0 ? r[nameIdx] : '';
+    const pill = rv === '반려' ? '<span class="pill p-rej">반려</span>' : rv === '검토완료' ? '<span class="pill p-done">검토완료</span>' : '<span class="pill p-wait">검토 전</span>';
+    return '<div class="stile' + (rv === '반려' ? ' rej' : '') + (lt && lt.days ? ' latet' : '') + '" data-ri="' + ri + '" data-st="' + (rv === '반려' ? 'rej' : rv === '검토완료' ? 'done' : 'todo') + '" data-late="' + (lt && lt.days ? 1 : 0) + '" data-flag="' + (flag ? 1 : 0) + '">' +
+      '<div class="st-top"><div class="dot">' + escapeHtml(String(nm || r[0] || '?').slice(-2)) + '</div><div class="st-nm">' + escapeHtml(r[0] + (nm ? ' ' + nm : '')) + '<small>' + escapeHtml(timeIdx >= 0 ? histTime_(r[timeIdx]).replace(/^\d{4}-/, '') : '') + '</small></div></div>' +
+      '<div class="st-badges">' + pill + (lt && lt.days ? '<span class="pill late-p">⏰ ' + lt.days + '일 초과</span>' : '') + (flag ? '<span class="pill p-flag">복붙 의심</span>' : '') + '</div>' +
+      submissionPreviewHtml_(fields, r) +
+      scoreHtml_(scoreIdx >= 0 ? r[scoreIdx] : '', scoreMax) + '</div>';
+  }).join('');
+  const missTiles = missing.map(function (m) {
+    return '<div class="stile miss"><div class="st-top"><div class="dot">' + escapeHtml(String(m.name || m.studentId).slice(-2)) + '</div><div class="st-nm">' + escapeHtml(m.studentId + (m.name ? ' ' + m.name : '')) + '<small>아직 안 냄</small></div></div>' +
+      '<div class="st-badges"><span class="pill p-none">미제출</span>' + (dlPassed_(res.deadline) ? '<span class="pill late-p">⏰ 기한 지남</span>' : '') + '</div></div>';
+  }).join('');
+  let acc = {}; try { acc = JSON.parse(localStorage.getItem('hyewon_admin_subacc') || '{}') || {}; } catch (e) {}
+  const gridView =
+    '<div class="subg"><div class="kpis kpis5"><div class="kpi"><span>제출</span><b>' + rows.length + (missing.length ? ' <small>/ ' + (rows.length + missing.length) + '</small>' : '') + '</b></div>' +
+    '<div class="kpi"><span>검토 전</span><b>' + todoN + '</b></div><div class="kpi"><span>반려</span><b>' + rejN + '</b></div>' +
+    '<div class="kpi"><span>기한 후 제출</span><b>' + lateN + '</b></div><div class="kpi"><span>평균 점수</span><b>' + (avg === null ? '—' : (Math.round(avg * 10) / 10) + (scoreMax ? ' <small>/' + scoreMax + '</small>' : '')) + '</b></div></div>' +
+    '<div class="chips" id="subChips"><button class="on" data-f="all">전체</button><button data-f="todo">검토 전</button><button data-f="rej">반려</button><button data-f="late">기한 후</button>' + (apOn ? '<button data-f="flag">복붙 의심</button>' : '') + '</div>' +
+    '<details class="sacc" data-acc="done"' + (acc.done === false ? '' : ' open') + '><summary>✅ 낸 학생 <b>' + rows.length + '명</b></summary>' +
+      (tiles ? '<div class="sgrid" id="subCards">' + tiles + '</div>' : '<p class="hint" style="margin:6px 2px;">아직 낸 학생이 없어요.</p>') + '</details>' +
+    '<details class="sacc" data-acc="miss"' + (acc.miss ? ' open' : '') + '><summary>⏳ 안 낸 학생 <b>' + missing.length + '명</b></summary>' +
+      (missTiles ? '<div class="sgrid">' + missTiles + '</div>' : '<p class="hint" style="margin:6px 2px;">' + (rows.length ? '모두 냈어요 🎉 (명단이나 대상이 없으면 안 낸 학생을 셀 수 없어요)' : '명단이나 대상이 정해지면 안 낸 학생이 보여요.') + '</p>') + '</details>' +
+    '<div class="row" style="gap:8px;margin:10px 0 16px;flex-wrap:wrap;"><button class="btn-outline btn-sm" id="tblToggle" type="button">표로 보기</button><span class="hint">타일을 누르면 낸 내용·점수·검토·기록을 볼 수 있어요.</span></div></div>';
   const mobileList =
     '<div class="subm"><div class="kpis" style="grid-template-columns:1fr 1fr 1fr;"><div class="kpi"><span>제출</span><b>' + rows.length + '</b></div>' +
     '<div class="kpi"><span>복붙 의심</span><b style="color:#8a6500;">' + flagged + '</b></div>' +
@@ -1914,12 +2076,12 @@ async function renderSubmissions(tab) {
     '<div id="subCards">' + (cards || '<p class="hint">제출된 답변이 없습니다.</p>') + '</div>' +
     '<p class="hint" style="margin:8px 2px 16px;">학생을 누르면 검토 완료·반려·피드백과 제출 기록을 볼 수 있어요.</p></div>';
 
-  body.innerHTML = mobileList +
+  body.innerHTML = gridView +
     '<p class="hint">총 ' + rows.length + '건' +
       (apOn ? ' · 복붙 방지 켜짐 · 한 번에 ' + apMin + '자 이상 기록 · 의심 ' + flagged + '명 / 기록 ' + traced + '명' : (showTrace ? ' · 복붙 방지 꺼짐 (이전 작성 기록이 있어요)' : '')) +
       (apOn && res.antiPastePartial ? ' · 수업 도중에 켜서 그 전에 쓴 글은 기록이 없을 수 있어요' : '') + '</p>' +
     (reviewIdx < 0 ? '<p class="hint">검토상태·피드백 열은 학생이 한 번 이상 제출하면 자동으로 생깁니다.</p>' : '') +
-    '<div class="tablewrap"><table>' + head + (body_ || '<tr><td class="hint">제출된 답변이 없습니다.</td></tr>') + '</table></div>' +
+    '<div class="tablewrap" id="subTable" style="display:none;"><table>' + head + (body_ || '<tr><td class="hint">제출된 답변이 없습니다.</td></tr>') + '</table></div>' +
     '<button class="btn-outline" id="csvBtn">CSV 내보내기</button>';
 
   document.getElementById('csvBtn').onclick = function () { exportCsv(tab.sheetName, fields, rows); };
@@ -1927,18 +2089,29 @@ async function renderSubmissions(tab) {
     b.onclick = function () {
       document.querySelectorAll('#subChips button').forEach(function (x) { x.classList.toggle('on', x === b); });
       const f = b.getAttribute('data-f');
-      document.querySelectorAll('#subCards .srow').forEach(function (r) {
-        r.style.display = (f === 'all' || (f === 'flag' && r.dataset.flag === '1') || (f === 'todo' && r.dataset.done !== '1')) ? '' : 'none';
+      document.querySelectorAll('#subCards .stile').forEach(function (r) {
+        r.style.display = (f === 'all' || (f === 'flag' && r.dataset.flag === '1') || (f === 'late' && r.dataset.late === '1') || f === r.dataset.st) ? '' : 'none';
       });
     };
   });
 
   function openRev_(ri) {
     const r = rows[ri];
-    openReviewSheet_(tab.sheetName, r[0], nameIdx >= 0 ? r[nameIdx] : '', reviewIdx >= 0 ? r[reviewIdx] : '', feedbackIdx >= 0 ? r[feedbackIdx] : '', function () { renderSubmissions(tab); }, submissionContentHtml_(fields, r));
+    openReviewSheet_(tab.sheetName, r[0], nameIdx >= 0 ? r[nameIdx] : '', reviewIdx >= 0 ? r[reviewIdx] : '', feedbackIdx >= 0 ? r[feedbackIdx] : '', function () { renderSubmissions(tab); }, submissionContentHtml_(fields, r),
+      { score: scoreIdx >= 0 ? r[scoreIdx] : '', scoreMax: scoreMax, late: lateArr[ri], deadline: res.deadline, submittedAt: timeIdx >= 0 ? r[timeIdx] : '' });
   }
   document.querySelectorAll('.revOpen').forEach(function (b) { b.onclick = function () { openRev_(Number(b.getAttribute('data-row'))); }; });
-  document.querySelectorAll('#subCards .srow').forEach(function (el) { el.onclick = function () { openRev_(Number(el.getAttribute('data-ri'))); }; });
+  document.querySelectorAll('#subCards .stile').forEach(function (el) { el.onclick = function () { openRev_(Number(el.getAttribute('data-ri'))); }; });
+  document.getElementById('tblToggle').onclick = function () {
+    const t = document.getElementById('subTable'), show = t.style.display === 'none';
+    t.style.display = show ? '' : 'none'; this.textContent = show ? '표 닫기' : '표로 보기';
+  };
+  document.querySelectorAll('details.sacc').forEach(function (d) {
+    d.addEventListener('toggle', function () {
+      let a = {}; try { a = JSON.parse(localStorage.getItem('hyewon_admin_subacc') || '{}') || {}; } catch (e) {}
+      a[d.getAttribute('data-acc')] = d.open; try { localStorage.setItem('hyewon_admin_subacc', JSON.stringify(a)); } catch (e) {}
+    });
+  });
   document.querySelectorAll('.reviewToggle').forEach(function (btn) {
     btn.onclick = async function () {
       const ri = Number(btn.getAttribute('data-row'));
