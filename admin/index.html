@@ -1235,7 +1235,7 @@ function renderNewTab(notice) {
           '</div></div>' +
         '<div class="field"><label>대상 <span class="hint">(학번의 학년·반으로 정해요)</span></label><div id="tabTargets"></div>' +
           '<span class="hint" id="tabTargetsNote"></span></div>' +
-        '<div class="field"><label for="tabDesc">교사 안내 <span class="hint">(선택 · 학생 화면 «교사 안내»에 보여요)</span></label>' +
+        '<div class="field"><label for="tabDesc">과제 안내 <span class="hint">(선택 · 학생 화면 «과제 안내»에 보여요)</span></label>' +
         '<textarea id="tabDesc" style="min-height:80px;font-family:inherit;font-size:14px;" placeholder="예: 동작 3가지를 연결해 연습하고 활동 영상을 제출하세요."></textarea></div>' +
         '<label style="margin-bottom:8px;display:block;">항목</label>' +
         '<div id="fieldRows"></div>' +
@@ -1324,7 +1324,7 @@ async function doCreateTab() {
   if (targets.length) await step('대상', 'setTargets', { tabName: tabName, targets: targets });
   if (targets.length && !qr) await step('명단 만들기', 'autoRoster', { tabName: tabName, apply: true, targets: targets });
   if (openAt) await step('예약 공개', 'setSchedule', { tabName: tabName, openAt: openAt });
-  if (desc) await step('교사 안내', 'updateHeaders', { tabName: tabName, headers: ['학번', '이름'].concat(fields), description: desc });
+  if (desc) await step('과제 안내', 'updateHeaders', { tabName: tabName, headers: ['학번', '이름'].concat(fields), description: desc });
   if (qr) await step('로그인 없이 받기', 'setOpenAccess', { tabName: tabName, on: true });
   if (dl) await step('제출 기한', 'setDeadline', { tabName: tabName, deadline: dl });
   if (ap) await step('복붙 방지', 'setAntiPaste', { tabName: tabName, on: true, minChars: apMin });
@@ -1424,7 +1424,7 @@ async function renderDetail(tabName) {
         '</div>';
       })() +
       '<div class="card wide tile" style="max-width:720px;">' +
-        '<div class="tile-head"><span class="tile-label">📢 과제 안내</span><span class="hint">학생 화면 «교사 안내»에 보여요</span>' +
+        '<div class="tile-head"><span class="tile-label">📢 과제 안내</span><span class="hint">학생 화면 «과제 안내»에 보여요</span>' +
           '<button class="btn-outline btn-sm" id="descEdit" type="button" style="margin-left:auto;">' + (tab.description ? '고치기' : '쓰기') + '</button></div>' +
         '<div id="descView" class="tile-body">' + (tab.description ? escapeHtml(tab.description).replace(/\n/g, '<br>') : '<span class="hint">아직 안내가 없어요. «쓰기»를 눌러 과제 내용을 적어 주세요.</span>') + '</div>' +
         '<div id="descForm" style="display:none;"><textarea id="descIn" style="min-height:110px;font-family:inherit;font-size:14px;">' + escapeHtml(tab.description || '') + '</textarea>' +
