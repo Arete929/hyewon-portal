@@ -2347,6 +2347,41 @@ async function doSendNotice() {
 
 // ---------- 설정 ----------
 
+// ---------- 서버 이전 ----------
+function wireMigration_() {
+  const btn = document.getElementById('mgCheck'); if (!btn) return;
+  const out = document.getElementById('mgOut');
+  btn.onclick = async function () {
+    const url = document.getElementById('mgUrl').value.trim();
+    if (!/^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec$/.test(url)) { out.innerHTML = '<div class="msg error">주소는 https://script.google.com/macros/s/…/exec 모양이어야 해요.</div>'; return; }
+    if (url === state.exec) { out.innerHTML = '<div class="msg error">지금 쓰는 서버 주소예요. 새 서버 주소를 넣어 주세요.</div>'; return; }
+    out.innerHTML = '<span class="hint">새 서버 확인 중…</span>';
+    let st;
+    try { st = await (await fetch(url + '?action=migrationStatus')).json(); } catch (e) { st = null; }
+    if (!st || st.success !== true) { out.innerHTML = '<div class="msg error">새 서버에 연결하지 못했어요. 코드가 올라가고 웹앱 배포(액세스: 모든 사용자)가 됐는지 확인해 주세요.</div>'; return; }
+    const info = '새 서버 실행 계정 <b>' + escapeHtml(st.runAs || '(확인 안 됨)') + '</b> · 서버 버전 ' + st.serverVersion;
+    if (st.configured) { out.innerHTML = '<div class="msg ok">' + info + '<br>이미 설정이 들어 있어요(옮기기 끝). 연결 주소를 바꾸려면 Claude에게 새 주소를 알려 주세요.</div>'; return; }
+    if (!st.importOpen) { out.innerHTML = '<div class="msg warn">' + info + '<br>아직 받을 준비가 안 됐어요. 새 서버 스크립트 편집기에서 «권한승인»을 실행한 뒤(60분 동안 유효) 다시 «확인»을 눌러 주세요.</div>'; return; }
+    out.innerHTML = '<div class="msg ok">' + info + '<br>받을 준비 완료 (' + st.openMinutes + '분 남음)</div><button class="btn btn-sm" id="mgGo" type="button">설정 옮기기</button>';
+    document.getElementById('mgGo').onclick = async function () {
+      if (!confirm('지금 서버의 설정을 새 서버로 옮길까요?\n(지금 서버는 그대로 계속 돌아가요. 연결 주소는 옮긴 뒤 따로 바꿔요.)')) return;
+      this.disabled = true;
+      out.insertAdjacentHTML('beforeend', '<p class="hint" id="mgStep">설정 꺼내는 중…</p>');
+      let ex;
+      try { ex = await api('exportForMigration'); } catch (e) { ex = null; }
+      if (!ex || ex.success !== true) { document.getElementById('mgStep').textContent = '지금 서버에서 설정을 꺼내지 못했어요. 지금 서버가 버전 43 이상인지 확인해 주세요.'; return; }
+      document.getElementById('mgStep').textContent = '새 서버에 넣는 중…';
+      const body = new URLSearchParams(); body.set('action', 'importMigration'); body.set('data', JSON.stringify({ props: ex.props }));
+      let im;
+      try { im = await (await fetch(url, { method: 'POST', body: body })).json(); } catch (e) { im = null; }
+      ex.props = null;
+      if (!im || im.success !== true) { document.getElementById('mgStep').innerHTML = '<span style="color:var(--error-text);">' + escapeHtml((im && im.message) || '새 서버에 넣지 못했어요.') + '</span>'; return; }
+      markSaved_('서버 이전', '', 'importMigration');
+      out.innerHTML = '<div class="msg ok">✅ 설정 ' + im.count + '개를 옮겼어요 → <b>' + escapeHtml(im.runAs || '') + '</b><br>이제 Claude에게 «옮기기 끝났어»라고 알려 주세요. 학생·관리자 화면 연결 주소를 새 서버로 바꿔요.</div>';
+    };
+  };
+}
+
 // ---------- 과제 이모지 ----------
 // meta.icon = { type:'emoji', v:'🏀' } 또는 { type:'img', id } (설정에서 올린 그림). 없으면 기본 📘.
 const ICON_PRESETS = ['🏀', '⚽', '🏐', '🏸', '🏓', '⚾', '🎾', '🏃‍♀️', '🤸‍♀️', '🧘‍♀️', '🚴‍♀️', '🏊‍♀️', '💪', '🥇', '🏆', '📝', '📚', '🎤', '🎬', '📷', '🎨', '🎵', '💡', '🧠', '❤️', '🌱', '🍎', '📊', '🗂️', '📢'];
@@ -2652,6 +2687,12 @@ async function renderSettings(notice) {
         '<p class="hint" id="tpMsg" style="margin:8px 0 0;"></p>' +
       '</div>' +
       '<div class="card wide" style="margin-bottom:16px;">' +
+        '<h2>🚚 서버 이전</h2>' +
+        '<p class="hint" style="margin:0 0 10px;">다른 구글 계정(예: 학교 계정)에 새로 만든 서버로 설정·비밀값을 옮겨요. 값은 이 화면이 두 서버 사이에서 바로 옮기고, 어디에도 표시되지 않아요. ' + tipHtml_('① 새 서버 프로젝트에 코드가 올라가고 웹앱 배포가 만들어진 뒤 ② 새 서버 편집기에서 «권한승인»을 실행하면 60분 동안 받을 준비가 돼요. ③ 여기에 새 서버 주소(…/exec)를 넣고 «확인» → «설정 옮기기». 관리자 비밀번호·마스터코드·학생 알림·GitHub 토큰·교사 정보 같은 설정이 그대로 옮겨져요. 제출 파일 저장 위치는 새 계정 드라이브의 «혜원포털 제출물»로 새로 잡혀요.') + '</p>' +
+        '<div class="row" style="gap:8px;flex-wrap:wrap;"><input id="mgUrl" type="text" placeholder="https://script.google.com/macros/s/…/exec" style="flex:1;min-width:220px;"><button class="btn-outline btn-sm" id="mgCheck" type="button">확인</button></div>' +
+        '<div id="mgOut" style="margin-top:10px;font-size:13px;line-height:1.8;"></div>' +
+      '</div>' +
+      '<div class="card wide" style="margin-bottom:16px;">' +
         '<h2>😀 과제 이모지</h2>' +
         '<p class="hint" style="margin:0 0 10px;">자주 쓰는 그림을 미리 올려 두면, 과제 화면에서 제목 왼쪽 아이콘을 눌러 골라요. 기본 이모지(🏀📝…)도 쓸 수 있어요.</p>' +
         '<div id="icBox"><span class="hint">불러오는 중…</span></div>' +
@@ -2697,6 +2738,7 @@ async function renderSettings(notice) {
   loadAutoPushBox_();
   loadTeacherPushBox_();
   loadIconBox_();
+  wireMigration_();
   document.getElementById('tpSave').onclick = async function () {
     const msg = document.getElementById('tpMsg'); msg.textContent = '저장 중…';
     let r;
