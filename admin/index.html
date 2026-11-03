@@ -206,6 +206,8 @@
   .tile { padding: 16px 18px; margin-bottom: 14px; }
   .tile-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
   .tav { display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; object-fit: cover; vertical-align: middle; line-height: 1; flex: none; background: #fff; }
+  .tav.subj { width: auto !important; display: inline-flex !important; padding: 0 .4em; border-radius: 999px; background: #E3F1EC; color: #0F5A44; letter-spacing: 0; white-space: nowrap; font-family: 'Gugi', sans-serif; font-weight: 400; text-shadow: none; box-sizing: border-box; }
+  .tline .tav.subj { background: #FFD84A; color: #0F3B34; }
   .tline .tav { margin-right: 5px; box-shadow: 0 0 0 1.5px rgba(255,255,255,.8); }
   .dt-meta .tav { margin-right: 2px; }
   .tp-av-row { display: flex; align-items: center; gap: 12px; margin: 0 0 12px; }
@@ -702,10 +704,24 @@ function avatarHtml_(size, placeholder) {
   const t = teacherInfo_(), a = t.avatar;
   const st = 'width:' + size + 'px;height:' + size + 'px;';
   if (a && a.type === 'img' && t.avatarData) return '<img class="tav" alt="" style="' + st + '" src="' + escapeHtml(t.avatarData) + '">';
-  const ch = a && a.type === 'emoji' && a.v ? a.v : (placeholder ? '🧑‍🏫' : '');
-  return ch ? '<span class="tav" style="' + st + 'font-size:' + Math.round(size * 0.72) + 'px;">' + escapeHtml(ch) + '</span>' : '';
+  if (a && a.type === 'emoji' && a.v) return '<span class="tav" style="' + st + 'font-size:' + Math.round(size * 0.72) + 'px;">' + escapeHtml(a.v) + '</span>';
+  // 프로필 이모지가 없으면 과목명을 구기 글씨로(예: «체육»)
+  if (t.subject) return subjectBadgeHtml_(t.subject, size);
+  return placeholder ? '<span class="tav" style="' + st + 'font-size:' + Math.round(size * 0.72) + 'px;">🧑‍🏫</span>' : '';
 }
-function tlineHtml_() { const l = teacherLine_(); return l ? avatarHtml_(18) + escapeHtml(l) : ''; }
+function subjectBadgeHtml_(subject, size) {
+  const txt = String(subject).replace(/\s+/g, '').slice(0, 4);
+  const fs = Math.max(9, Math.round(size * (txt.length <= 2 ? 0.46 : txt.length === 3 ? 0.36 : 0.3)));
+  return '<span class="tav subj" style="min-width:' + size + 'px;height:' + size + 'px;font-size:' + fs + 'px;">' + escapeHtml(txt) + '</span>';
+}
+function tlineHtml_() {
+  const t = teacherInfo_(), a = t.avatar;
+  if (!t.name && !t.subject) return '';
+  const hasAv = a && (a.type === 'emoji' ? !!a.v : !!t.avatarData);
+  // 프로필 이모지가 없으면 앞의 과목 배지(체육)가 과목을 대신하니 뒤에는 이름만
+  const text = t.name ? t.name + ' 선생님' + (hasAv && t.subject ? ' · ' + t.subject : '') : '';
+  return avatarHtml_(20) + escapeHtml(text);
+}
 function taskMetaHtml_() {
   const t = teacherInfo_();
   return '<span>📚 과목 <b>' + escapeHtml(t.subject || '미입력') + '</b></span><span>' + (avatarHtml_(20) || '👩‍🏫') + ' 담당 교사 <b>' + escapeHtml(t.name ? t.name + ' 선생님' : '미입력') + '</b></span>' +

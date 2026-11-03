@@ -675,6 +675,12 @@ function teacherAvatarHtml_(t, size) {
   const st = 'display:inline-flex;align-items:center;justify-content:center;width:' + size + 'px;height:' + size + 'px;border-radius:50%;vertical-align:middle;margin-right:6px;object-fit:cover;';
   if (a && a.type === 'img' && t.avatarData) return '<img alt="" src="' + escapeHtml(t.avatarData) + '" style="' + st + '">';
   if (a && a.type === 'emoji' && a.v) return '<span style="' + st + 'font-size:' + Math.round(size * 0.8) + 'px;line-height:1;">' + escapeHtml(a.v) + '</span>';
+  // 프로필 이모지가 없으면 과목명을 구기 글씨로(예: «체육»)
+  if (t && t.subject) {
+    const txt = String(t.subject).replace(/\s+/g, '').slice(0, 4);
+    const fs = Math.max(9, Math.round(size * (txt.length <= 2 ? 0.5 : txt.length === 3 ? 0.4 : 0.33)));
+    return '<span class="gugi" style="display:inline-flex;align-items:center;justify-content:center;min-width:' + size + 'px;height:' + size + 'px;padding:0 .4em;border-radius:999px;background:var(--hyewon-mint,#E3F1EC);color:var(--hyewon-emerald,#087A55);font-size:' + fs + 'px;line-height:1;vertical-align:middle;margin-right:6px;white-space:nowrap;box-sizing:border-box;">' + escapeHtml(txt) + '</span>';
+  }
   return '';
 }
 function titleCardHtml_(name) {
