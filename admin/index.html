@@ -205,6 +205,16 @@
   .up-path { font-size: 15px; font-weight: 700; color: var(--accent); overflow-wrap: anywhere; }
   .tile { padding: 16px 18px; margin-bottom: 14px; }
   .tile-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+  .tline { display: block; font-style: normal; font-size: 12px; font-weight: 600; color: rgba(255,255,255,.88); margin-top: 4px; text-shadow: 0 1px 4px rgba(0,0,0,.35); }
+  .tline:empty { display: none; }
+  .dt-meta { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; margin: 10px 0 0; font-size: 13.5px; color: var(--text2); }
+  .dt-meta b { color: var(--text); }
+  .sh-list { display: flex; flex-direction: column; gap: 8px; }
+  .sh-row { display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; border: 1px solid var(--border); border-radius: 14px; padding: 10px 12px; }
+  .sh-row.bad { background: #FFF6E6; border-color: #F3D9A4; }
+  .sh-main { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+  .sh-main small { font-size: 12px; color: var(--text2); overflow-wrap: anywhere; }
+  .sh-btns { display: flex; gap: 6px; flex: none; }
   .set-nav { position: sticky; top: 0; z-index: 30; display: flex; gap: 8px; overflow-x: auto; padding: 10px 2px; margin: 6px 0 12px; background: var(--bg); scrollbar-width: none; }
   .set-nav::-webkit-scrollbar { display: none; }
   .set-nav button { flex: none; border: 1px solid var(--border); background: #fff; color: var(--text2); border-radius: 999px; padding: 9px 16px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; white-space: nowrap; }
@@ -449,7 +459,7 @@ function render(inner) {
   document.getElementById('app').innerHTML =
     '<div class="shell"><aside class="side">' +
       '<div class="photo" aria-hidden="true"></div>' +
-      '<div class="brandbox"><img src="../assets/logo.png" alt=""><div><span class="gugi">혜원포털</span><small>관리자</small></div></div>' +
+      '<div class="brandbox"><img src="../assets/logo.png" alt=""><div><span class="gugi">혜원포털</span><small>관리자</small><em class="tline">' + escapeHtml(teacherLine_()) + '</em></div></div>' +
       nav +
       '<div class="spacer"></div>' +
       '<button class="sub installBtn" type="button" style="display:none;color:#FFD84A;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><polyline points="7 10 12 15 17 10"/><path d="M5 21h14"/></svg>앱으로 설치</button>' +
@@ -457,7 +467,7 @@ function render(inner) {
       '<button class="sub" id="navLogout"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><path d="M21 12H9"/></svg>로그아웃</button>' +
       '<div class="verbox" id="verBox"></div>' +
     '</aside><main class="main">' +
-      '<div class="mhero" aria-hidden="true"><img class="mh-logo" src="../assets/logo.png" alt=""><div><span class="gugi">혜원포털</span><small>관리자</small></div></div>' +
+      '<div class="mhero" aria-hidden="true"><img class="mh-logo" src="../assets/logo.png" alt=""><div><span class="gugi">혜원포털</span><small>관리자</small><em class="tline">' + escapeHtml(teacherLine_()) + '</em></div></div>' +
       inner + '<div class="verfoot" id="verFoot"></div></main></div>' + bottomNavHtml_();
   document.querySelectorAll('[data-nav]').forEach(function (b) {
     b.onclick = function () {
@@ -597,6 +607,7 @@ async function api(action, data, opts) {
     renderLogin('세션이 끊어졌습니다. 다시 로그인해주세요.');
     throw new Error('unauthorized');
   }
+  try { if (json && json.teacher) rememberTeacher_(json.teacher); } catch (e) {}
   try { if (json && json.success === true && SAVE_LABELS[action] && !(action === 'autoRoster' && !payload.apply)) markSaved_(SAVE_LABELS[action], payload.tabName, action); } catch (e) {}
   return json;
 }
@@ -657,7 +668,32 @@ async function apiGet(action) {
   const url = new URL(state.exec);
   url.searchParams.set('action', action);
   const res = await fetch(url.toString());
-  return res.json();
+  const json = await res.json();
+  try { if (json && json.teacher) rememberTeacher_(json.teacher); } catch (e) {}
+  return json;
+}
+// ---------- 교사 이름·과목 (사이드바·위쪽 머리·과제 화면에 표시) ----------
+const TEACHER_KEY = 'hyewon_admin_teacher';
+function teacherInfo_() {
+  if (state.teacher) return state.teacher;
+  try { state.teacher = JSON.parse(localStorage.getItem(TEACHER_KEY) || 'null'); } catch (e) {}
+  return state.teacher || {};
+}
+function teacherLine_() {
+  const t = teacherInfo_();
+  return t.name ? t.name + ' 선생님' + (t.subject ? ' · ' + t.subject : '') : (t.subject || '');
+}
+function rememberTeacher_(t) {
+  t = { name: (t && t.name) || '', subject: (t && t.subject) || '' };
+  state.teacher = t;
+  try { localStorage.setItem(TEACHER_KEY, JSON.stringify(t)); } catch (e) {}
+  document.querySelectorAll('.tline').forEach(function (el) { el.textContent = teacherLine_(); });
+  document.querySelectorAll('.dt-meta').forEach(function (el) { el.innerHTML = taskMetaHtml_(); });
+}
+function taskMetaHtml_() {
+  const t = teacherInfo_();
+  return '<span>📚 과목 <b>' + escapeHtml(t.subject || '미입력') + '</b></span><span>👩‍🏫 담당 교사 <b>' + escapeHtml(t.name ? t.name + ' 선생님' : '미입력') + '</b></span>' +
+    (t.name && t.subject ? '' : ' <a href="#" class="hint" onclick="event.preventDefault();state.setTab=\'basic\';renderSettings();">설정에서 입력</a>');
 }
 
 // ---------- 부팅 ----------
@@ -1323,6 +1359,7 @@ async function renderDetail(tabName) {
         '<button type="button" class="dt-icon" id="iconPick" title="과제 이모지 바꾸기">' + taskIconHtml_(tabName, 44, true) + '<i>바꾸기</i></button>' +
         '<h1 class="serif dt-title">' + escapeHtml(tabName) + '</h1>' +
       '</div>' +
+      '<div class="dt-meta">' + taskMetaHtml_() + '</div>' +
       '<div id="iconPanel" class="icon-panel" style="display:none;"></div>' +
       '<div class="dt-pills">' +
         '<button type="button" class="pillbtn' + (ap ? ' on' : '') + '" id="apToggle">복붙방지 ' + (ap ? '켜짐' : '꺼짐') + '</button>' +
@@ -2645,13 +2682,33 @@ async function loadAutoPushBox_() {
   };
 }
 
+// ---------- 연결된 시트 ----------
+async function loadSheetsBox_() {
+  const box = document.getElementById('shBox'); if (!box) return;
+  box.innerHTML = '<span class="hint">확인 중…</span>';
+  let r = null;
+  try { r = await api('getConnectedSheets'); } catch (e) {}
+  if (!document.getElementById('shBox')) return;
+  if (!r || r.success !== true) { box.innerHTML = '<span class="hint">서버(Code.gs) 버전 44 이상에서 보여요.</span>'; return; }
+  box.innerHTML = '<div class="sh-list">' + r.sheets.map(function (x) {
+    return '<div class="sh-row' + (x.ok || x.note ? '' : ' bad') + '"><div class="sh-main"><b>' + escapeHtml(x.label) + '</b><span class="hint">' + escapeHtml(x.use) + '</span>' +
+      '<small>' + (x.ok ? '✅ ' + escapeHtml(x.title || '') + (x.owner ? ' · 주인 ' + escapeHtml(x.owner) : '') : x.note ? 'ℹ️ ' + escapeHtml(x.note) : '⚠️ 서버 계정(' + escapeHtml(r.runAs || '') + ')이 열 수 없어요 — 공유가 필요해요') + '</small></div>' +
+      '<div class="sh-btns"><a class="btn-outline btn-sm" href="' + escapeHtml(x.url) + '" target="_blank" rel="noopener" style="text-decoration:none;">열기</a>' +
+      '<button type="button" class="btn-outline btn-sm" data-shcopy="' + escapeHtml(x.url) + '">주소 복사</button></div></div>';
+  }).join('') + '</div><div class="row" style="margin-top:10px;"><button type="button" class="btn-outline btn-sm" id="shRe">다시 확인</button></div>';
+  box.querySelectorAll('[data-shcopy]').forEach(function (b) {
+    b.onclick = async function () { try { await navigator.clipboard.writeText(b.getAttribute('data-shcopy')); b.textContent = '복사됨 ✓'; } catch (e) { window.prompt('주소를 복사해 주세요', b.getAttribute('data-shcopy')); } };
+  });
+  document.getElementById('shRe').onclick = loadSheetsBox_;
+}
+
 // ---------- 설정 화면 묶기 (위쪽 탭 버튼) ----------
 // 카드 제목(h2)으로 무리를 나눠요. 새 카드는 제목 낱말만 아래에 더하면 돼요(맞는 게 없으면 «기타»).
 const SETTING_GROUPS = [
   ['basic', '👤 기본', '교사 정보 · 비밀번호 · 학생 접속', ['교사 정보', '비밀번호', '마스터코드', '학생 접속 주소']],
   ['task', '📝 과제', '이모지 · 제출 파일 저장 위치', ['과제 이모지', '제출 파일 저장 위치']],
   ['noti', '🔔 알림', '선생님 알림 · 학생 자동 알림', ['선생님 알림', '학생 자동 알림']],
-  ['link', '🔗 연결', '성적 · Firestore · 썸네일', ['성적 조회', 'Firestore', '썸네일']],
+  ['link', '🔗 연결', '시트 · 성적 · Firestore · 썸네일', ['연결된 시트', '성적 조회', 'Firestore', '썸네일']],
   ['server', '🛠 서버', '서버 이전 · 버전', ['서버 이전', '버전']]
 ];
 const SET_TAB_KEY = 'hyewon_admin_settab';
@@ -2729,6 +2786,11 @@ async function renderSettings(notice) {
           '<div class="row"><input type="text" readonly id="stuUrl" value="' + escapeHtml(studentUrl) + '"><button class="btn-outline" id="copyStu">복사</button></div>' +
         '</div>' +
       '</div>' +
+      '<div class="card wide">' +
+        '<h2>📄 연결된 시트</h2>' +
+        '<p class="hint" style="margin:0 0 10px;">서버가 읽는 시트예요. «열 수 없음»이면 그 시트를 서버 계정에 공유(보기 권한 이상)해 주세요. ' + tipHtml_('혜원포털 시트는 편집자, 나머지는 보기 권한이면 돼요. 공유한 뒤 «다시 확인»을 누르면 바로 바뀌어요.') + '</p>' +
+        '<div id="shBox"><span class="hint">확인 중…</span></div>' +
+      '</div>' +
       '<div class="card">' +
         '<h2>성적 조회 연결</h2>' +
         '<p class="hint" style="margin:0 0 10px;">학생 화면의 «성적» 탭이 읽는 점수 시트예요. 연결이 잘 됐는지 확인해보세요.</p>' +
@@ -2802,6 +2864,7 @@ async function renderSettings(notice) {
   loadUploadBox_();
   loadAutoPushBox_();
   loadTeacherPushBox_();
+  loadSheetsBox_();
   loadIconBox_();
   wireMigration_();
   document.getElementById('tpSave').onclick = async function () {
