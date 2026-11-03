@@ -1,6 +1,6 @@
 /* 혜원포털 서비스워커 — 홈 화면 설치(PWA) + 푸시 알림(FCM).
    ★ FCM_CONFIG 는 index.html 위쪽의 FCM_CONFIG 와 «똑같이» 채운다(비어 있으면 푸시는 조용히 꺼져 있다). */
-var CACHE = 'hyewon-report-v1';
+var CACHE = 'hyewon-report-v2';
 var FCM_CONFIG = { apiKey: 'AIzaSyBtpG79Dr6u-pLz3FiwebWf3v8Qq16OXv8', authDomain: 'hyewon-portal.firebaseapp.com', projectId: 'hyewon-portal', storageBucket: 'hyewon-portal.firebasestorage.app', messagingSenderId: '926603414719', appId: '1:926603414719:web:a068b0a313ca0986834a0a' };
 
 try {
@@ -35,7 +35,8 @@ self.addEventListener('fetch', function (e) {
   if (url.origin !== location.origin) return;
 
   var isHTML = req.mode === 'navigate' || (req.headers.get('accept') || '').indexOf('text/html') >= 0;
-  if (isHTML) {
+  // 화면과 설정(routes.json 등 .json)은 «네트워크 먼저» — 서버 주소가 바뀌어도 바로 따라가요.
+  if (isHTML || /\.json$/.test(url.pathname)) {
     // 화면은 «네트워크 먼저» — 고친 코드가 바로 반영되고, 오프라인이면 저장본을 보여 줍니다.
     e.respondWith(fetch(req).then(function (res) {
       if (res && res.ok) { var copy = res.clone(); caches.open(CACHE).then(function (c) { c.put(req, copy); }); }
