@@ -1032,8 +1032,6 @@ function announceText_(o) {
     '👩‍🏫 담당 교사: ' + (t.name ? t.name + ' 선생님' : '(설정 → 교사 정보에서 이름 입력)')
   ];
   lines.push('⏰ 제출 기한: ' + (dlText_(o.deadline) || '선생님이 마감할 때까지'));
-  if (o.names && o.names.length) lines.push('🎯 제출 대상(' + o.names.length + '명): ' + o.names.join(', '));
-  else lines.push('🎯 대상: ' + o.who);
   lines.push('🔐 제출 방법: ' + (o.openAcc ? '링크를 열고 학번·이름을 적어 제출' : '학번과 학생코드로 로그인해서 제출'));
   lines.push('🔗 제출 링크: ' + o.url);
   if (o.desc) { lines.push('', '📝 안내', String(o.desc).trim()); }
