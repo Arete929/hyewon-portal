@@ -770,11 +770,12 @@ async function mountTargetPicker_(id, initial, onChange) {
   if (first) { pickG = String(first)[0]; pickC = String(first)[1]; }
   // 고르는 방식: 전교생(all) · 학년 전체(grade) · 학급 전체(class) · 개별(mix — 학년·반·학생을 섞어서)
   const init = Object.keys(sel);
-  let mode = !init.length ? 'all' : init.every(function (k) { return /^[1-9]$/.test(k); }) ? 'grade' : init.every(function (k) { return /^[1-9]-[1-9]$/.test(k); }) ? 'class' : 'mix';
+  let mode = !init.length ? 'all' : init.some(function (k) { return k.length === 4; }) ? 'mix' : init.every(function (k) { return /^[1-9]$/.test(k); }) ? 'grade' : 'class';
+  if (mode === 'mix') Object.keys(sel).forEach(function (k) { if (k.length !== 4) delete sel[k]; });   // 개별은 학생만
   function setMode(m) {
     mode = m;
     Object.keys(sel).forEach(function (k) {
-      const keep = m === 'mix' || (m === 'grade' && /^[1-9]$/.test(k)) || (m === 'class' && /^[1-9]-[1-9]$/.test(k));
+      const keep = (m === 'mix' && k.length === 4) || (m === 'grade' && /^[1-9]$/.test(k)) || (m === 'class' && /^[1-9]-[1-9]$/.test(k));
       if (!keep) delete sel[k];
     });
     changed();
@@ -785,15 +786,15 @@ async function mountTargetPicker_(id, initial, onChange) {
   function targets() { return Object.keys(sel).filter(function (k) { return sel[k]; }).sort(); }
   function onesIn(g, c) { return (grades[g][c] || []).filter(function (x) { return sel[x.studentId]; }).length; }
   function paint() {
-    const modes = [['all', '🏫 전교생'], ['grade', '학년 전체'], ['class', '학급 전체'], ['mix', '👤 개별 (섞어서)']];
+    const modes = [['all', '🏫 전교생'], ['grade', '학년 전체'], ['class', '학급 전체'], ['mix', '👤 개별 학생']];
     const seg = '<div class="tp-seg">' + modes.map(function (m) { return '<button type="button" data-mode="' + m[0] + '"' + (mode === m[0] ? ' class="on"' : '') + '>' + m[1] + '</button>'; }).join('') + '</div>';
     if (mode === 'all') {
       el.innerHTML = seg + '<p class="hint" style="margin:8px 0 0;">전교생' + (students.length ? ' ' + students.length + '명' : '') + '이 대상이에요(대상 제한 없음).</p>';
       wireSeg(); return;
     }
-    const showGrade = mode === 'grade' || mode === 'mix', showClass = mode === 'class' || mode === 'mix', showOnes = mode === 'mix';
+    const showGrade = mode === 'grade', showClass = mode === 'class', showOnes = mode === 'mix';
     const ones = students.filter(function (x) { return sel[x.studentId]; });
-    el.innerHTML = seg + '<div style="margin-top:10px;">' + gKeys.map(function (g) {
+    el.innerHTML = seg + '<div style="margin-top:10px;">' + (showOnes ? '' : gKeys.map(function (g) {
       const total = Object.keys(grades[g]).reduce(function (a, c) { return a + grades[g][c].length; }, 0);
       return '<div class="tp-row">' + (!showGrade ? '<span class="tp-glabel">' + g + '학년</span>' : '') + (showGrade ? '<button type="button" class="tp-chip all' + (sel[g] ? ' on' : '') + '" data-t="' + g + '">' + g + '학년 전체' + (total ? ' <i>' + total + '</i>' : '') + '</button>' : '') +
         (!showClass ? '' : Object.keys(grades[g]).sort(function (a, b) { return a - b; }).map(function (c) {
@@ -801,8 +802,8 @@ async function mountTargetPicker_(id, initial, onChange) {
           return '<button type="button" class="tp-chip' + (sel[k] ? ' on' : '') + (sel[g] ? ' dim' : '') + '" data-t="' + k + '">' + c + '반' +
             (n ? ' <i style="opacity:1;color:var(--accent);font-weight:800;">' + n + '명</i>' : (grades[g][c].length ? ' <i>' + grades[g][c].length + '</i>' : '')) + '</button>';
         }).join('')) + '</div>';
-    }).join('') + '</div>' +
-    (showOnes && ones.length ? '<div class="tp-picked"><span class="hint">고른 학생 ' + ones.length + '명:</span> ' + ones.map(function (x) { return '<button type="button" class="tp-chip on" data-s="' + escapeHtml(x.studentId) + '">' + escapeHtml(x.studentId) + ' ' + escapeHtml(x.name) + ' ✕</button>'; }).join('') + '</div>' : '') +
+    }).join('')) + '</div>' +
+    (showOnes ? '<div class="tp-picked"><span class="hint">' + (ones.length ? '고른 학생 ' + ones.length + '명:' : '아래에서 학생을 눌러 고르세요. 여러 학년·반을 섞어도 돼요.') + '</span> ' + ones.map(function (x) { return '<button type="button" class="tp-chip on" data-s="' + escapeHtml(x.studentId) + '">' + escapeHtml(x.studentId) + ' ' + escapeHtml(x.name) + ' ✕</button>'; }).join('') + '</div>' : '') +
     (showOnes && students.length ? '<div class="tp-ind"><div class="tp-ind-head">👤 학생 한 명씩 고르기 <span class="hint" style="font-weight:400;">학년·반을 누르고 학생을 눌러서 넣고 빼요</span></div>' +
         '<div class="tp-pick">' + gKeys.map(function (g) { return '<button type="button" class="tp-pb' + (g === pickG ? ' on' : '') + '" data-pg="' + g + '">' + g + '학년</button>'; }).join('') + '</div>' +
         '<div class="tp-pick">' + Object.keys(grades[pickG] || {}).sort(function (a, b) { return a - b; }).map(function (c) {
@@ -834,11 +835,7 @@ async function mountTargetPicker_(id, initial, onChange) {
     el.querySelectorAll('[data-s]').forEach(function (b) {
       b.onclick = function () {
         const sid = b.getAttribute('data-s');
-        const x = students.find(function (y) { return y.studentId === sid; }); if (!x) return;
-        const g = String(x.grade), c = String(x.cls);
-        // 학년·반 전체로 골라져 있던 학생을 누르면 → 그 전체 선택을 풀고 «이 학생 한 명»만 골라요
-        if (sel[g] || sel[g + '-' + c]) { delete sel[g]; delete sel[g + '-' + c]; sel[sid] = true; }
-        else if (sel[sid]) delete sel[sid]; else sel[sid] = true;
+        if (sel[sid]) delete sel[sid]; else sel[sid] = true;   // 누른 학생만 넣고 빼요
         changed();
       };
     });
