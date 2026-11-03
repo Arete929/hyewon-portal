@@ -665,9 +665,17 @@ function metaRowsHtml_(tab) {
       // 과목·담당 교사는 기본 항목(관리자 설정 → 교사 정보)
       const t = (state.config && state.config.teacher) || {};
       return '<div class="meta-row">' + ic_('info', 15, 'var(--text2)') + '<span class="k">과목</span><span class="v">' + escapeHtml(t.subject || '—') + '</span></div>' +
-        '<div class="meta-row">' + ic_('chat', 15, 'var(--text2)') + '<span class="k">담당 교사</span><span class="v">' + escapeHtml(t.name ? t.name + ' 선생님' : '—') + '</span></div>';
+        '<div class="meta-row">' + ic_('chat', 15, 'var(--text2)') + '<span class="k">담당 교사</span><span class="v">' + teacherAvatarHtml_(t, 22) + escapeHtml(t.name ? t.name + ' 선생님' : '—') + '</span></div>';
     })() +
   '</div>';
+}
+// 선생님 프로필 이모지(설정에서 고른 글자 이모지 또는 그림)
+function teacherAvatarHtml_(t, size) {
+  const a = t && t.avatar; size = size || 22;
+  const st = 'display:inline-flex;align-items:center;justify-content:center;width:' + size + 'px;height:' + size + 'px;border-radius:50%;vertical-align:middle;margin-right:6px;object-fit:cover;';
+  if (a && a.type === 'img' && t.avatarData) return '<img alt="" src="' + escapeHtml(t.avatarData) + '" style="' + st + '">';
+  if (a && a.type === 'emoji' && a.v) return '<span style="' + st + 'font-size:' + Math.round(size * 0.8) + 'px;line-height:1;">' + escapeHtml(a.v) + '</span>';
+  return '';
 }
 function titleCardHtml_(name) {
   const sub = sportCategoryLabel_(name);

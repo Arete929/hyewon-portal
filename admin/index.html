@@ -205,6 +205,12 @@
   .up-path { font-size: 15px; font-weight: 700; color: var(--accent); overflow-wrap: anywhere; }
   .tile { padding: 16px 18px; margin-bottom: 14px; }
   .tile-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+  .tav { display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; object-fit: cover; vertical-align: middle; line-height: 1; flex: none; background: #fff; }
+  .tline .tav { margin-right: 5px; box-shadow: 0 0 0 1.5px rgba(255,255,255,.8); }
+  .dt-meta .tav { margin-right: 2px; }
+  .tp-av-row { display: flex; align-items: center; gap: 12px; margin: 0 0 12px; }
+  .tp-av { width: 56px; height: 56px; border-radius: 50%; border: 2px dashed var(--border); background: #fff; display: grid; place-items: center; cursor: pointer; padding: 0; flex: none; }
+  .tp-av:hover { border-color: var(--accent); }
   .tline { display: block; font-style: normal; font-size: 12px; font-weight: 600; color: rgba(255,255,255,.88); margin-top: 4px; text-shadow: 0 1px 4px rgba(0,0,0,.35); }
   .tline:empty { display: none; }
   .dt-meta { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; margin: 10px 0 0; font-size: 13.5px; color: var(--text2); }
@@ -459,7 +465,7 @@ function render(inner) {
   document.getElementById('app').innerHTML =
     '<div class="shell"><aside class="side">' +
       '<div class="photo" aria-hidden="true"></div>' +
-      '<div class="brandbox"><img src="../assets/logo.png" alt=""><div><span class="gugi">혜원포털</span><small>관리자</small><em class="tline">' + escapeHtml(teacherLine_()) + '</em></div></div>' +
+      '<div class="brandbox"><img src="../assets/logo.png" alt=""><div><span class="gugi">혜원포털</span><small>관리자</small><em class="tline">' + tlineHtml_() + '</em></div></div>' +
       nav +
       '<div class="spacer"></div>' +
       '<button class="sub installBtn" type="button" style="display:none;color:#FFD84A;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><polyline points="7 10 12 15 17 10"/><path d="M5 21h14"/></svg>앱으로 설치</button>' +
@@ -467,7 +473,7 @@ function render(inner) {
       '<button class="sub" id="navLogout"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><path d="M21 12H9"/></svg>로그아웃</button>' +
       '<div class="verbox" id="verBox"></div>' +
     '</aside><main class="main">' +
-      '<div class="mhero" aria-hidden="true"><img class="mh-logo" src="../assets/logo.png" alt=""><div><span class="gugi">혜원포털</span><small>관리자</small><em class="tline">' + escapeHtml(teacherLine_()) + '</em></div></div>' +
+      '<div class="mhero" aria-hidden="true"><img class="mh-logo" src="../assets/logo.png" alt=""><div><span class="gugi">혜원포털</span><small>관리자</small><em class="tline">' + tlineHtml_() + '</em></div></div>' +
       inner + '<div class="verfoot" id="verFoot"></div></main></div>' + bottomNavHtml_();
   document.querySelectorAll('[data-nav]').forEach(function (b) {
     b.onclick = function () {
@@ -684,15 +690,25 @@ function teacherLine_() {
   return t.name ? t.name + ' 선생님' + (t.subject ? ' · ' + t.subject : '') : (t.subject || '');
 }
 function rememberTeacher_(t) {
-  t = { name: (t && t.name) || '', subject: (t && t.subject) || '' };
+  t = { name: (t && t.name) || '', subject: (t && t.subject) || '', avatar: (t && t.avatar) || null, avatarData: (t && t.avatarData) || '' };
   state.teacher = t;
   try { localStorage.setItem(TEACHER_KEY, JSON.stringify(t)); } catch (e) {}
-  document.querySelectorAll('.tline').forEach(function (el) { el.textContent = teacherLine_(); });
+  document.querySelectorAll('.tline').forEach(function (el) { el.innerHTML = tlineHtml_(); });
+  document.querySelectorAll('.tp-av').forEach(function (el) { el.innerHTML = avatarHtml_(40, true); });
   document.querySelectorAll('.dt-meta').forEach(function (el) { el.innerHTML = taskMetaHtml_(); });
 }
+// 프로필 이모지(글자 또는 올린 그림). 없으면 placeholder 가 true 일 때만 기본 🧑‍🏫
+function avatarHtml_(size, placeholder) {
+  const t = teacherInfo_(), a = t.avatar;
+  const st = 'width:' + size + 'px;height:' + size + 'px;';
+  if (a && a.type === 'img' && t.avatarData) return '<img class="tav" alt="" style="' + st + '" src="' + escapeHtml(t.avatarData) + '">';
+  const ch = a && a.type === 'emoji' && a.v ? a.v : (placeholder ? '🧑‍🏫' : '');
+  return ch ? '<span class="tav" style="' + st + 'font-size:' + Math.round(size * 0.72) + 'px;">' + escapeHtml(ch) + '</span>' : '';
+}
+function tlineHtml_() { const l = teacherLine_(); return l ? avatarHtml_(18) + escapeHtml(l) : ''; }
 function taskMetaHtml_() {
   const t = teacherInfo_();
-  return '<span>📚 과목 <b>' + escapeHtml(t.subject || '미입력') + '</b></span><span>👩‍🏫 담당 교사 <b>' + escapeHtml(t.name ? t.name + ' 선생님' : '미입력') + '</b></span>' +
+  return '<span>📚 과목 <b>' + escapeHtml(t.subject || '미입력') + '</b></span><span>' + (avatarHtml_(20) || '👩‍🏫') + ' 담당 교사 <b>' + escapeHtml(t.name ? t.name + ' 선생님' : '미입력') + '</b></span>' +
     (t.name && t.subject ? '' : ' <a href="#" class="hint" onclick="event.preventDefault();state.setTab=\'basic\';renderSettings();">설정에서 입력</a>');
 }
 
@@ -2680,6 +2696,57 @@ async function loadAutoPushBox_() {
   };
 }
 
+// ---------- 교사 프로필 이모지 고르기 ----------
+const AVATAR_PRESETS = ['🧑‍🏫', '👩‍🏫', '👨‍🏫', '🏃‍♀️', '🏃‍♂️', '🤸‍♀️', '🧘‍♀️', '🏀', '⚽', '🏐', '🏸', '🎾', '⚾', '🏓', '💪', '🏆', '🥇', '🌟', '😀', '😎', '🤓', '🦁', '🐯', '🐻', '🐰', '🦊', '🐶', '🐱', '🌻', '🍀', '🔥', '🎵'];
+async function saveAvatar_(av) {
+  const msg = document.getElementById('tpMsg');
+  if (msg) msg.textContent = '저장 중…';
+  const nm = document.getElementById('tpName'), sj = document.getElementById('tpSubj');
+  let r;
+  try { r = await api('setTeacherProfile', { name: nm ? nm.value : teacherInfo_().name, subject: sj ? sj.value : teacherInfo_().subject, avatar: av }); } catch (e) { if (msg) msg.textContent = '서버에 연결하지 못했어요.'; return; }
+  if (!r || r.success !== true) { if (msg) msg.textContent = (r && r.message) || '저장하지 못했어요. 서버(Code.gs)가 버전 46 이상인지 확인해주세요.'; return; }
+  rememberTeacher_(r.teacher);
+  if (msg) msg.textContent = '프로필 이모지를 저장했어요.';
+  const box = document.getElementById('tpAvPanel'); if (box) box.style.display = 'none';
+}
+async function toggleAvatarPanel_() {
+  const box = document.getElementById('tpAvPanel'); if (!box) return;
+  if (box.style.display !== 'none') { box.style.display = 'none'; return; }
+  box.style.display = '';
+  box.innerHTML = '<span class="hint">불러오는 중…</span>';
+  const lib = await loadIconLib_();
+  const cur = teacherInfo_().avatar || null;
+  box.innerHTML =
+    '<div class="ip-head"><b>프로필 이모지</b><button type="button" class="btn-outline btn-sm" id="avClose" style="margin-left:auto;">닫기</button></div>' +
+    '<div class="ip-sec">😀 기본 이모지</div>' +
+    '<div class="ip-grid">' + AVATAR_PRESETS.map(function (e) {
+      return '<button type="button" class="ip-cell emo' + (cur && cur.type === 'emoji' && cur.v === e ? ' on' : '') + '" data-avemo="' + escapeHtml(e) + '">' + e + '</button>';
+    }).join('') + '</div>' +
+    '<div class="ip-sec">🖼️ 내 그림 ' + tipHtml_('사진이나 캐릭터 그림을 올리면 가운데를 동그랗게 잘라 작게 줄여서 써요. 올린 그림은 «과제 이모지»와 같은 곳에 보관돼요.') + '</div>' +
+    '<div class="ip-grid">' + lib.map(function (x) {
+      return '<button type="button" class="ip-cell' + (cur && cur.type === 'img' && cur.id === x.id ? ' on' : '') + '" data-avimg="' + escapeHtml(x.id) + '" title="' + escapeHtml(x.name) + '"><img alt="" src="' + escapeHtml(x.data) + '" style="border-radius:50%;"></button>';
+    }).join('') +
+      '<label class="ip-cell" style="font-size:12px;cursor:pointer;" title="그림 올리기">＋ 올리기<input type="file" id="avFile" accept="image/png,image/jpeg,image/webp,image/gif" style="display:none;"></label></div>' +
+    '<div class="row" style="gap:8px;margin-top:10px;flex-wrap:wrap;align-items:center;"><input id="avText" type="text" maxlength="8" placeholder="직접 입력 (예: 🏃‍♀️)" style="width:170px;"><button type="button" class="btn-outline btn-sm" id="avTextOk">이걸로</button>' +
+      '<button type="button" class="btn-outline btn-sm" id="avNone">없애기</button><span class="hint" id="avMsg"></span></div>';
+  document.getElementById('avClose').onclick = function () { box.style.display = 'none'; };
+  box.querySelectorAll('[data-avemo]').forEach(function (b) { b.onclick = function () { saveAvatar_({ type: 'emoji', v: b.getAttribute('data-avemo') }); }; });
+  box.querySelectorAll('[data-avimg]').forEach(function (b) { b.onclick = function () { saveAvatar_({ type: 'img', id: b.getAttribute('data-avimg') }); }; });
+  document.getElementById('avTextOk').onclick = function () { const v = document.getElementById('avText').value.trim(); if (v) saveAvatar_({ type: 'emoji', v: v }); };
+  document.getElementById('avNone').onclick = function () { saveAvatar_(null); };
+  document.getElementById('avFile').onchange = async function (e) {
+    const f = e.target.files && e.target.files[0]; if (!f) return;
+    const m = document.getElementById('avMsg'); m.textContent = '올리는 중…';
+    try {
+      const d = await shrinkIcon_(f);
+      const r = await api('addIcon', { name: '프로필', data: d });
+      if (!r || !r.success) { m.textContent = (r && r.message) || '올리지 못했어요.'; return; }
+      state.iconLib = r.icons || state.iconLib;
+      await saveAvatar_({ type: 'img', id: r.id });
+    } catch (err) { m.textContent = String(err.message || err); }
+  };
+}
+
 // ---------- 테스트 계정 ----------
 async function loadTestBox_() {
   const box = document.getElementById('tsBox'); if (!box) return;
@@ -2832,7 +2899,10 @@ async function renderSettings(notice) {
       '</div>' +
       '<div class="card wide" style="margin-bottom:16px;">' +
         '<h2>교사 정보</h2>' +
-        '<p class="hint" style="margin:0 0 10px;">학생 화면의 과제 상세에 «출제: ○○○ 선생님 · 과목»으로 보이고, 홈 인사말에도 쓰여요.</p>' +
+        '<p class="hint" style="margin:0 0 10px;">학생 화면의 과제 정보·단톡방 안내문·관리자 화면에 이름·과목과 프로필 이모지가 함께 보여요.</p>' +
+        '<div class="tp-av-row"><button type="button" class="tp-av" id="tpAv" title="프로필 이모지 바꾸기">' + avatarHtml_(40, true) + '</button>' +
+          '<div><b style="font-size:14px;">프로필 이모지</b><div class="hint">눌러서 이모지를 고르거나 내 그림을 올려요.</div></div></div>' +
+        '<div id="tpAvPanel" class="icon-panel" style="display:none;margin:0 0 12px;"></div>' +
         '<div class="row" style="gap:10px;flex-wrap:wrap;align-items:flex-end;">' +
           '<div class="field" style="flex:1;min-width:160px;margin:0;"><label for="tpName">이름</label><input id="tpName" type="text" maxlength="20" placeholder="예: 김진호" value="' + escapeHtml((st.teacher && st.teacher.name) || '') + '"></div>' +
           '<div class="field" style="flex:1;min-width:140px;margin:0;"><label for="tpSubj">과목</label><input id="tpSubj" type="text" maxlength="20" placeholder="예: 체육" value="' + escapeHtml((st.teacher && st.teacher.subject) || '') + '"></div>' +
@@ -2900,10 +2970,11 @@ async function renderSettings(notice) {
   loadSheetsBox_();
   loadIconBox_();
   wireMigration_();
+  document.getElementById('tpAv').onclick = function () { toggleAvatarPanel_(); };
   document.getElementById('tpSave').onclick = async function () {
     const msg = document.getElementById('tpMsg'); msg.textContent = '저장 중…';
     let r;
-    try { r = await api('setTeacherProfile', { name: document.getElementById('tpName').value, subject: document.getElementById('tpSubj').value }); } catch (e) { msg.textContent = '서버에 연결하지 못했어요.'; return; }
+    try { r = await api('setTeacherProfile', { name: document.getElementById('tpName').value, subject: document.getElementById('tpSubj').value, avatar: teacherInfo_().avatar || null }); } catch (e) { msg.textContent = '서버에 연결하지 못했어요.'; return; }
     if (!r || r.success !== true) { msg.textContent = (r && r.message) || '저장하지 못했어요. 서버(Code.gs)가 버전 39 이상인지 확인해주세요.'; return; }
     msg.textContent = '저장했어요. 학생 화면에 «출제: ' + (r.teacher.name || '') + ' 선생님' + (r.teacher.subject ? ' · ' + r.teacher.subject : '') + '»로 보여요.';
   };
