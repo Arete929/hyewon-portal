@@ -82,6 +82,7 @@
   .hnav { margin: 4px 0 10px; font-size: 14px; font-weight: 700; display: flex; justify-content: space-between; }
   .hnav span { font-size: 12px; color: var(--text3); font-weight: 400; }
   .subm { display: none; }
+  @media (max-width: 1180px) { .subm { display: block; } .subm ~ .tablewrap { display: none; } .subm ~ .hint { display: none; } }
   .chips { display: flex; gap: 8px; margin: 0 0 12px; overflow-x: auto; }
   .chips button { border: 0; background: #fff; border-radius: 999px; padding: 8px 14px; font-family: inherit; font-size: 12px; font-weight: 600; color: var(--text2); cursor: pointer; white-space: nowrap; }
   .chips button.on { background: var(--accent); color: #fff; }
@@ -90,7 +91,6 @@
   .srow .t { flex: 1; min-width: 0; font-size: 14px; font-weight: 600; }
   .srow .t small { display: block; color: var(--text2); font-size: 11px; font-weight: 400; margin-top: 2px; }
   @media (max-width: 760px) {
-    .subm { display: block; } .subm ~ .tablewrap { display: none; } .subm ~ .hint { display: none; }
     body { padding-bottom: 96px; }
     .shell { flex-direction: column; }
     .side { display: none; }
@@ -189,6 +189,19 @@
     .qrbig .qb-text { max-width: 40vw; display: flex; flex-direction: column; gap: 14px; }
     .qrbig .qb-code svg { width: min(44vw, 78vh); height: min(44vw, 78vh); }
   }
+  .rvsheet { position: fixed; inset: 0; z-index: 90; background: rgba(0,0,0,.4); display: flex; align-items: flex-end; justify-content: center; }
+  .rv-panel { background: #fff; width: 100%; max-width: 560px; max-height: 88vh; overflow-y: auto; border-radius: 22px 22px 0 0; padding: 18px 18px 28px; box-shadow: 0 -10px 30px rgba(0,0,0,.2); }
+  @media (min-width: 761px) { .rvsheet { align-items: center; } .rv-panel { border-radius: 22px; } }
+  .rv-head { display: flex; align-items: center; gap: 8px; font-size: 16px; }
+  .rv-x { margin-left: auto; width: 38px; height: 38px; border-radius: 50%; border: none; background: var(--bg); font-size: 16px; cursor: pointer; }
+  .rv-btns { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+  .rv-btns > * { flex: 1; justify-content: center; min-width: 96px; }
+  .tl { list-style: none; margin: 0; padding: 0; }
+  .tl li { display: flex; gap: 10px; position: relative; padding-bottom: 14px; }
+  .tl li:not(:last-child):before { content: ''; position: absolute; left: 13px; top: 28px; bottom: 0; width: 2px; background: var(--border); }
+  .tl-dot { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font-size: 13px; flex: none; color: #fff; }
+  .tl-body { font-size: 13px; line-height: 1.5; min-width: 0; }
+  .tl-note { margin-top: 4px; background: var(--bg); border-radius: 8px; padding: 6px 10px; white-space: pre-wrap; }
   .tp-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
   .tp-chip { border: 1px solid var(--border); background: #fff; color: var(--text2); border-radius: 999px; padding: 6px 12px; font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
   .tp-chip i { font-style: normal; font-size: 11px; opacity: .7; margin-left: 2px; }
@@ -595,6 +608,65 @@ function showBigQr_(title, url) {
   const fs = el.querySelector('.qb-full');
   if (!el.requestFullscreen) fs.style.display = 'none';
   fs.onclick = function () { try { el.requestFullscreen(); fs.style.display = 'none'; } catch (e) {} };
+}
+
+// ---------- 검토·반려·피드백 + 제출 기록 (학생 한 명) ----------
+const HIST_STYLE = { '제출': ['#087A55', '📤'], '다시 제출': ['#2F6FED', '🔁'], '회수': ['#8A6D3B', '↩️'], '반려': ['#E5484D', '⛔'], '검토 완료': ['#087A55', '✅'], '검토중으로 되돌림': ['#9A6400', '⏳'], '피드백': ['#6B4BD8', '💬'] };
+function reviewPill_(v) {
+  v = String(v || '');
+  if (v === '반려') return '<span class="pill" style="color:#C22B2B;background:#FDEAEC;">반려</span>';
+  if (v === '검토완료') return '<span class="pill open">검토완료</span>';
+  return '<span class="pill wait">' + escapeHtml(v || '제출됨') + '</span>';
+}
+function historyHtml_(items) {
+  if (!items || !items.length) return '<p class="hint" style="margin:0;">아직 기록이 없어요.</p>';
+  return '<ol class="tl">' + items.slice().reverse().map(function (it) {
+    const st = HIST_STYLE[it.kind] || ['#72827E', '•'];
+    return '<li><span class="tl-dot" style="background:' + st[0] + ';">' + st[1] + '</span><div class="tl-body">' +
+      '<div><b style="color:' + st[0] + ';">' + escapeHtml(it.kind) + '</b> <span class="hint">' + escapeHtml(it.actor || '') + '</span>' +
+      (it.at ? ' <span class="hint">· ' + escapeHtml(it.at) + '</span>' : '') + '</div>' +
+      (it.note ? '<div class="tl-note">' + escapeHtml(it.note) + '</div>' : '') + '</div></li>';
+  }).join('') + '</ol>';
+}
+function openReviewSheet_(tabName, sid, name, status, feedback, onSaved) {
+  const el = document.createElement('div');
+  el.className = 'rvsheet';
+  el.innerHTML = '<div class="rv-panel"><div class="rv-head"><b>' + escapeHtml(sid + (name ? ' ' + name : '')) + '</b> ' + reviewPill_(status) +
+      '<button class="rv-x" type="button" aria-label="닫기">✕</button></div>' +
+    '<label style="display:block;margin:12px 0 6px;">피드백 <span class="hint">(반려할 땐 이유를 꼭 적어 주세요 · 학생 화면에 보여요)</span></label>' +
+    '<textarea id="rvFb" style="min-height:90px;font-family:inherit;font-size:14px;">' + escapeHtml(feedback || '') + '</textarea>' +
+    '<div class="rv-btns"><button class="btn" data-st="검토완료" type="button">✅ 검토 완료</button>' +
+      '<button class="btn" data-st="반려" type="button" style="background:#E5484D;">⛔ 반려</button>' +
+      '<button class="btn-outline" data-st="검토중" type="button">⏳ 검토중</button></div>' +
+    '<p class="hint" id="rvMsg" style="margin:8px 0 0;"></p>' +
+    '<h3 style="font-size:14px;margin:18px 0 10px;">제출 기록</h3><div id="rvHist"><span class="hint">불러오는 중…</span></div></div>';
+  document.body.appendChild(el);
+  let changed = false;
+  function close() { el.remove(); if (changed && onSaved) onSaved(); }
+  el.onclick = function (e) { if (e.target === el) close(); };
+  el.querySelector('.rv-x').onclick = close;
+  el.querySelectorAll('[data-st]').forEach(function (b) {
+    b.onclick = async function () {
+      const st = b.getAttribute('data-st'), fb = document.getElementById('rvFb').value.trim();
+      if (st === '반려' && !fb) { document.getElementById('rvMsg').innerHTML = '<span style="color:var(--error-text);">반려하려면 피드백에 이유를 적어 주세요.</span>'; document.getElementById('rvFb').focus(); return; }
+      if (st === '반려' && !confirm(sid + ' 학생의 제출을 반려할까요?\\n학생 화면에 «반려 · 다시 제출해 주세요»와 피드백이 보여요.')) return;
+      document.getElementById('rvMsg').textContent = '저장 중…';
+      let r;
+      try { r = await api('setReview', { tabName: tabName, studentId: sid, reviewStatus: st, feedback: fb }); } catch (e) { return; }
+      if (!r || !r.success) { document.getElementById('rvMsg').innerHTML = '<span style="color:var(--error-text);">' + escapeHtml((r && r.message) || '저장 실패 — 서버(Code.gs)가 버전 35 이상인지 확인해주세요.') + '</span>'; return; }
+      changed = true;
+      el.querySelector('.rv-head .pill').outerHTML = reviewPill_(st);
+      document.getElementById('rvMsg').textContent = '저장했어요.';
+      loadHist();
+    };
+  });
+  async function loadHist() {
+    let r;
+    try { r = await api('getSubmissionHistory', { tabName: tabName, studentId: sid }); } catch (e) { return; }
+    const box = document.getElementById('rvHist'); if (!box) return;
+    box.innerHTML = (r && r.success) ? historyHtml_(r.items) : '<span class="hint">' + escapeHtml((r && r.message) || '기록을 불러오지 못했어요. 서버(Code.gs)가 버전 35 이상인지 확인해주세요.') + '</span>';
+  }
+  loadHist();
 }
 
 // ---------- 대상 고르기 (학년 전체 / 반) — 새 과제 만들기·과제 화면에서 같이 써요 ----------
@@ -1191,10 +1263,8 @@ async function renderSubmissions(tab) {
     const sid = r[0];
     return '<tr>' + r.map(function (v, ci) {
       if (ci === reviewIdx) {
-        const done = v === '검토완료';
-        return '<td><span class="pill ' + (done ? 'open' : 'wait') + '">' + escapeHtml(v || '제출됨') + '</span><br>' +
-          '<button class="btn-outline btn-sm reviewToggle" data-row="' + ri + '" data-next="' + (done ? '검토중' : '검토완료') + '" style="margin-top:6px;">' +
-          (done ? '검토중으로' : '검토완료로') + '</button></td>';
+        return '<td>' + reviewPill_(v) + '<br>' +
+          '<button class="btn-outline btn-sm revOpen" data-row="' + ri + '" style="margin-top:6px;">검토·기록</button></td>';
       }
       if (ci === feedbackIdx) {
         return '<td style="min-width:160px;"><div class="fbtext" style="white-space:pre-wrap;font-size:12px;margin-bottom:6px;">' +
@@ -1207,15 +1277,16 @@ async function renderSubmissions(tab) {
 
   const nameIdx = fields.findIndex(function (f) { return /이름|성명/.test(f.name); });
   const timeIdx = fields.findIndex(function (f) { return /시각|시간|제출일|일시/.test(f.name); });
-  const cards = rows.map(function (r) {
+  const cards = rows.map(function (r, ri) {
     const t = traces[traceKey_(r[0])];
     const flag = !!t && (t.pasteTries > 0 || t.maxChunk >= apMin);
-    const done = reviewIdx >= 0 && r[reviewIdx] === '검토완료';
+    const rv = reviewIdx >= 0 ? String(r[reviewIdx] || '') : '';
+    const done = rv === '검토완료';
     const nm = nameIdx >= 0 ? r[nameIdx] : '';
     const sub = [timeIdx >= 0 ? r[timeIdx] : '', flag && t.maxChunk ? '한 번에 ' + t.maxChunk + '자' : ''].filter(Boolean).join(' · ');
-    return '<div class="srow" data-flag="' + (flag ? 1 : 0) + '" data-done="' + (done ? 1 : 0) + '"><div class="dot">' + escapeHtml(String(nm || r[0] || '?').slice(-2)) + '</div>' +
+    return '<div class="srow" data-ri="' + ri + '" style="cursor:pointer;" data-flag="' + (flag ? 1 : 0) + '" data-done="' + (done ? 1 : 0) + '"><div class="dot">' + escapeHtml(String(nm || r[0] || '?').slice(-2)) + '</div>' +
       '<div class="t">' + escapeHtml(nm ? r[0] + ' ' + nm : r[0]) + '<small>' + escapeHtml(sub) + '</small></div>' +
-      '<span class="tag ' + (flag ? 'wr' : done ? 'ok' : 'ok') + '">' + (flag ? '복붙 의심' : done ? '검토완료' : '제출') + '</span></div>';
+      '<span class="tag ' + (rv === '반려' ? 'no' : flag ? 'wr' : 'ok') + '">' + (rv === '반려' ? '반려' : flag ? '복붙 의심' : done ? '검토완료' : '제출') + '</span></div>';
   }).join('');
   const mobileList =
     '<div class="subm"><div class="kpis" style="grid-template-columns:1fr 1fr 1fr;"><div class="kpi"><span>제출</span><b>' + rows.length + '</b></div>' +
@@ -1223,7 +1294,7 @@ async function renderSubmissions(tab) {
     '<div class="kpi"><span>검토완료</span><b>' + rows.filter(function (r) { return reviewIdx >= 0 && r[reviewIdx] === '검토완료'; }).length + '</b></div></div>' +
     '<div class="chips" id="subChips"><button class="on" data-f="all">전체</button><button data-f="flag">복붙 의심</button><button data-f="todo">검토 전</button></div>' +
     '<div id="subCards">' + (cards || '<p class="hint">제출된 답변이 없습니다.</p>') + '</div>' +
-    '<p class="hint" style="margin:8px 2px 16px;">피드백·검토 변경은 PC 화면의 표에서 할 수 있어요.</p></div>';
+    '<p class="hint" style="margin:8px 2px 16px;">학생을 누르면 검토 완료·반려·피드백과 제출 기록을 볼 수 있어요.</p></div>';
 
   body.innerHTML = mobileList +
     '<p class="hint">총 ' + rows.length + '건' +
@@ -1244,6 +1315,12 @@ async function renderSubmissions(tab) {
     };
   });
 
+  function openRev_(ri) {
+    const r = rows[ri];
+    openReviewSheet_(tab.sheetName, r[0], nameIdx >= 0 ? r[nameIdx] : '', reviewIdx >= 0 ? r[reviewIdx] : '', feedbackIdx >= 0 ? r[feedbackIdx] : '', function () { renderSubmissions(tab); });
+  }
+  document.querySelectorAll('.revOpen').forEach(function (b) { b.onclick = function () { openRev_(Number(b.getAttribute('data-row'))); }; });
+  document.querySelectorAll('#subCards .srow').forEach(function (el) { el.onclick = function () { openRev_(Number(el.getAttribute('data-ri'))); }; });
   document.querySelectorAll('.reviewToggle').forEach(function (btn) {
     btn.onclick = async function () {
       const ri = Number(btn.getAttribute('data-row'));

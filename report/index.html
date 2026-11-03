@@ -150,6 +150,15 @@
   .rpill.none { color: var(--text2); background: #EFEDE7; }
   .rpill.pending { color: var(--warn-text); background: var(--warn-bg); }
   .rpill.done { color: var(--success-text); background: var(--success-bg); }
+  .rpill.rejected { color: #C22B2B; background: #FDEAEC; }
+  .status-chip.rejected { background: #FDEAEC; color: #C22B2B; }
+  .tl { list-style: none; margin: 0; padding: 0; }
+  .tl li { display: flex; gap: 10px; position: relative; padding-bottom: 14px; }
+  .tl li:not(:last-child):before { content: ''; position: absolute; left: 13px; top: 28px; bottom: 0; width: 2px; background: var(--border); }
+  .tl-dot { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font-size: 13px; flex: none; color: #fff; }
+  .tl-body { font-size: 13px; line-height: 1.5; min-width: 0; }
+  .tl-note { margin-top: 4px; background: var(--bg); border-radius: 8px; padding: 6px 10px; white-space: pre-wrap; color: var(--text); }
+  .linkbtn { background: none; border: none; color: var(--text2); font-family: inherit; font-size: 13px; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; padding: 6px; }
 
   /* 과제 상세 · 제출 현황 */
   .info-row { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text2); margin-bottom: 14px; }
@@ -280,6 +289,7 @@
   html[data-theme="dark"] .login-page img[src*="bottom-banner"] { opacity: .55; }
   html[data-theme="dark"] .theme-pick button.on { box-shadow: 0 0 0 3px rgba(53,211,200,.25); }
   html[data-theme="dark"] .msg.ok, html[data-theme="dark"] .identity { border-color: transparent; }
+  html[data-theme="dark"] .rpill.rejected, html[data-theme="dark"] .status-chip.rejected { background: rgba(255,107,129,.16); color: #FF8A9B; }
 </style>
 </head>
 <body>
@@ -653,6 +663,7 @@ function titleCardHtml_(name) {
 function reviewPillHtml_(t) {
   const cls = reviewClass_(t);
   const icon = cls === 'done' ? '<span style="width:14px;height:14px;border-radius:50%;background:var(--hyewon-emerald);display:inline-flex;align-items:center;justify-content:center;">' + ic_('check', 9, '#fff', 3.5) + '</span>'
+    : cls === 'rejected' ? '<span style="width:14px;height:14px;border-radius:50%;background:#E5484D;display:inline-flex;align-items:center;justify-content:center;color:#fff;font-size:9px;font-weight:900;">↺</span>'
     : cls === 'pending' ? '<span style="width:14px;height:14px;border-radius:50%;background:#F2A33A;display:inline-flex;align-items:center;justify-content:center;color:#fff;font-size:10px;font-weight:900;">!</span>'
     : '<span style="width:12px;height:12px;border-radius:50%;background:#A9B3AF;display:inline-block;"></span>';
   return '<span class="rpill ' + cls + '" style="align-self:flex-start;">' + icon + reviewLabel_(t) + (t.submittedAt ? ' · 제출 ' + escapeHtml(t.submittedAt) : '') + '</span>';
@@ -708,11 +719,25 @@ function renderMore_() {
 
 function reviewLabel_(entry) {
   if (!entry.submitted) return '미제출';
+  if (entry.reviewStatus === '반려') return '반려 · 다시 제출해 주세요';
   return entry.reviewStatus === '검토완료' ? '검토 완료' : '검토 중';
 }
 function reviewClass_(entry) {
   if (!entry.submitted) return 'none';
+  if (entry.reviewStatus === '반려') return 'rejected';
   return entry.reviewStatus === '검토완료' ? 'done' : 'pending';
+}
+// 제출 기록 타임라인 (학생·선생님 화면 공통 모양)
+const HIST_STYLE = { '제출': ['#087A55', '📤'], '다시 제출': ['#2F6FED', '🔁'], '회수': ['#8A6D3B', '↩️'], '반려': ['#E5484D', '⛔'], '검토 완료': ['#087A55', '✅'], '검토중으로 되돌림': ['#9A6400', '⏳'], '피드백': ['#6B4BD8', '💬'] };
+function historyHtml_(items) {
+  if (!items || !items.length) return '<p class="hint" style="margin:0;">아직 기록이 없어요.</p>';
+  return '<ol class="tl">' + items.slice().reverse().map(function (it) {
+    const st = HIST_STYLE[it.kind] || ['#72827E', '•'];
+    return '<li><span class="tl-dot" style="background:' + st[0] + ';">' + st[1] + '</span><div class="tl-body">' +
+      '<div><b style="color:' + st[0] + ';">' + escapeHtml(it.kind) + '</b> <span class="hint">' + escapeHtml(it.actor || '') + '</span></div>' +
+      (it.at ? '<div class="hint">' + escapeHtml(String(it.at).replace(/^(\d{4})-(\d{2})-(\d{2}) (\d{2}:\d{2}).*$/, function (m, y, mo, d, t) { return Number(mo) + '/' + Number(d) + ' ' + t; })) + '</div>' : '') +
+      (it.note ? '<div class="tl-note">' + escapeHtml(it.note) + '</div>' : '') + '</div></li>';
+  }).join('') + '</ol>';
 }
 
 function fileSizeLabel(bytes) {
@@ -1147,10 +1172,12 @@ function renderAssignmentForm(tab, entry, notice) {
 function renderSubmissionStatus(tab, entry) {
   state.currentEntry = entry;
   const hasFeedback = !!entry.feedback;
-  const btnLabel = hasFeedback ? '피드백 반영해 수정 제출' : '다시 제출하기';
+  const btnLabel = (hasFeedback || entry.reviewStatus === '반려') ? '피드백 반영해 수정 제출' : '다시 제출하기';
 
   const done = reviewClass_(entry) === 'done';
+  const rejected = reviewClass_(entry) === 'rejected';
   const over = (deadlineInfo_(tab) || {}).over;
+  const canWithdraw = !done && !over && effStatus_(tab) === 'open' && !(tab.meta && tab.meta.openAccess) && !isPeek_();
   render(
     appbarHtml_('제출 현황', true) +
     '<div class="main" style="padding-top:16px;">' +
@@ -1158,10 +1185,11 @@ function renderSubmissionStatus(tab, entry) {
       '<div class="detail-card rowbetween" style="gap:10px;">' +
         '<div style="display:flex;align-items:center;gap:10px;">' + ic_('clock', 18, 'var(--text2)') +
           '<div><div style="font-size:12px;color:var(--text2);">제출 시간</div><div style="font-size:15px;font-weight:700;">' + escapeHtml(entry.submittedAt) + '</div></div></div>' +
-        '<span class="status-chip ' + (done ? 'done' : 'pending') + '">' +
+        '<span class="status-chip ' + (done ? 'done' : rejected ? 'rejected' : 'pending') + '">' +
           (done ? '<span style="width:18px;height:18px;border-radius:50%;background:var(--hyewon-emerald);display:inline-flex;align-items:center;justify-content:center;">' + ic_('check', 11, '#fff', 3.5) + '</span>교사 검토 완료'
-                : ic_('clock', 15, 'var(--warn-text)') + '검토 중') + '</span>' +
+                : rejected ? '⛔ 반려됨' : ic_('clock', 15, 'var(--warn-text)') + '검토 중') + '</span>' +
       '</div>' +
+      (rejected ? '<div class="msg error" style="margin-bottom:12px;">선생님이 반려했어요. 아래 피드백을 보고 고쳐서 다시 제출해 주세요.</div>' : '') +
       (hasFeedback
         ? '<div class="detail-card"><div class="sec-head">' + ic_('chat', 17, 'var(--text2)') + '선생님 피드백</div>' +
             '<div class="feedback-box"><p>' + escapeHtml(entry.feedback) + '</p></div></div>'
@@ -1172,6 +1200,8 @@ function renderSubmissionStatus(tab, entry) {
             ic_('refresh', 17, 'var(--hyewon-coral)', 2.4) + '<span>' + btnLabel + '</span>' +
             '<span style="margin-left:auto;display:flex;">' + ic_('chev', 16, 'var(--hyewon-coral)', 2.4) + '</span>' +
           '</button>') +
+      (canWithdraw ? '<div style="text-align:center;margin:-4px 0 12px;"><button class="linkbtn" id="withdrawBtn" type="button">제출 회수하기 (잘못 냈을 때)</button></div>' : '') +
+      '<div class="detail-card"><div class="sec-head">' + ic_('clock', 16, 'var(--text2)') + '제출 기록</div><div id="histArea"><span class="hint">불러오는 중…</span></div></div>' +
       '<div class="detail-card" id="submittedFileCard" style="display:none;"><div class="sec-head">' + ic_('file', 16, 'var(--text2)') + '제출한 파일</div><div id="submittedFileArea"></div></div>' +
       '<div class="detail-card" style="padding-bottom:6px;"><div class="sec-head">' + ic_('info', 16, 'var(--text2)') + '과제 정보</div>' +
         metaRowsHtml_(tab).replace('class="detail-card meta-rows"', 'style="margin:0 -2px;"') +
@@ -1184,6 +1214,24 @@ function renderSubmissionStatus(tab, entry) {
   if (backBtn2) backBtn2.onclick = function (e) { e.preventDefault(); renderToday(); };
   const rb = document.getElementById('resubmitBtn');
   if (rb) rb.onclick = function () { renderAssignmentForm(tab, entry); };
+  const wb = document.getElementById('withdrawBtn');
+  if (wb) wb.onclick = async function () {
+    if (!confirm('낸 과제를 회수할까요?\n\n회수하면 «미제출»이 되고, 다시 제출해야 해요. 선생님 화면의 제출 기록에도 «회수»로 남아요.')) return;
+    wb.disabled = true; wb.textContent = '회수하는 중…';
+    let r;
+    try { r = await api('withdrawSubmission', { tabName: tab.sheetName, studentId: state.login.studentId, code: state.login.code }); } catch (e) { r = null; }
+    if (!r || r.success !== true) { wb.disabled = false; wb.textContent = '제출 회수하기 (잘못 냈을 때)'; alert((r && r.message) || '회수하지 못했어요. 잠시 뒤 다시 해 주세요.'); return; }
+    try { const r2 = await api('getMySubmissions', { studentId: state.login.studentId, code: state.login.code }); if (r2 && r2.success) state.myTabs = r2.tabs || []; } catch (e) {}
+    alert(r.message || '회수했어요.');
+    renderToday();
+  };
+  (async function () {
+    const area = document.getElementById('histArea'); if (!area) return;
+    let r;
+    try { r = await api('getMyHistory', { tabName: tab.sheetName, studentId: state.login.studentId, code: state.login.code }); } catch (e) { r = null; }
+    if (!document.getElementById('histArea')) return;
+    area.innerHTML = (r && r.success) ? historyHtml_(r.items) : '<span class="hint">기록을 불러오지 못했어요.</span>';
+  })();
   loadSubmittedFile_(tab);
 }
 
