@@ -203,6 +203,30 @@
   .tl-body { font-size: 13px; line-height: 1.5; min-width: 0; }
   .tl-note { margin-top: 4px; background: var(--bg); border-radius: 8px; padding: 6px 10px; white-space: pre-wrap; }
   .up-path { font-size: 15px; font-weight: 700; color: var(--accent); overflow-wrap: anywhere; }
+  .tile { padding: 16px 18px; margin-bottom: 14px; }
+  .tile-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+  .tile-label { font-size: 13px; font-weight: 800; color: var(--accent); background: #E8F3EF; border-radius: 999px; padding: 4px 12px; }
+  .tile-body { font-size: 15px; line-height: 1.7; white-space: normal; }
+  .statebtns { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .state-btn { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; text-align: left; padding: 12px 14px; border: 1.5px solid var(--border); border-radius: 14px; background: #fff; cursor: pointer; font-family: inherit; color: var(--text); }
+  .state-btn b { font-size: 15px; } .state-btn span { font-size: 12px; color: var(--text2); line-height: 1.4; }
+  .state-btn.on { border-color: var(--accent); background: var(--accent); color: #fff; } .state-btn.on span { color: #D6EBE4; }
+  .state-btn[data-status="closed"].on { background: #5F6F6B; border-color: #5F6F6B; }
+  .state-btn[data-status="wait"].on { background: #9A6400; border-color: #9A6400; }
+  @media (max-width: 560px) { .statebtns { grid-template-columns: 1fr; } }
+  .dangerzone { max-width: 720px; margin-top: 28px; padding: 14px 18px; border: 1.5px dashed rgba(194,43,43,.35); border-radius: 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .dangerzone b { display: block; color: var(--error-text); font-size: 14px; }
+  .tp-seg { display: inline-flex; flex-wrap: wrap; gap: 4px; background: #EEF2F1; border-radius: 14px; padding: 4px; }
+  .tp-seg button { border: none; background: none; padding: 8px 14px; border-radius: 10px; font-family: inherit; font-size: 13px; font-weight: 700; color: var(--text2); cursor: pointer; }
+  .tp-seg button.on { background: #fff; color: var(--accent); box-shadow: 0 1px 4px rgba(0,0,0,.1); }
+  .tp-glabel { align-self: center; font-size: 13px; font-weight: 800; color: var(--text2); width: 46px; }
+  .tp-picked { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .tp-ind { margin-top: 10px; padding: 12px; border: 1px dashed var(--border); border-radius: 14px; background: #FAFCFB; }
+  .tp-ind-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 13px; font-weight: 700; margin-bottom: 8px; }
+  .tp-ind-head select { width: auto; padding: 6px 10px; min-height: 36px; }
+  .tp-stu { display: flex; flex-wrap: wrap; gap: 6px; }
+  .tp-stu .tp-chip { font-weight: 500; font-size: 12.5px; }
+  .tp-stu .tp-chip.cov { background: #E8F3EF; color: var(--accent); border-color: transparent; }
   .tp-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
   .tp-chip { border: 1px solid var(--border); background: #fff; color: var(--text2); border-radius: 999px; padding: 6px 12px; font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
   .tp-chip i { font-style: normal; font-size: 11px; opacity: .7; margin-left: 2px; }
@@ -253,9 +277,14 @@ function effStatus_(tab) {
   return s;
 }
 function targetsLabel_(targets) {
-  const byG = {};
-  (targets || []).forEach(function (t) { const p = String(t).split('-'); byG[p[0]] = byG[p[0]] || { all: false, cls: [] }; if (p[1]) byG[p[0]].cls.push(p[1]); else byG[p[0]].all = true; });
-  return Object.keys(byG).sort().map(function (g) { return byG[g].all || !byG[g].cls.length ? g + '학년' : g + '학년 ' + byG[g].cls.sort().join('·') + '반'; }).join(', ');
+  const byG = {}; let ones = 0;
+  (targets || []).forEach(function (t) {
+    t = String(t); if (t.length === 4) { ones++; return; }
+    const p = t.split('-'); byG[p[0]] = byG[p[0]] || { all: false, cls: [] }; if (p[1]) byG[p[0]].cls.push(p[1]); else byG[p[0]].all = true;
+  });
+  const parts = Object.keys(byG).sort().map(function (g) { return byG[g].all || !byG[g].cls.length ? g + '학년' : g + '학년 ' + byG[g].cls.sort().join('·') + '반'; });
+  if (ones) parts.push('개별 학생 ' + ones + '명');
+  return parts.join(', ');
 }
 function escapeHtml(s) {
   return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
@@ -721,41 +750,98 @@ async function mountTargetPicker_(id, initial, onChange) {
   el.innerHTML = '<span class="hint">학생명단 시트를 읽는 중…</span>';
   const students = await loadSourceStudents_();
   if (!document.getElementById(id)) return;
-  const grades = {};
-  students.forEach(function (x) { const g = String(x.grade), c = String(x.cls); grades[g] = grades[g] || {}; grades[g][c] = (grades[g][c] || 0) + 1; });
-  if (!Object.keys(grades).length) ['1', '2', '3'].forEach(function (g) { grades[g] = {}; for (let c = 1; c <= 5; c++) grades[g][c] = 0; });
-  const sel = {};   // '3' 또는 '3-2' → true
-  (initial || []).forEach(function (t) { sel[t] = true; });
-  function count() {
-    return students.filter(function (x) { return sel[String(x.grade)] || sel[x.grade + '-' + x.cls]; }).length;
+  const grades = {};   // grades[g][c] = [학생…]
+  students.forEach(function (x) { const g = String(x.grade), c = String(x.cls); grades[g] = grades[g] || {}; (grades[g][c] = grades[g][c] || []).push(x); });
+  if (!Object.keys(grades).length) ['1', '2', '3'].forEach(function (g) { grades[g] = {}; for (let c = 1; c <= 5; c++) grades[g][c] = []; });
+  const sel = {};   // '3'(학년 전체) · '3-2'(반 전체) · '3205'(학생 한 명) → true
+  (initial || []).forEach(function (t) { sel[String(t)] = true; });
+  const gKeys = Object.keys(grades).sort();
+  let pickG = gKeys[gKeys.length - 1], pickC = Object.keys(grades[pickG] || {}).sort(function (a, b) { return a - b; })[0] || '1';
+  const first = (initial || []).find(function (t) { return String(t).length === 4; });
+  if (first) { pickG = String(first)[0]; pickC = String(first)[1]; }
+  // 고르는 방식: 전교생(all) · 학년 전체(grade) · 학급 전체(class) · 개별(mix — 학년·반·학생을 섞어서)
+  const init = Object.keys(sel);
+  let mode = !init.length ? 'all' : init.every(function (k) { return /^[1-9]$/.test(k); }) ? 'grade' : init.every(function (k) { return /^[1-9]-[1-9]$/.test(k); }) ? 'class' : 'mix';
+  function setMode(m) {
+    mode = m;
+    Object.keys(sel).forEach(function (k) {
+      const keep = m === 'mix' || (m === 'grade' && /^[1-9]$/.test(k)) || (m === 'class' && /^[1-9]-[1-9]$/.test(k));
+      if (!keep) delete sel[k];
+    });
+    changed();
   }
+  function covered(x) { return !!(sel[String(x.grade)] || sel[x.grade + '-' + x.cls]); }
+  function picked(x) { return covered(x) || !!sel[x.studentId]; }
+  function count() { return students.filter(picked).length; }
   function targets() { return Object.keys(sel).filter(function (k) { return sel[k]; }).sort(); }
+  function onesIn(g, c) { return (grades[g][c] || []).filter(function (x) { return sel[x.studentId]; }).length; }
   function paint() {
-    el.innerHTML = Object.keys(grades).sort().map(function (g) {
-      const total = Object.keys(grades[g]).reduce(function (a, c) { return a + grades[g][c]; }, 0);
-      return '<div class="tp-row"><button type="button" class="tp-chip all' + (sel[g] ? ' on' : '') + '" data-t="' + g + '">' + g + '학년 전체' + (total ? ' <i>' + total + '</i>' : '') + '</button>' +
-        Object.keys(grades[g]).sort(function (a, b) { return a - b; }).map(function (c) {
-          const k = g + '-' + c;
-          return '<button type="button" class="tp-chip' + (sel[k] ? ' on' : '') + (sel[g] ? ' dim' : '') + '" data-t="' + k + '">' + c + '반' + (grades[g][c] ? ' <i>' + grades[g][c] + '</i>' : '') + '</button>';
-        }).join('') + '</div>';
-    }).join('') +
+    const modes = [['all', '🏫 전교생'], ['grade', '학년 전체'], ['class', '학급 전체'], ['mix', '👤 개별 (섞어서)']];
+    const seg = '<div class="tp-seg">' + modes.map(function (m) { return '<button type="button" data-mode="' + m[0] + '"' + (mode === m[0] ? ' class="on"' : '') + '>' + m[1] + '</button>'; }).join('') + '</div>';
+    if (mode === 'all') {
+      el.innerHTML = seg + '<p class="hint" style="margin:8px 0 0;">전교생' + (students.length ? ' ' + students.length + '명' : '') + '이 대상이에요(대상 제한 없음).</p>';
+      wireSeg(); return;
+    }
+    const showGrade = mode === 'grade' || mode === 'mix', showClass = mode === 'class' || mode === 'mix', showOnes = mode === 'mix';
+    const ones = students.filter(function (x) { return sel[x.studentId]; });
+    el.innerHTML = seg + '<div style="margin-top:10px;">' + gKeys.map(function (g) {
+      const total = Object.keys(grades[g]).reduce(function (a, c) { return a + grades[g][c].length; }, 0);
+      return '<div class="tp-row">' + (!showGrade ? '<span class="tp-glabel">' + g + '학년</span>' : '') + (showGrade ? '<button type="button" class="tp-chip all' + (sel[g] ? ' on' : '') + '" data-t="' + g + '">' + g + '학년 전체' + (total ? ' <i>' + total + '</i>' : '') + '</button>' : '') +
+        (!showClass ? '' : Object.keys(grades[g]).sort(function (a, b) { return a - b; }).map(function (c) {
+          const k = g + '-' + c, n = onesIn(g, c);
+          return '<button type="button" class="tp-chip' + (sel[k] ? ' on' : '') + (sel[g] ? ' dim' : '') + '" data-t="' + k + '">' + c + '반' +
+            (n ? ' <i style="opacity:1;color:var(--accent);font-weight:800;">' + n + '명</i>' : (grades[g][c].length ? ' <i>' + grades[g][c].length + '</i>' : '')) + '</button>';
+        }).join('')) + '</div>';
+    }).join('') + '</div>' +
+    (showOnes && ones.length ? '<div class="tp-picked"><span class="hint">고른 학생 ' + ones.length + '명:</span> ' + ones.map(function (x) { return '<button type="button" class="tp-chip on" data-s="' + escapeHtml(x.studentId) + '">' + escapeHtml(x.studentId) + ' ' + escapeHtml(x.name) + ' ✕</button>'; }).join('') + '</div>' : '') +
+    (showOnes && students.length ? '<div class="tp-ind"><div class="tp-ind-head">👤 학생 한 명씩 고르기' +
+        '<select id="' + id + '_g">' + gKeys.map(function (g) { return '<option value="' + g + '"' + (g === pickG ? ' selected' : '') + '>' + g + '학년</option>'; }).join('') + '</select>' +
+        '<select id="' + id + '_c">' + Object.keys(grades[pickG] || {}).sort(function (a, b) { return a - b; }).map(function (c) { return '<option value="' + c + '"' + (c === pickC ? ' selected' : '') + '>' + c + '반</option>'; }).join('') + '</select>' +
+        '<span class="hint" style="font-weight:400;">눌러서 넣고 빼요</span></div>' +
+      '<div class="tp-stu">' + ((grades[pickG] || {})[pickC] || []).map(function (x) {
+          const cov = covered(x);
+          return '<button type="button" class="tp-chip' + (cov ? ' cov' : sel[x.studentId] ? ' on' : '') + '" data-s="' + escapeHtml(x.studentId) + '">' + escapeHtml(x.studentId) + ' ' + escapeHtml(x.name) + '</button>';
+        }).join('') + '</div></div>' : '') +
     '<p class="hint" style="margin:6px 0 0;">' + (targets().length ? '고른 대상: <b>' + escapeHtml(targetsLabel_(targets())) + '</b>' + (students.length ? ' · ' + count() + '명' : '') : '아무것도 안 고르면 대상 제한이 없어요(전교생).') + '</p>';
+    wireSeg();
     el.querySelectorAll('[data-t]').forEach(function (b) {
       b.onclick = function () {
         const k = b.getAttribute('data-t'), g = k.split('-')[0];
-        if (k.indexOf('-') < 0) {   // 학년 전체: 그 학년의 반 선택은 지워요
+        if (k.indexOf('-') < 0) {   // 학년 전체: 그 학년의 반·개별 선택은 지워요
           const on = !sel[k];
-          Object.keys(sel).forEach(function (x) { if (x.split('-')[0] === g) delete sel[x]; });
+          Object.keys(sel).forEach(function (x) { if (x[0] === g) delete sel[x]; });
           if (on) sel[k] = true;
-        } else {
+        } else {                    // 반 전체: 그 반의 개별 선택은 지워요
           delete sel[g];
-          if (sel[k]) delete sel[k]; else sel[k] = true;
+          const on = !sel[k];
+          (grades[g][k.split('-')[1]] || []).forEach(function (x) { delete sel[x.studentId]; });
+          if (on) sel[k] = true; else delete sel[k];
         }
-        paint();
-        if (onChange) onChange(targets(), count());
+        changed();
       };
     });
-  };
+    el.querySelectorAll('[data-s]').forEach(function (b) {
+      b.onclick = function () {
+        const sid = b.getAttribute('data-s');
+        const x = students.find(function (y) { return y.studentId === sid; }); if (!x) return;
+        const g = String(x.grade), c = String(x.cls);
+        if (sel[g]) {   // 학년 전체에서 한 명 빼기 → 다른 반은 반 전체로, 이 반은 이 학생만 빼고 한 명씩
+          delete sel[g];
+          Object.keys(grades[g]).forEach(function (cc) { if (cc !== c) sel[g + '-' + cc] = true; });
+          grades[g][c].forEach(function (y) { if (y.studentId !== sid) sel[y.studentId] = true; });
+        } else if (sel[g + '-' + c]) {   // 반 전체에서 한 명 빼기
+          delete sel[g + '-' + c];
+          grades[g][c].forEach(function (y) { if (y.studentId !== sid) sel[y.studentId] = true; });
+        } else if (sel[sid]) delete sel[sid]; else sel[sid] = true;
+        changed();
+      };
+    });
+    const gs = document.getElementById(id + '_g'), cs = document.getElementById(id + '_c');
+    if (gs) gs.onchange = function () { pickG = gs.value; pickC = Object.keys(grades[pickG]).sort(function (a, b) { return a - b; })[0]; paint(); };
+    if (cs) cs.onchange = function () { pickC = cs.value; paint(); };
+  }
+  function wireSeg() { el.querySelectorAll('[data-mode]').forEach(function (b) { b.onclick = function () { if (b.getAttribute('data-mode') !== mode) setMode(b.getAttribute('data-mode')); }; }); }
+  function changed() { paint(); if (onChange) onChange(targets(), count()); }
   el._targets = targets;
   el._count = count;
   paint();
@@ -961,12 +1047,20 @@ async function renderDetail(tabName) {
               '<span class="hint">«…/hyewon-portal/?k7q2» 같은 짧은 주소와 QR이 생겨요.</span></div>') +
         '</div>';
       })() +
-      (tab.description ? '<p class="lead">' + escapeHtml(tab.description) + '</p>' : '') +
-      '<div class="statusbtns" style="max-width:440px;margin-bottom:16px;">' +
-        '<button class="btn-outline' + (status === 'wait' ? '' : '') + '" data-status="wait">대기</button>' +
-        '<button class="btn-outline" data-status="open">진행중</button>' +
-        '<button class="btn-outline" data-status="closed">마감</button>' +
-        '<button class="btn-outline btn-danger" id="delTabBtn">삭제</button>' +
+      '<div class="card wide tile" style="max-width:720px;">' +
+        '<div class="tile-head"><span class="tile-label">📢 과제 안내</span><span class="hint">학생 화면 «교사 안내»에 보여요</span>' +
+          '<button class="btn-outline btn-sm" id="descEdit" type="button" style="margin-left:auto;">' + (tab.description ? '고치기' : '쓰기') + '</button></div>' +
+        '<div id="descView" class="tile-body">' + (tab.description ? escapeHtml(tab.description).replace(/\n/g, '<br>') : '<span class="hint">아직 안내가 없어요. «쓰기»를 눌러 과제 내용을 적어 주세요.</span>') + '</div>' +
+        '<div id="descForm" style="display:none;"><textarea id="descIn" style="min-height:110px;font-family:inherit;font-size:14px;">' + escapeHtml(tab.description || '') + '</textarea>' +
+          '<div class="row" style="gap:8px;margin-top:8px;"><button class="btn btn-sm" id="descSave" type="button">저장</button><button class="btn-outline btn-sm" id="descCancel" type="button">취소</button><span class="hint" id="descMsg"></span></div></div>' +
+      '</div>' +
+      '<div class="card wide tile" style="max-width:720px;">' +
+        '<div class="tile-head"><span class="tile-label">🚦 과제 상태</span><span class="hint">지금: <b>' + (status === 'open' ? '진행중' : status === 'wait' ? '대기' : '마감') + '</b></span></div>' +
+        '<div class="statebtns">' +
+          '<button class="state-btn" data-status="wait"><b>⏸ 대기</b><span>학생에게 안 보여요 · 준비 중</span></button>' +
+          '<button class="state-btn" data-status="open"><b>▶ 진행중</b><span>학생이 보고 제출해요</span></button>' +
+          '<button class="state-btn" data-status="closed"><b>⏹ 마감</b><span>제출을 그만 받아요 · 결과는 볼 수 있어요</span></button>' +
+        '</div>' +
       '</div>' +
       '<div class="card wide" style="margin-bottom:16px;">' +
         '<h2>안내 파일 (학생이 내려받는 파일)</h2>' +
@@ -984,13 +1078,24 @@ async function renderDetail(tabName) {
         '<button data-view="log">로그</button>' +
       '</div>' +
       '<div id="detailBody"></div>' +
+      '<div class="dangerzone"><div><b>과제 삭제</b><span class="hint">과제와 명단 연결이 지워져요. 학생 답변은 «_이전제출» 시트에 남아요.</span></div>' +
+        '<button class="btn-outline btn-danger" id="delTabBtn" type="button">🗑 삭제</button></div>' +
     '</div>'
   );
   document.getElementById('backBtn').onclick = function (e) { e.preventDefault(); renderDashboard(); };
   document.querySelectorAll('[data-status]').forEach(function (b) {
-    if (b.getAttribute('data-status') === status) b.style.background = 'var(--accent)', b.style.color = '#fff', b.style.borderColor = 'transparent';
-    b.onclick = function () { doSetStatus(tabName, b.getAttribute('data-status')); };
+    if (b.getAttribute('data-status') === status) b.classList.add('on');
+    b.onclick = function () { if (b.getAttribute('data-status') !== status) doSetStatus(tabName, b.getAttribute('data-status')); };
   });
+  document.getElementById('descEdit').onclick = function () { document.getElementById('descView').style.display = 'none'; document.getElementById('descForm').style.display = ''; document.getElementById('descIn').focus(); };
+  document.getElementById('descCancel').onclick = function () { document.getElementById('descView').style.display = ''; document.getElementById('descForm').style.display = 'none'; };
+  document.getElementById('descSave').onclick = async function () {
+    const msg = document.getElementById('descMsg'); msg.textContent = '저장 중…';
+    let r;
+    try { r = await api('setDescription', { tabName: tabName, description: document.getElementById('descIn').value }); } catch (e) { msg.textContent = '서버에 연결하지 못했어요.'; return; }
+    if (!r || r.success !== true) { msg.textContent = (r && r.message) || '저장하지 못했어요. 서버(Code.gs)가 버전 38 이상인지 확인해주세요.'; return; }
+    renderDetail(tabName);
+  };
   document.getElementById('delTabBtn').onclick = function () { doDeleteTab(tabName); };
   async function saveDeadline_(v) {
     const msg = document.getElementById('dlMsg');
