@@ -273,6 +273,13 @@
   .sh-main { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
   .sh-main small { font-size: 12px; color: var(--text2); overflow-wrap: anywhere; }
   .sh-btns { display: flex; gap: 6px; flex: none; }
+  .tg-groups { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 10px 12px; margin-bottom: 10px; background: #F4F7F6; border: 1px dashed var(--border); border-radius: 12px; }
+  .tg-gl { font-size: 12.5px; font-weight: 800; color: var(--text2); margin-right: 2px; }
+  .tg-g { border: 1.5px solid #CFE3DC; background: #fff; color: #0F5A44; border-radius: 999px; padding: 5px 12px; font-family: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+  .tg-g:hover { background: #E3F1EC; }
+  .tg-g.add { border-style: dashed; color: var(--text2); font-weight: 600; }
+  .tg-gman { margin-left: auto; font-size: 12px; }
+  .tg-gname { flex: 1; min-width: 140px; padding: 7px 10px; border: 1px solid var(--border); border-radius: 10px; font-family: inherit; font-size: 14px; }
   .om-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
   .om-btn { border: 1.5px solid #E5C77A; background: #fff; color: #6B4E00; border-radius: 999px; padding: 6px 14px; font-family: inherit; font-size: 13px; font-weight: 800; cursor: pointer; }
   .om-btn.on { background: #6B4E00; border-color: #6B4E00; color: #fff; }
@@ -685,7 +692,7 @@ const SAVE_LABELS = {
   regenerateStudentCode: '학생코드', publishSharePage: '썸네일 페이지', notifyTask: '과제 알림 발송', ensureShortCode: '짧은 주소',
   deleteTab: '과제 삭제', addTab: '새 과제', addRosterStudent: '명단 학생 추가', changePassword: '비밀번호',
   setUploadFolder: '저장 위치', createUploadFolder: '새 저장 폴더', setPerTaskFolders: '과제별 폴더', updateHeaders: '과제 항목',
-  renameTab: '과제 이름', setScoreSource: '성적 시트 연결', setTaskIcon: '과제 이모지', addIcon: '이모지 올리기', deleteIcon: '이모지 삭제', setTestStudent: '테스트 계정', setLateOk: '늦은 제출', setScoreMax: '점수 만점', setOpenMode: 'QR 제출자'
+  renameTab: '과제 이름', setScoreSource: '성적 시트 연결', setTaskIcon: '과제 이모지', addIcon: '이모지 올리기', deleteIcon: '이모지 삭제', setTestStudent: '테스트 계정', setLateOk: '늦은 제출', setScoreMax: '점수 만점', setOpenMode: 'QR 제출자', saveTargetGroup: '대상 묶음', deleteTargetGroup: '대상 묶음 삭제'
 };
 const SAVED_KEY = 'hyewon_admin_saved';
 function stampNow_() {
@@ -1304,6 +1311,53 @@ async function wirePushTile_(tabName) {
   btnM.onclick = function () { send(true); };
 }
 
+// ---------- 자주 쓰는 대상 묶음 ----------
+async function loadTargetGroups_(force) {
+  if (state.tgGroups && !force) return state.tgGroups;
+  try { const r = await api('listTargetGroups'); if (r && r.success) state.tgGroups = r.groups || []; } catch (e) {}
+  return state.tgGroups || [];
+}
+async function loadGroupsBox_() {
+  const box = document.getElementById('tgmBox'); if (!box) return;
+  const gs = await loadTargetGroups_(true);
+  if (!document.getElementById('tgmBox')) return;
+  box.innerHTML = (gs.length ? '<div class="sh-list">' + gs.map(function (g) {
+      return '<div class="sh-row" data-grow="' + escapeHtml(g.id) + '"><div class="sh-main"><b>📁 ' + escapeHtml(g.name) + '</b><small>' + escapeHtml(targetsLabel_(g.targets)) + (g.at ? ' · 수정 ' + escapeHtml(g.at) : '') + '</small></div>' +
+        '<div class="sh-btns"><button type="button" class="btn-outline btn-sm" data-gedit="' + escapeHtml(g.id) + '">고치기</button><button type="button" class="btn-outline btn-sm btn-danger" data-gdel="' + escapeHtml(g.id) + '">삭제</button></div></div>';
+    }).join('') + '</div>' : '<p class="hint" style="margin:0 0 8px;">아직 묶음이 없어요. 과제의 «대상 바꾸기»에서 고른 뒤 «＋ 지금 고른 대상 저장»을 눌러도 돼요.</p>') +
+    '<div class="row" style="margin-top:10px;"><button type="button" class="btn btn-sm" id="tgmNew">＋ 새 묶음 만들기</button></div>' +
+    '<div id="tgmEdit" class="icon-panel" style="display:none;margin-top:12px;"></div>';
+  function openEdit(g) {
+    const ed = document.getElementById('tgmEdit');
+    ed.style.display = '';
+    ed.innerHTML = '<div class="ip-head"><b>' + (g ? '묶음 고치기' : '새 묶음') + '</b></div>' +
+      '<div class="field" style="margin:0 0 10px;"><label>이름</label><input id="tgmName" type="text" maxlength="30" placeholder="예: 넷볼반, 3학년 임원" value="' + escapeHtml(g ? g.name : '') + '"></div>' +
+      '<div id="tgmPick"></div>' +
+      '<div class="row" style="gap:8px;margin-top:10px;flex-wrap:wrap;"><button type="button" class="btn btn-sm" id="tgmSave">저장</button><button type="button" class="btn-outline btn-sm" id="tgmCancel">취소</button><span class="hint" id="tgmMsg"></span></div>';
+    mountTargetPicker_('tgmPick', g ? g.targets : [], null, { noGroups: true });
+    document.getElementById('tgmCancel').onclick = function () { ed.style.display = 'none'; };
+    document.getElementById('tgmSave').onclick = async function () {
+      const pick = document.getElementById('tgmPick'), msg = document.getElementById('tgmMsg');
+      const tg = pick && pick._targets ? pick._targets() : [];
+      msg.textContent = '저장 중…';
+      let r; try { r = await api('saveTargetGroup', { id: g ? g.id : '', name: document.getElementById('tgmName').value.trim(), targets: tg }); } catch (e) { msg.textContent = '서버에 연결하지 못했어요.'; return; }
+      if (!r || r.success !== true) { msg.textContent = (r && r.message) || '저장하지 못했어요. 서버(Code.gs)가 버전 52 이상인지 확인해주세요.'; return; }
+      state.tgGroups = r.groups || []; loadGroupsBox_();
+    };
+    ed.scrollIntoView({ block: 'nearest' });
+  }
+  document.getElementById('tgmNew').onclick = function () { openEdit(null); };
+  box.querySelectorAll('[data-gedit]').forEach(function (b) { b.onclick = function () { openEdit(gs.find(function (x) { return x.id === b.getAttribute('data-gedit'); })); }; });
+  box.querySelectorAll('[data-gdel]').forEach(function (b) {
+    b.onclick = async function () {
+      const g = gs.find(function (x) { return x.id === b.getAttribute('data-gdel'); });
+      if (!g || !confirm('«' + g.name + '» 묶음을 지울까요? (이 묶음으로 이미 정한 과제 대상은 그대로예요)')) return;
+      let r; try { r = await api('deleteTargetGroup', { id: g.id }); } catch (e) { return; }
+      state.tgGroups = (r && r.groups) || []; loadGroupsBox_();
+    };
+  });
+}
+
 // ---------- 대상 고르기 (학년 전체 / 반) — 새 과제 만들기·과제 화면에서 같이 써요 ----------
 async function loadSourceStudents_() {
   if (srcState.students && srcState.students.length) return srcState.students;
@@ -1311,11 +1365,13 @@ async function loadSourceStudents_() {
   return srcState.students || [];
 }
 // 화면에 <div id="..."></div> 를 두고 부르면 칩을 그려요. el._targets() 로 고른 값(['3'] 또는 ['3-1','3-2'])을 읽어요.
-async function mountTargetPicker_(id, initial, onChange) {
+async function mountTargetPicker_(id, initial, onChange, opts) {
+  opts = opts || {};
   const el = document.getElementById(id);
   if (!el) return;
   el.innerHTML = '<span class="hint">학생명단 시트를 읽는 중…</span>';
   const students = await loadSourceStudents_();
+  if (!opts.noGroups) await loadTargetGroups_();
   if (!document.getElementById(id)) return;
   const grades = {};   // grades[g][c] = [학생…]
   students.forEach(function (x) { const g = String(x.grade), c = String(x.cls); grades[g] = grades[g] || {}; (grades[g][c] = grades[g][c] || []).push(x); });
@@ -1343,7 +1399,7 @@ async function mountTargetPicker_(id, initial, onChange) {
   function count() { return students.filter(picked).length; }
   function targets() { return Object.keys(sel).filter(function (k) { return sel[k]; }).sort(); }
   function onesIn(g, c) { return (grades[g][c] || []).filter(function (x) { return sel[x.studentId]; }).length; }
-  function paint() {
+  function paintCore() {
     const modes = [['all', '🏫 전교생'], ['grade', '학년 전체'], ['class', '학급 전체'], ['mix', '👤 개별 학생']];
     const seg = '<div class="tp-seg">' + modes.map(function (m) { return '<button type="button" data-mode="' + m[0] + '"' + (mode === m[0] ? ' class="on"' : '') + '>' + m[1] + '</button>'; }).join('') + '</div>';
     if (mode === 'all') {
@@ -1401,6 +1457,44 @@ async function mountTargetPicker_(id, initial, onChange) {
     el.querySelectorAll('[data-pc]').forEach(function (b) { b.onclick = function () { pickC = b.getAttribute('data-pc'); paint(); }; });
   }
   function wireSeg() { el.querySelectorAll('[data-mode]').forEach(function (b) { b.onclick = function () { if (b.getAttribute('data-mode') !== mode) setMode(b.getAttribute('data-mode')); }; }); }
+  function paint() { paintCore(); if (!opts.noGroups) addGroupsBar_(); }
+  // 자주 쓰는 묶음 — 누르면 그 대상으로 바꿔요. 지금 고른 대상을 새 묶음으로 저장할 수도 있어요.
+  function addGroupsBar_(saving) {
+    const gs = state.tgGroups || [];
+    const bar = document.createElement('div'); bar.className = 'tg-groups';
+    if (saving) {
+      bar.innerHTML = '<span class="tg-gl">📁 묶음 이름</span><input type="text" class="tg-gname" maxlength="30" placeholder="예: 넷볼반, 3학년 임원">' +
+        '<button type="button" class="btn btn-sm" data-gok>저장</button><button type="button" class="btn-outline btn-sm" data-gno>취소</button><span class="hint tg-gmsg"></span>';
+    } else {
+      bar.innerHTML = '<span class="tg-gl">📁 자주 쓰는 묶음</span>' +
+        (gs.length ? gs.map(function (g) { return '<button type="button" class="tg-g" data-gid="' + escapeHtml(g.id) + '" title="' + escapeHtml(targetsLabel_(g.targets)) + '">' + escapeHtml(g.name) + '</button>'; }).join('') : '<span class="hint">아직 없어요</span>') +
+        (targets().length ? '<button type="button" class="tg-g add" data-gsave>＋ 지금 고른 대상 저장</button>' : '') +
+        '<a href="#" class="hint tg-gman" data-gman>묶음 관리</a>';
+    }
+    el.insertBefore(bar, el.firstChild);
+    bar.querySelectorAll('[data-gid]').forEach(function (btn) {
+      btn.onclick = function () {
+        const g = gs.find(function (x) { return x.id === btn.getAttribute('data-gid'); }); if (!g) return;
+        Object.keys(sel).forEach(function (k) { delete sel[k]; });
+        g.targets.forEach(function (t) { sel[String(t)] = true; });
+        const ks = g.targets.map(String);
+        mode = ks.some(function (k) { return k.length === 4; }) ? 'mix' : ks.every(function (k) { return /^[1-9]$/.test(k); }) ? 'grade' : 'class';
+        if (mode === 'mix') Object.keys(sel).forEach(function (k) { if (k.length !== 4) { /* 개별 모드는 학생만 — 학년·반은 학생으로 풀어요 */ students.forEach(function (x) { if ((k.indexOf('-') < 0 ? String(x.grade) === k : x.grade + '-' + x.cls === k)) sel[x.studentId] = true; }); delete sel[k]; } });
+        changed();
+      };
+    });
+    const sv = bar.querySelector('[data-gsave]'); if (sv) sv.onclick = function () { bar.remove(); addGroupsBar_(true); const i = el.querySelector('.tg-gname'); if (i) i.focus(); };
+    const no = bar.querySelector('[data-gno]'); if (no) no.onclick = function () { paint(); };
+    const ok = bar.querySelector('[data-gok]'); if (ok) ok.onclick = async function () {
+      const nm = el.querySelector('.tg-gname').value.trim(), m = el.querySelector('.tg-gmsg');
+      if (!nm) { m.textContent = '이름을 적어 주세요.'; return; }
+      m.textContent = '저장 중…';
+      let r; try { r = await api('saveTargetGroup', { name: nm, targets: targets() }); } catch (e) { m.textContent = '서버에 연결하지 못했어요.'; return; }
+      if (!r || r.success !== true) { m.textContent = (r && r.message) || '저장하지 못했어요. 서버(Code.gs)가 버전 52 이상인지 확인해주세요.'; return; }
+      state.tgGroups = r.groups || []; paint();
+    };
+    const man = bar.querySelector('[data-gman]'); if (man) man.onclick = function (e) { e.preventDefault(); state.setTab = 'task'; renderSettings(); };
+  }
   function changed() { paint(); if (onChange) onChange(targets(), count()); }
   el._targets = targets;
   el._count = count;
@@ -3045,7 +3139,7 @@ async function loadSheetsBox_() {
 // 카드 제목(h2)으로 무리를 나눠요. 새 카드는 제목 낱말만 아래에 더하면 돼요(맞는 게 없으면 «기타»).
 const SETTING_GROUPS = [
   ['basic', '👤 기본', '교사 정보 · 비밀번호 · 학생 접속 · 테스트 계정', ['교사 정보', '비밀번호', '마스터코드', '학생 접속 주소', '테스트 계정']],
-  ['task', '📝 과제', '이모지 · 제출 파일 저장 위치', ['과제 이모지', '제출 파일 저장 위치']],
+  ['task', '📝 과제', '대상 묶음 · 이모지 · 제출 파일 저장 위치', ['대상 묶음', '과제 이모지', '제출 파일 저장 위치']],
   ['noti', '🔔 알림', '선생님 알림 · 학생 자동 알림', ['선생님 알림', '학생 자동 알림']],
   ['link', '🔗 연결', '시트 · 성적 · Firestore · 썸네일', ['연결된 시트', '성적 조회', 'Firestore', '썸네일']],
   ['server', '🛠 서버', '서버 이전 · 버전', ['서버 이전', '버전']]
@@ -3166,6 +3260,11 @@ async function renderSettings(notice) {
         '<div id="mgOut" style="margin-top:10px;font-size:13px;line-height:1.8;"></div>' +
       '</div>' +
       '<div class="card wide" style="margin-bottom:16px;">' +
+        '<h2>📁 대상 묶음</h2>' +
+        '<p class="hint" style="margin:0 0 10px;">«넷볼반», «3학년 임원»처럼 자주 쓰는 학생 묶음을 저장해 두면, 과제의 대상 고르기 맨 위에서 눌러 한 번에 불러와요. ' + tipHtml_('묶음에는 학년 전체·반 전체·학생 한 명씩을 섞어 넣을 수 있어요. 묶음을 고치거나 지워도 이미 대상을 정해 둔 과제는 바뀌지 않아요(그때 고른 대상이 그대로 남아요).') + '</p>' +
+        '<div id="tgmBox"><span class="hint">불러오는 중…</span></div>' +
+      '</div>' +
+      '<div class="card wide" style="margin-bottom:16px;">' +
         '<h2>😀 과제 이모지</h2>' +
         '<p class="hint" style="margin:0 0 10px;">자주 쓰는 그림을 미리 올려 두면, 과제 화면에서 제목 왼쪽 아이콘을 눌러 골라요. 기본 이모지(🏀📝…)도 쓸 수 있어요.</p>' +
         '<div id="icBox"><span class="hint">불러오는 중…</span></div>' +
@@ -3211,6 +3310,7 @@ async function renderSettings(notice) {
   loadUploadBox_();
   loadAutoPushBox_();
   loadTeacherPushBox_();
+  loadGroupsBox_();
   loadTestBox_();
   loadSheetsBox_();
   loadIconBox_();
