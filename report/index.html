@@ -661,6 +661,12 @@ function metaRowsHtml_(tab) {
   return '<div class="detail-card meta-rows">' +
     (dl ? '<div class="meta-row">' + ic_('cal', 15, 'var(--text2)') + '<span class="k">제출 기한</span><span class="v' + (dl.over ? ' over' : '') + '">' + escapeHtml(dl.text) + (dl.over ? ' · 마감됨' : '') + '</span></div>' : '') +
     '<div class="meta-row">' + ic_('doc', 15, 'var(--text2)') + '<span class="k">과제 유형</span><span class="v">' + escapeHtml(assignmentTypeLabel_(tab)) + '</span></div>' +
+    (function () {
+      // 과목·담당 교사는 기본 항목(관리자 설정 → 교사 정보)
+      const t = (state.config && state.config.teacher) || {};
+      return '<div class="meta-row">' + ic_('info', 15, 'var(--text2)') + '<span class="k">과목</span><span class="v">' + escapeHtml(t.subject || '—') + '</span></div>' +
+        '<div class="meta-row">' + ic_('chat', 15, 'var(--text2)') + '<span class="k">담당 교사</span><span class="v">' + escapeHtml(t.name ? t.name + ' 선생님' : '—') + '</span></div>';
+    })() +
   '</div>';
 }
 function titleCardHtml_(name) {

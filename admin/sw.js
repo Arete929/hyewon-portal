@@ -1,6 +1,13 @@
-/* 혜원포털 관리자 서비스워커 — 홈 화면 설치(PWA)용.
+/* 혜원포털 관리자 서비스워커 — 홈 화면 설치(PWA) + 선생님 알림(FCM).
    서버(Apps Script)·GitHub 호출은 캐시하지 않고 그대로 통과(다른 주소). 화면 파일은 «네트워크 먼저», 안 되면 저장본. */
-var CACHE = 'admin-shell-v2';
+var CACHE = 'admin-shell-v3';
+var FCM_CONFIG = { apiKey: 'AIzaSyBtpG79Dr6u-pLz3FiwebWf3v8Qq16OXv8', authDomain: 'hyewon-portal.firebaseapp.com', projectId: 'hyewon-portal', storageBucket: 'hyewon-portal.firebasestorage.app', messagingSenderId: '926603414719', appId: '1:926603414719:web:a068b0a313ca0986834a0a' };
+try {
+  importScripts('https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js');
+  importScripts('https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js');
+  firebase.initializeApp(FCM_CONFIG);
+  firebase.messaging();   // 앱이 닫혀 있을 때 알림 표시 · 눌렀을 때 과제 화면 열기
+} catch (e) {}
 var SHELL = ['./', './index.html', './manifest.webmanifest', './qrcode.js', '../routes.json',
   '../assets/admin-192.png', '../assets/admin-512.png', '../assets/admin-maskable-512.png', '../assets/logo.png', '../assets/login-bg.webp'];
 

@@ -205,9 +205,27 @@
   .up-path { font-size: 15px; font-weight: 700; color: var(--accent); overflow-wrap: anywhere; }
   .tile { padding: 16px 18px; margin-bottom: 14px; }
   .tile-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+  #saveToast { position: fixed; left: 50%; top: 16px; transform: translate(-50%, -140%); background: #14231F; color: #fff; padding: 10px 16px; border-radius: 999px; font-size: 13.5px; box-shadow: 0 8px 24px rgba(0,0,0,.2); z-index: 300; transition: transform .25s ease; white-space: nowrap; max-width: 92vw; overflow: hidden; text-overflow: ellipsis; }
+  #saveToast.show { transform: translate(-50%, 0); }
+  #saveToast b { color: #FFD84A; }
+  #saveStamp { position: fixed; right: 12px; bottom: 12px; background: rgba(255,255,255,.95); border: 1px solid var(--border); color: var(--text2); font-size: 11.5px; padding: 5px 10px; border-radius: 999px; z-index: 40; box-shadow: 0 2px 8px rgba(0,0,0,.06); max-width: calc(100vw - 24px); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  @media (max-width: 760px) { #saveStamp { bottom: 90px; right: 50%; transform: translateX(50%); } body.has-stamp { padding-bottom: 128px; } }
+  .tab-saved { font-size: 12.5px; color: var(--text2); margin: 6px 0 0; min-height: 0; }
+  .tab-saved b { color: var(--accent); }
+  details.rosterpaste summary { cursor: pointer; list-style: none; display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+  details.rosterpaste summary::before { content: '▸'; color: var(--text3); }
+  details.rosterpaste[open] summary::before { content: '▾'; }
+  .tip { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 50%; background: var(--accent-soft, #E3F1EC); color: var(--accent); font-size: 12px; font-weight: 800; cursor: help; vertical-align: middle; font-style: normal; }
+  .tip-box { display: none; position: fixed; left: 8px; top: 0; width: min(300px, calc(100vw - 16px)); box-sizing: border-box; background: #14231F; color: #fff; font-size: 12.5px; font-weight: 500; line-height: 1.6; padding: 10px 12px; border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,.18); z-index: 50; text-align: left; white-space: normal; }
+  .tip.open .tip-box { display: block; }
+  @media (hover: hover) { .tip:hover .tip-box { display: block; } }
+  .tp-sec { margin: 14px 0 6px; font-size: 14px; }
+  .tp-rads { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+  .tp-rad { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--border); border-radius: 999px; padding: 7px 12px; font-size: 13px; cursor: pointer; }
+  .tp-rad input { width: auto; margin: 0; }
   .ap-opt { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border: 1px solid var(--border); border-radius: 12px; margin-bottom: 8px; cursor: pointer; }
   .ap-opt input { width: auto; margin-top: 3px; }
-  .ap-opt span { display: flex; flex-direction: column; }
+  .ap-opt > span { display: flex; flex-direction: column; }
   .ap-opt small { color: var(--text3); font-size: 12px; }
   .ts { font-size: 13px; line-height: 1.6; }
   .ts-total { margin-bottom: 8px; color: var(--text2); }
@@ -432,6 +450,7 @@ function render(inner) {
   paintInstall_();
   paintVer_();
   loadVersionInfo_();
+  paintSaveStamp_();
 }
 
 // ---------- 앱으로 설치 (PWA) ----------
@@ -555,7 +574,61 @@ async function api(action, data, opts) {
     renderLogin('세션이 끊어졌습니다. 다시 로그인해주세요.');
     throw new Error('unauthorized');
   }
+  try { if (json && json.success === true && SAVE_LABELS[action] && !(action === 'autoRoster' && !payload.apply)) markSaved_(SAVE_LABELS[action], payload.tabName, action); } catch (e) {}
   return json;
+}
+
+// ---------- 저장·변경 시각 표시 ----------
+// 무언가를 저장·변경하는 버튼은 모두 여기를 지나요. 누를 때마다 «✅ ○○ 저장됨 · 11/3(화) 15:42:07»을 띄우고,
+// 화면 아래쪽(과제 화면은 제목 아래)에 «마지막 저장» 시각을 계속 보여줘요. 이 기기에 기억해 둬서 새로고침해도 남아요.
+const SAVE_LABELS = {
+  setReview: '검토 결과', saveRoster: '명단', autoRoster: '명단', setRosterSource: '명렬표 연결', setRosterException: '예외 학생',
+  setRosterConfirm: '본인확인 표시', setAntiPaste: '복붙방지', setTeacherPush: '선생님 알림 항목', setTeacherProfile: '교사 정보',
+  setTeacherFile: '안내 파일', clearTeacherFile: '안내 파일 삭제', setTargets: '대상', setTabStatus: '과제 상태', setSchedule: '예약 공개',
+  setOpenAccess: '로그인 없이 받기', setMasterCode: '마스터코드', setDescription: '과제 안내', setDeadline: '제출 기한',
+  setAutoPush: '학생 자동 알림', sendNotice: '공지', saveTeacherToken: '알림 기기 등록', removeTeacherToken: '알림 기기 해제',
+  regenerateStudentCode: '학생코드', publishSharePage: '썸네일 페이지', notifyTask: '과제 알림 발송', ensureShortCode: '짧은 주소',
+  deleteTab: '과제 삭제', addTab: '새 과제', addRosterStudent: '명단 학생 추가', changePassword: '비밀번호',
+  setUploadFolder: '저장 위치', createUploadFolder: '새 저장 폴더', setPerTaskFolders: '과제별 폴더', updateHeaders: '과제 항목',
+  renameTab: '과제 이름', setScoreSource: '성적 시트 연결'
+};
+const SAVED_KEY = 'hyewon_admin_saved';
+function stampNow_() {
+  const d = new Date(), p = function (n) { return String(n).padStart(2, '0'); };
+  return (d.getMonth() + 1) + '/' + d.getDate() + '(' + '일월화수목금토'.charAt(d.getDay()) + ') ' + p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds());
+}
+function savedStore_() { try { return JSON.parse(localStorage.getItem(SAVED_KEY) || '{}') || {}; } catch (e) { return {}; } }
+function markSaved_(label, tabName, action) {
+  const at = stampNow_();
+  const st = savedStore_();
+  st._last = { label: label, at: at, tab: tabName || '' };
+  if (tabName && action !== 'deleteTab') st['t:' + tabName] = { label: label, at: at };
+  try { localStorage.setItem(SAVED_KEY, JSON.stringify(st)); } catch (e) {}
+  showSaveToast_(label, at);
+  paintSaveStamp_();
+  setTimeout(paintSaveStamp_, 0); setTimeout(paintSaveStamp_, 1500);   // 저장 뒤 화면을 다시 그려도 표시가 남게
+}
+function showSaveToast_(label, at) {
+  let t = document.getElementById('saveToast');
+  if (!t) { t = document.createElement('div'); t.id = 'saveToast'; document.body.appendChild(t); }
+  t.innerHTML = '✅ <b>' + escapeHtml(label) + '</b> 저장됨 · ' + escapeHtml(at);
+  t.classList.remove('show'); void t.offsetWidth; t.classList.add('show');
+  clearTimeout(t._h); t._h = setTimeout(function () { t.classList.remove('show'); }, 4000);
+}
+// 과제 화면: 제목 아래 «이 과제 마지막 저장», 그 밖의 화면: 아래쪽 작은 표시
+function paintSaveStamp_() {
+  const st = savedStore_();
+  const box = document.getElementById('tabSaved');
+  if (box) {
+    const x = st['t:' + box.getAttribute('data-tab')];
+    box.innerHTML = x ? '💾 마지막 저장 <b>' + escapeHtml(x.label) + '</b> · ' + escapeHtml(x.at) : '';
+  }
+  let g = document.getElementById('saveStamp');
+  if (!g) { g = document.createElement('div'); g.id = 'saveStamp'; document.body.appendChild(g); }
+  const l = st._last;
+  g.innerHTML = l ? '💾 마지막 저장 · ' + escapeHtml(l.label) + (l.tab ? ' (' + escapeHtml(l.tab) + ')' : '') + ' · ' + escapeHtml(l.at) : '';
+  g.style.display = (l && !box && state.token) ? '' : 'none';
+  document.body.classList.toggle('has-stamp', g.style.display !== 'none');
 }
 async function apiGet(action) {
   const url = new URL(state.exec);
@@ -581,7 +654,13 @@ async function boot() {
     return;
   }
   try { state.token = localStorage.getItem(TOKEN_KEY) || ''; } catch (e) {}
-  if (state.token) { renderPortal(); } else { renderLogin(); }
+  state.pendingTab = qs('tab') || '';   // 알림을 눌러 열면 «…/admin/?tab=과제» — 그 과제 화면으로
+  if (state.token) { openStart_(); } else { renderLogin(); }
+}
+function openStart_() {
+  const t = state.pendingTab; state.pendingTab = '';
+  if (t) { try { history.replaceState(null, '', location.pathname + (qs('exec') ? '?exec=' + encodeURIComponent(qs('exec')) : '')); } catch (e) {} renderDetail(t); }
+  else renderPortal();
 }
 
 // ---------- 로그인 ----------
@@ -617,7 +696,7 @@ async function doLogin() {
   if (!res.success) { return renderLogin(res.message || '로그인에 실패했습니다.'); }
   state.token = res.token;
   if (remember) { try { localStorage.setItem(TOKEN_KEY, res.token); } catch (e) {} }
-  renderPortal();
+  openStart_();
 }
 
 function doLogout() {
@@ -882,12 +961,12 @@ function announceText_(o) {
   const lines = [
     '📢 [과제 안내] ' + o.tabName,
     '',
-    '안녕하세요! ' + o.who + ' 학생 여러분.',
     '아래 링크로 들어가 과제를 제출해 주세요.',
     '',
-    '📌 과제: ' + o.tabName
+    '📌 과제: ' + o.tabName,
+    '📚 과목: ' + (t.subject || '(설정 → 교사 정보에서 과목 입력)'),
+    '👩‍🏫 담당 교사: ' + (t.name ? t.name + ' 선생님' : '(설정 → 교사 정보에서 이름 입력)')
   ];
-  if (t.name) lines.push('👩‍🏫 출제: ' + t.name + ' 선생님' + (t.subject ? ' (' + t.subject + ')' : ''));
   lines.push('⏰ 제출 기한: ' + (dlText_(o.deadline) || '선생님이 마감할 때까지'));
   if (o.names && o.names.length) lines.push('🎯 제출 대상(' + o.names.length + '명): ' + o.names.join(', '));
   else lines.push('🎯 대상: ' + o.who);
@@ -915,7 +994,7 @@ function toggleAnnounce_(tabName, tab, openAcc) {
   function build(k) {
     const names = (k === 'all' ? b.ones : b.ones.filter(function (x) { return x.cls === k; })).map(function (x) { return x.studentId + ' ' + x.name; });
     let who;
-    if (k === 'all') who = allWho || (b.ones.length ? '' : '혜원여중');
+    if (k === 'all') who = allWho || (b.ones.length ? '' : '전교생');
     else { const p = k.split('-'); who = p[0] + '학년 ' + p[1] + '반'; }
     if (!who) who = keys.length === 1 ? (keys[0].split('-')[0] + '학년 ' + keys[0].split('-')[1] + '반') : (function () {
       const gs = keys.map(function (q) { return q.split('-')[0]; }).filter(function (g, i, a) { return a.indexOf(g) === i; });
@@ -1218,6 +1297,7 @@ async function renderDetail(tabName) {
         '<button type="button" class="pillbtn' + (openAcc ? ' on' : '') + '" id="oaToggle">로그인 없이 받기 ' + (openAcc ? '켜짐' : '꺼짐') + '</button>' +
         '<button type="button" class="pillbtn" id="previewBtn" style="background:#4B3BB5;border-color:#4B3BB5;color:#fff;">👀 학생 화면 미리보기</button>' +
       '</div>' +
+      '<div id="tabSaved" class="tab-saved" data-tab="' + escapeHtml(tabName) + '"></div>' +
       '<div class="hint" style="margin:6px 0 12px;line-height:1.9;">' +
         (ap
           ? '학생 화면에서 붙여넣기·끌어다 놓기를 막고, 한 번에 <input id="apMin" type="number" min="5" max="500" value="' + apMin + '" style="width:72px;display:inline-block;padding:4px 8px;"> 자 이상 입력되면 작성 기록에 남겨요. <span id="apMsg"></span>'
@@ -1318,6 +1398,7 @@ async function renderDetail(tabName) {
     '</div>'
   );
   document.getElementById('backBtn').onclick = function (e) { e.preventDefault(); renderDashboard(); };
+  paintSaveStamp_();
   document.querySelectorAll('[data-status]').forEach(function (b) {
     if (b.getAttribute('data-status') === status) b.classList.add('on');
     b.onclick = function () { if (b.getAttribute('data-status') !== status) doSetStatus(tabName, b.getAttribute('data-status')); };
@@ -1534,13 +1615,16 @@ async function renderRoster(tab) {
     '<div class="tablewrap"><table><tr><th>학번</th><th>이름</th><th>학생코드</th><th>본인확인</th></tr>' +
       (rows || '<tr><td colspan="4" class="hint">아직 명단이 없습니다.</td></tr>') +
     '</table></div>' +
-    '<div class="card wide">' +
-      '<h2>명단 올리기 / 갱신</h2>' +
-      '<p class="hint" style="margin-bottom:12px;">학번, 이름 (코드는 있으면 그대로 씁니다, 없으면 자동 발급). 탭 또는 쉼표로 구분해서 붙여넣으세요. 다시 올리면 이 과제의 명단이 통째로 바뀝니다.</p>' +
-      '<textarea id="rosterRaw" placeholder="2101&#9;강수빈&#9;PARQWGBXT"></textarea>' +
+    (tab.meta && tab.meta.openAccess
+      ? '<div class="msg ok" style="margin-top:12px;">로그인 없이 받는 과제는 <b>명단이 필요 없어요.</b> 학생은 학번·이름만 적어 내고, 낼 수 있는 학생은 위 <b>🎯 대상</b>으로 정해져요(대상이 비어 있으면 누구나 낼 수 있어요). «모두 제출»·«마감 요약» 알림도 대상 학생 기준으로 세요.</div>'
+      : '<div class="msg" style="margin-top:12px;background:var(--bg);">로그인 과제는 명단에 있는 학생만 학번·학생코드로 낼 수 있어요. 보통은 위 <b>🎯 대상 → 대상 바꾸기 → «이 대상으로 명단도 다시 만들기»</b>로 혜원핏 명렬에서 학생코드까지 자동으로 만들어져서, 아래 직접 붙여넣기는 쓰지 않아도 돼요.</div>') +
+    '<details class="card wide rosterpaste"' + (entries.length || (tab.meta && tab.meta.openAccess) ? '' : ' open') + '>' +
+      '<summary><b>명단 직접 붙여넣기 / 갱신</b> <span class="hint">엑셀에서 복사해 올릴 때만</span></summary>' +
+      '<p class="hint" style="margin:10px 0 12px;">학번, 이름, (학생코드) 순서로 한 줄에 한 명. 탭 또는 쉼표로 구분해요. 학생코드는 있으면 그대로 쓰고, 없으면 새로 만들어요. <b>저장하면 이 과제의 명단이 통째로 바뀌어요.</b></p>' +
+      '<textarea id="rosterRaw" placeholder="예)&#10;2101&#9;강수빈&#10;2102&#9;김하늘"></textarea>' +
       '<div style="margin-top:12px;"><button class="btn" id="saveRosterBtn">저장</button></div>' +
       '<div id="rosterMsg"></div>' +
-    '</div>';
+    '</details>';
 
   body.querySelectorAll('[data-copy]').forEach(function (b) {
     b.onclick = function () { navigator.clipboard.writeText(b.getAttribute('data-copy')); b.textContent = '복사됨'; setTimeout(function () { b.textContent = '복사'; }, 1200); };
@@ -2236,6 +2320,125 @@ async function doSendNotice() {
 
 // ---------- 설정 ----------
 
+// 툴팁: ⓘ 를 누르면(마우스는 올리면) 설명이 떠요. 휴대폰에서도 눌러서 볼 수 있어요.
+function tipHtml_(text) {
+  return '<span class="tip" tabindex="0" role="button" aria-label="설명 보기" onmouseenter="tipPlace_(this)" onclick="tipToggle_(event,this)">ⓘ<span class="tip-box">' + escapeHtml(text) + '</span></span>';
+}
+function tipToggle_(e, el) {
+  e.preventDefault(); e.stopPropagation();
+  const open = !el.classList.contains('open');
+  document.querySelectorAll('.tip.open').forEach(function (t) { t.classList.remove('open'); });
+  if (open) { el.classList.add('open'); tipPlace_(el); }
+}
+// 화면 밖으로 나가지 않게 아이콘 아래(자리가 없으면 위)에 놓아요.
+function tipPlace_(el) {
+  const box = el.querySelector('.tip-box'); if (!box) return;
+  const r = el.getBoundingClientRect();
+  const w = Math.min(300, window.innerWidth - 16);
+  box.style.width = w + 'px';
+  box.style.left = Math.max(8, Math.min(window.innerWidth - w - 8, r.left + r.width / 2 - w / 2)) + 'px';
+  box.style.visibility = 'hidden'; box.style.display = 'block';
+  const h = box.offsetHeight;
+  box.style.display = ''; box.style.visibility = '';
+  box.style.top = (r.bottom + 8 + h > window.innerHeight - 8 ? Math.max(8, r.top - 8 - h) : r.bottom + 8) + 'px';
+}
+window.addEventListener('scroll', function () { document.querySelectorAll('.tip.open').forEach(function (t) { t.classList.remove('open'); }); }, { passive: true });
+document.addEventListener('click', function (e) { if (!e.target.closest || !e.target.closest('.tip')) document.querySelectorAll('.tip.open').forEach(function (t) { t.classList.remove('open'); }); });
+
+// ---------- 교사 알림 (이 폰으로 제출 소식 받기) ----------
+const T_FCM = { apiKey: 'AIzaSyBtpG79Dr6u-pLz3FiwebWf3v8Qq16OXv8', authDomain: 'hyewon-portal.firebaseapp.com', projectId: 'hyewon-portal', storageBucket: 'hyewon-portal.firebasestorage.app', messagingSenderId: '926603414719', appId: '1:926603414719:web:a068b0a313ca0986834a0a' };
+const T_VAPID = 'BOwJEUn05ciuh9lZu39bDZEHAOfoqGj_AKSXaXFro6UNCZzPiPgfRP-mUTegraLSHwMkOZ43d5dFN774pOGzyoQ';
+const T_TOKEN_KEY = 'hyewon_admin_push_token';
+function tLoadScript_(src) {
+  return new Promise(function (res, rej) {
+    if (document.querySelector('script[src="' + src + '"]')) return res();
+    const sc = document.createElement('script'); sc.src = src; sc.onload = function () { res(); }; sc.onerror = function () { rej(new Error('load')); };
+    document.head.appendChild(sc);
+  });
+}
+async function tGetToken_() {
+  await tLoadScript_('https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js');
+  await tLoadScript_('https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js');
+  if (!firebase.apps || !firebase.apps.length) firebase.initializeApp(T_FCM);
+  const reg = await navigator.serviceWorker.register('./sw.js');
+  await navigator.serviceWorker.ready;
+  return firebase.messaging().getToken({ vapidKey: T_VAPID, serviceWorkerRegistration: reg });
+}
+function tIsIOS_() { return /iphone|ipad|ipod/i.test(navigator.userAgent); }
+function tStandalone_() { return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true; }
+async function loadTeacherPushBox_() {
+  const box = document.getElementById('tpushBox'); if (!box) return;
+  let saved = ''; try { saved = localStorage.getItem(T_TOKEN_KEY) || ''; } catch (e) {}
+  let r = null;
+  try { r = await api('getTeacherPush', { token: saved }); } catch (e) {}
+  if (!document.getElementById('tpushBox')) return;
+  if (!r || r.success !== true) { box.innerHTML = '<span class="hint">서버(Code.gs) 버전 41 이상에서 쓸 수 있어요.</span>'; return; }
+  const st = r.settings || {};
+  const supported = ('serviceWorker' in navigator) && ('Notification' in window);
+  const here = !!(saved && r.thisDevice && window.Notification && Notification.permission === 'granted');
+  const chk = function (k, t, d, tip) { return '<label class="ap-opt"><input type="checkbox" data-tp="' + k + '"' + (st[k] ? ' checked' : '') + '><span><b>' + t + ' ' + tipHtml_(tip) + '</b><small>' + d + '</small></span></label>'; };
+  const rad = function (v, t, tip) { return '<label class="tp-rad"><input type="radio" name="tpSubmit" value="' + v + '"' + (st.submit === v ? ' checked' : '') + '> ' + t + ' ' + tipHtml_(tip) + '</label>'; };
+  let dev;
+  if (!supported) dev = '<div class="msg warn">이 브라우저는 알림을 지원하지 않아요. 크롬(안드로이드)이나 홈 화면에 설치한 앱(아이폰)에서 열어 주세요.</div>';
+  else if (tIsIOS_() && !tStandalone_()) dev = '<div class="msg warn">아이폰은 Safari 공유 버튼 → «홈 화면에 추가»로 관리자 앱을 설치한 뒤, 그 앱에서 켤 수 있어요.</div>';
+  else if (window.Notification && Notification.permission === 'denied') dev = '<div class="msg warn">이 기기에서 알림이 차단돼 있어요. 휴대폰 설정 → 앱(또는 크롬) → 알림에서 혜원포털 관리자를 허용해 주세요.</div>';
+  else dev = '<div class="row" style="gap:8px;flex-wrap:wrap;align-items:center;">' +
+      (here ? '<span class="pill on" style="background:var(--success-bg,#DDF5EB);color:var(--success-text,#12805B);padding:5px 12px;border-radius:999px;font-weight:700;font-size:13px;">✅ 이 기기에서 받는 중</span><button class="btn-outline btn-sm" id="tpOff" type="button">이 기기 끄기</button><button class="btn-outline btn-sm" id="tpTest" type="button">시험 알림 보내기</button>'
+            : '<button class="btn btn-sm" id="tpOn" type="button">📱 이 기기에서 알림 받기</button>') +
+      ' ' + tipHtml_('이 폰(또는 PC)을 알림 받을 기기로 등록해요. 처음 누르면 «알림 허용» 창이 뜨는데 «허용»을 눌러 주세요. 여러 기기를 등록해도 돼요(모두 받아요). 앱을 닫아 둬도 알림이 오고, 알림을 누르면 그 과제 화면이 열려요.') +
+      '<span class="hint">등록된 기기 ' + r.devices + '대</span></div>';
+  box.innerHTML =
+    (r.pushReady ? '' : '<div class="msg warn">푸시 서버(FCM_SERVICE_ACCOUNT)가 아직 설정되지 않아 알림이 나가지 않아요.</div>') +
+    dev +
+    '<div class="tp-sec"><b>📥 새 제출</b> ' + tipHtml_('학생이 처음 제출했을 때예요. «바로»는 한 명 낼 때마다 한 통씩 와요(수업 중 한꺼번에 내면 많이 올 수 있어요). «15분마다 모아서»는 15분 동안 들어온 제출을 과제별로 묶어 «📥 과제명 · 12건 — 3201 ○○○, …» 한 통으로 보내요.') + '</div>' +
+    '<div class="tp-rads">' +
+      rad('each', '낼 때마다 바로', '한 명이 낼 때마다 «📥 제출: 학번 이름 / 과제명» 알림이 바로 와요.') +
+      rad('digest', '15분마다 모아서', '15분마다 한 번, 그동안 들어온 제출을 묶어서 한 통으로 와요. 알림이 너무 많을 때 좋아요.') +
+      rad('off', '받지 않기', '새 제출 알림은 오지 않아요. 아래 다른 항목은 따로 켜고 끌 수 있어요.') +
+    '</div>' +
+    chk('resubmit', '🔁 다시 제출', '반려 뒤 다시 낸 것 포함', '이미 냈던 학생이 내용을 고쳐 다시 냈을 때 바로 와요. 반려한 과제를 다시 냈으면 «반려 뒤 다시 냄»이 함께 보여서 다시 검토할 때 알기 쉬워요.') +
+    chk('withdraw', '↩️ 회수', '학생이 낸 과제를 거둬 갔을 때', '학생이 «회수»를 누르면 와요. 회수한 답은 «_이전제출» 시트에 남아 있어요. 검토 완료한 과제는 학생이 회수할 수 없어요.') +
+    chk('allDone', '🎉 모두 제출', '명단 학생이 전부 냈을 때 한 번', '로그인 과제에서 명단에 있는 학생이 한 명도 빠짐없이 내면 과제마다 한 번 «🎉 모두 제출»이 와요. 명단이 없는 로그인 없는 과제는 해당되지 않아요.') +
+    chk('deadlineReport', '⏰ 마감 요약', '기한이 지나면 냄·안 냄 인원', '제출 기한을 정한 과제는 기한이 지나고 15분 안에 «⏰ 마감: 과제명 / 냄 20 / 안 냄 3 — 안 낸 학생 학번 이름»이 와요. 과제(기한)마다 한 번만 와요.') +
+    chk('quiet', '🌙 밤에는 모아 두기', '밤 10시~아침 7시 알림은 아침 7시에 한 번에', '켜 두면 밤 10시부터 아침 7시 사이의 제출 소식은 바로 보내지 않고 모아 뒀다가 아침 7시 넘어 한 통으로 보내요. 끄면 밤에도 바로 와요.') +
+    '<div class="row" style="gap:8px;margin-top:10px;flex-wrap:wrap;"><button class="btn btn-sm" id="tpSaveSet" type="button">알림 항목 저장</button><span class="hint" id="tpMsg2"></span></div>';
+  const msg = function (t) { const m = document.getElementById('tpMsg2'); if (m) m.textContent = t; };
+  const on = document.getElementById('tpOn');
+  if (on) on.onclick = async function () {
+    on.disabled = true; on.textContent = '등록 중…';
+    try {
+      const perm = Notification.permission === 'granted' ? 'granted' : await Notification.requestPermission();
+      if (perm !== 'granted') { alert('알림 창에서 «허용»을 눌러야 켜져요.'); loadTeacherPushBox_(); return; }
+      const token = await tGetToken_();
+      if (!token) throw new Error('no token');
+      const res = await api('saveTeacherToken', { token: token, ua: navigator.userAgent });
+      if (!res || res.success !== true) throw new Error((res && res.message) || 'save');
+      try { localStorage.setItem(T_TOKEN_KEY, token); } catch (e) {}
+    } catch (e) { alert('알림을 켜지 못했어요. 잠시 후 다시 시도해 주세요. (' + (e.message || e) + ')'); }
+    loadTeacherPushBox_();
+  };
+  const off = document.getElementById('tpOff');
+  if (off) off.onclick = async function () {
+    if (!confirm('이 기기에서 교사 알림을 끌까요?')) return;
+    try { await api('removeTeacherToken', { token: saved }); } catch (e) {}
+    try { localStorage.removeItem(T_TOKEN_KEY); } catch (e) {}
+    loadTeacherPushBox_();
+  };
+  const test = document.getElementById('tpTest');
+  if (test) test.onclick = async function () {
+    msg('보내는 중…');
+    let res; try { res = await api('testTeacherPush'); } catch (e) { res = null; }
+    msg((res && res.message) || '보내지 못했어요.');
+  };
+  document.getElementById('tpSaveSet').onclick = async function () {
+    const v = { submit: (box.querySelector('input[name="tpSubmit"]:checked') || {}).value || 'each' };
+    box.querySelectorAll('[data-tp]').forEach(function (c) { v[c.getAttribute('data-tp')] = c.checked; });
+    msg('저장 중…');
+    let res; try { res = await api('setTeacherPush', { settings: v }); } catch (e) { msg('서버에 연결하지 못했어요.'); return; }
+    msg(res && res.success ? '저장했어요.' : ((res && res.message) || '저장하지 못했어요.'));
+  };
+}
+
 async function loadAutoPushBox_() {
   const box = document.getElementById('apBox'); if (!box) return;
   let r = null;
@@ -2243,12 +2446,15 @@ async function loadAutoPushBox_() {
   if (!document.getElementById('apBox')) return;
   if (!r || r.success !== true) { box.innerHTML = '<span class="hint">서버(Code.gs) 버전 40 이상에서 쓸 수 있어요.</span>'; return; }
   const a = r.auto || {};
-  const opt = function (k, t, d) { return '<label class="ap-opt"><input type="checkbox" data-ap="' + k + '"' + (a[k] ? ' checked' : '') + '><span><b>' + t + '</b><small>' + d + '</small></span></label>'; };
+  const opt = function (k, t, d, tip) { return '<label class="ap-opt"><input type="checkbox" data-ap="' + k + '"' + (a[k] ? ' checked' : '') + '><span><b>' + t + ' ' + tipHtml_(tip) + '</b><small>' + d + '</small></span></label>'; };
   box.innerHTML =
     (r.pushReady ? '' : '<div class="msg warn">푸시 서버(FCM_SERVICE_ACCOUNT)가 아직 설정되지 않아 알림이 나가지 않아요.</div>') +
-    opt('open', '📌 새 과제가 열리면', '바로 공개·예약 공개 모두 · 대상(명단) 학생에게') +
-    opt('due', '⏰ 마감 전날·당일 아침 8시', '아직 안 낸 학생에게만') +
-    opt('review', '↩️ 반려·✅ 검토 완료', '그 학생에게 (반려 사유·피드백 포함)') +
+    opt('open', '📌 새 과제가 열리면', '바로 공개·예약 공개 모두 · 대상(명단) 학생에게',
+      '과제 상태를 «진행중»으로 바꾸거나 예약 시각이 되면, 15분 안에 «📌 새 과제: 과제명 / 기한»이 가요. 받는 학생은 과제 명단(로그인 과제) 또는 대상 학년·반·학생(로그인 없는 과제)이에요. 대상을 아직 안 정한 과제는 정할 때까지 기다려요. 과제마다 한 번만 가요.') +
+    opt('due', '⏰ 마감 전날·당일 아침 8시', '아직 안 낸 학생에게만',
+      '제출 기한을 정한 과제만 해당돼요. 마감 전날 아침 8시에 «⏰ 내일 마감», 마감 당일 아침 8시에 «⏰ 오늘 마감»이 가요. 이미 낸 학생에게는 가지 않아요. 기한을 바꾸면 새 기한 기준으로 다시 가요.') +
+    opt('review', '↩️ 반려·✅ 검토 완료', '그 학생에게 (반려 사유·피드백 포함)',
+      '제출 현황에서 학생 답을 열어 «반려»나 «검토 완료»를 누르면 바로 그 학생에게만 가요. 반려 사유나 피드백을 적었다면 알림 내용에 함께 보여요. 알림을 누르면 학생 앱의 그 과제 화면이 열려요.') +
     '<div class="row" style="gap:8px;margin-top:10px;flex-wrap:wrap;"><button class="btn btn-sm" id="apSave" type="button">저장</button><span class="hint" id="apMsg">' +
     (r.trigger === false && (a.open || a.due) ? '⚠️ 예약 실행이 꺼져 있어요. 저장을 다시 눌러 주세요.' : '') + '</span></div>';
   document.getElementById('apSave').onclick = async function () {
@@ -2309,7 +2515,12 @@ async function renderSettings(notice) {
         '<p class="hint" id="tpMsg" style="margin:8px 0 0;"></p>' +
       '</div>' +
       '<div class="card wide" style="margin-bottom:16px;">' +
-        '<h2>🔔 자동 알림</h2>' +
+        '<h2>📱 선생님 알림 <span class="hint" style="font-weight:500;font-size:13px;">학생이 제출하면 이 폰으로</span></h2>' +
+        '<p class="hint" style="margin:0 0 10px;">관리자 앱을 폰에 설치하고 «이 기기에서 알림 받기»를 누르세요. 받을 항목은 아래에서 골라요. ⓘ를 누르면 자세한 설명이 나와요.</p>' +
+        '<div id="tpushBox"><span class="hint">불러오는 중…</span></div>' +
+      '</div>' +
+      '<div class="card wide" style="margin-bottom:16px;">' +
+        '<h2>🔔 학생 자동 알림</h2>' +
         '<p class="hint" style="margin:0 0 10px;">학생이 혜원포털 앱에서 «알림 받기»를 켜 두면, 앱을 닫아도 휴대폰에 알림이 떠요. 밤 10시~아침 7시에는 보내지 않고 아침으로 미뤄요.</p>' +
         '<div id="apBox"><span class="hint">불러오는 중…</span></div>' +
       '</div>' +
@@ -2342,6 +2553,7 @@ async function renderSettings(notice) {
   paintVer_();
   loadUploadBox_();
   loadAutoPushBox_();
+  loadTeacherPushBox_();
   document.getElementById('tpSave').onclick = async function () {
     const msg = document.getElementById('tpMsg'); msg.textContent = '저장 중…';
     let r;
