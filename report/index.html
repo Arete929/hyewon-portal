@@ -187,6 +187,7 @@
   .hn-del { color: #C2232A; text-decoration: line-through; }
   .hn-keep { color: var(--text3); }
   .hn-late { display: inline-block; margin-top: 4px; font-size: 11px; font-weight: 800; background: #FFE7D6; color: #B4501D; border-radius: 999px; padding: 1px 8px; }
+  .qr-tag { display: inline-block; font-size: 10.5px; font-weight: 800; color: #4B3BB5; background: #ECE9FB; border-radius: 999px; padding: 1px 7px; }
   .score-card .score-big { font-size: 30px; font-weight: 900; color: var(--hyewon-emerald); line-height: 1.1; }
   .score-card .score-big small { font-size: 14px; font-weight: 700; color: var(--text2); margin-left: 4px; }
   .sec-head { display: flex; align-items: center; gap: 7px; font-size: 14px; font-weight: 700; margin: 0 0 10px; }
@@ -516,6 +517,17 @@ async function boot() {
 
   // 로그인 없는 과제: 학생코드 없이 학번·이름만 적어서 냅니다.
   if (tab.meta && tab.meta.openAccess) {
+    // 이 기기에 로그인이 저장돼 있으면 학번·이름을 다시 적지 않고 로그인한 학생으로 내요
+    const savedQ = loadLogin();
+    if (savedQ) {
+      render('<div class="loading">불러오는 중…</div>');
+      let rq = null;
+      try { rq = await api('getMySubmissions', { studentId: savedQ.studentId, code: savedQ.code }); } catch (e) {}
+      if (rq && rq.success && !rq.master) {
+        state.login = { studentId: savedQ.studentId, studentName: rq.studentName, code: savedQ.code, open: false, qrLogin: true };
+        return renderForm(tab);
+      }
+    }
     state.login = { studentId: '', studentName: '', code: '', open: true };
     return renderForm(tab);
   }
@@ -1117,7 +1129,7 @@ function renderToday() {
       '<div class="sporticon">' + taskIconHtml_(t.sheetName) + '</div>' +
       '<div class="assign-main">' +
         '<span class="assign-title">' + escapeHtml(t.sheetName) + '</span>' +
-        (sub ? '<span class="assign-sub">' + escapeHtml(sub) + '</span>' : '') +
+        (sub || (t.openAccess) ? '<span class="assign-sub">' + escapeHtml(sub || '') + (t.openAccess ? (sub ? ' · ' : '') + '<span class="qr-tag">QR 과제</span>' : '') + '</span>' : '') +
         reviewPillHtml_(t) +
       '</div>' +
       '<svg class="assign-chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>' +
@@ -1292,7 +1304,7 @@ function renderSubmissionStatus(tab, entry) {
   const done = reviewClass_(entry) === 'done';
   const rejected = reviewClass_(entry) === 'rejected';
   const over = deadlineBlocked_(tab);
-  const canWithdraw = !done && !over && effStatus_(tab) === 'open' && !(tab.meta && tab.meta.openAccess) && !isPeek_();
+  const canWithdraw = !done && !over && effStatus_(tab) === 'open' && !isPeek_() && (entry.canWithdraw !== false);
   render(
     appbarHtml_('제출 현황', true) +
     '<div class="main" style="padding-top:16px;">' +
@@ -1731,6 +1743,7 @@ function renderForm(tab, notice) {
     if (!confirm('로그아웃할까요? 다시 쓰려면 학번과 학생코드를 입력해야 합니다.')) return;
     clearLogin();
     state.login = null;
+    if (tab.meta && tab.meta.openAccess) { state.login = { studentId: '', studentName: '', code: '', open: true }; return renderForm(tab); }
     renderLogin(tab);
   };
 }
