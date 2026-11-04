@@ -1119,9 +1119,7 @@ function submissionContentHtml_(fields, r) {
     return '<div class="rv-item"><div class="rv-label">' + escapeHtml(x.f.name) + '</div>' + body + '</div>';
   }).join('') + '</div>';
 }
-// 검토 창의 파일: 진짜 파일 이름·확장자·크기로 보여 줘요. PPT·한글·워드·엑셀은 원본 그대로 내려받고(구글 슬라이드로 바뀌지 않게),
-// PDF·사진·영상은 드라이브 미리보기로 열어요. 둘 다 할 수 있게 버튼을 두 개 둬요.
-const OFFICE_EXT_ = ['ppt', 'pptx', 'pps', 'ppsx', 'key', 'doc', 'docx', 'hwp', 'hwpx', 'xls', 'xlsx', 'odp', 'odt', 'ods', 'zip', 'txt'];
+// 검토 창의 파일: 진짜 파일 이름·확장자·크기로 보여 주고, «열기»는 브라우저에서 바로(아래 openInBrowser_ 참고), «⬇»는 원본 내려받기.
 function fileExt_(n) { const m = /\.([A-Za-z0-9]{1,6})$/.exec(String(n || '')); return m ? m[1].toLowerCase() : ''; }
 function fileIcon_(ext, mime) {
   if (/^ppt|^pps|^key|^odp/.test(ext)) return '📊'; if (/^hwp|^doc|^odt|^txt/.test(ext)) return '📝'; if (/^xls|^ods/.test(ext)) return '📈';
@@ -1135,18 +1133,17 @@ async function loadReviewFiles_(tabName, sid, root) {
     const list = r.files.filter(function (f) { return f.field === box.getAttribute('data-rvf'); });
     if (!list.length) return;
     box.innerHTML = list.map(function (f) {
-      const ext = fileExt_(f.name), office = OFFICE_EXT_.indexOf(ext) >= 0;
+      const ext = fileExt_(f.name);
       const dl = 'https://drive.google.com/uc?export=download&id=' + encodeURIComponent(f.id), view = 'https://drive.google.com/file/d/' + encodeURIComponent(f.id) + '/view';
       if (f.missing) return '<div class="rvf miss"><span class="rvf-ic">⚠️</span><div class="rvf-t"><b>파일을 찾을 수 없어요</b><small>지워졌거나 옮겨졌을 수 있어요</small></div></div>';
       const base = ext ? f.name.slice(0, -(ext.length + 1)) : f.name;
       return '<div class="rvf"><span class="rvf-ic">' + fileIcon_(ext, f.mime) + '</span>' +
         '<div class="rvf-t"><b title="' + escapeHtml(f.name) + '">' + escapeHtml(base) + (ext ? '<span class="rvf-x">.' + escapeHtml(ext) + '</span>' : '') + '</b><small>' + (ext ? ext.toUpperCase() + ' · ' : '') + fileSizeLabel(f.size || 0) + '</small></div>' +
-        (office
-          ? '<a class="btn btn-sm" href="' + dl + '" target="_blank" rel="noopener">⬇ 내려받기</a><a class="btn-outline btn-sm" href="' + view + '" target="_blank" rel="noopener">미리보기</a>'
-          : (browserViewable_(ext, f.mime)
-            ? '<button type="button" class="btn btn-sm" data-bview="' + escapeHtml(f.id) + '" data-drive="' + view + '">열기</button><a class="btn-outline btn-sm" href="' + view + '" target="_blank" rel="noopener">드라이브</a>'
-            : '<a class="btn btn-sm" href="' + view + '" target="_blank" rel="noopener">열기</a>') +
-            '<a class="btn-outline btn-sm" href="' + dl + '" target="_blank" rel="noopener" title="내려받기">⬇</a>') +
+        // «열기» 하나로 브라우저에서: 작은 PDF·사진은 브라우저 보기 화면(가장 빠름), 그 밖(큰 파일·영상·PPT·한글·워드)은 드라이브 미리보기
+        ((browserViewable_(ext, f.mime) && (f.size || 0) <= BROWSER_FAST_MAX_)
+          ? '<button type="button" class="btn btn-sm" data-bview="' + escapeHtml(f.id) + '" data-drive="' + view + '">열기</button>'
+          : '<a class="btn btn-sm" href="' + view + '" target="_blank" rel="noopener">열기</a>') +
+        '<a class="btn-outline btn-sm" href="' + dl + '" target="_blank" rel="noopener" title="내려받기">⬇</a>' +
         '</div>';
     }).join('');
     box.querySelectorAll('[data-bview]').forEach(function (b) {
@@ -1155,6 +1152,7 @@ async function loadReviewFiles_(tabName, sid, root) {
   });
 }
 // PDF·사진은 브라우저의 보기 화면으로(드라이브 미리보기가 안 될 때도 열려요). 새 탭은 누를 때 바로 열어 둬야 막히지 않아요.
+const BROWSER_FAST_MAX_ = 10 * 1024 * 1024;   // 이보다 크면 서버를 거치는 시간이 길어서 드라이브 미리보기가 더 빨라요
 function browserViewable_(ext, mime) { return ext === 'pdf' || /^(jpe?g|png|gif|webp|txt)$/.test(ext) || /^image\/(jpeg|png|gif|webp)$/.test(mime || '') || mime === 'application/pdf'; }
 async function openInBrowser_(tabName, sid, fileId, driveUrl, btn) {
   const w = window.open('', '_blank');
