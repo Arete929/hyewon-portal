@@ -214,6 +214,9 @@
   .qp-st:active, .qp-chip:active { transform: scale(.97); }
   .qp-me { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1.5px solid #CDEBDD; background: #F1FAF6; border-radius: 14px; }
   .qp-me b { display: block; font-size: 15.5px; }
+  .qp-note { margin-top: 8px; padding: 9px 12px; border-radius: 12px; font-size: 13px; line-height: 1.6; }
+  .qp-note.d { background: #FFF8E6; border: 1px solid #F5DFA8; color: #6B5200; }
+  .qp-note.r { background: #FDECEC; border: 1px solid #F5C2C2; color: #A12A2A; }
   .qp-me small { color: var(--text2); font-size: 12.5px; }
   .qp-ok { display: inline-flex; width: 28px; height: 28px; border-radius: 50%; background: var(--hyewon-emerald, #087A55); align-items: center; justify-content: center; flex: none; }
   .qp-re { margin-left: auto; font-size: 13px; }
@@ -939,7 +942,9 @@ async function mountQrPick_(tab) {
     let h = '<div class="qp">';
     if (me) {
       h += '<div class="qp-me"><span class="qp-ok">' + ic_('check', 16, '#fff', 3) + '</span><div><b>' + escapeHtml(me.id) + ' · ' + escapeHtml(me.n) + '</b><small>' + Number(me.id.charAt(0)) + '학년 ' + Number(me.id.charAt(1)) + '반 ' + Number(me.id.slice(2)) + '번</small></div>' +
-        '<button type="button" class="linklike qp-re" data-qre>다시 고르기</button></div>';
+        '<button type="button" class="linklike qp-re" data-qre>다시 고르기</button></div>' +
+        (me.r ? '<div class="qp-note r">🔒 선생님이 검토를 마쳐서 다시 낼 수 없어요. 고칠 게 있으면 선생님께 말씀해 주세요.</div>'
+          : me.d ? '<div class="qp-note d">✅ 이미 냈어요. 다시 내면 <b>새로 낸 내용으로 바뀌어요</b> — 새로 고른 파일 칸만 바뀌고, 안 고른 칸과 비워 둔 글은 전에 낸 그대로 남아요.</div>' : '');
     } else {
       h += '<div class="qp-row"><span class="qp-l">학년</span>' + grades.map(function (g) { return chip('data-qg', g, g + '학년', st.g === g); }).join('') + '</div>';
       if (st.g) h += '<div class="qp-row"><span class="qp-l">반</span>' + classes().map(function (c) { return chip('data-qc', c, c + '반', st.c === c); }).join('') + '</div>';
@@ -957,6 +962,8 @@ async function mountQrPick_(tab) {
     box.querySelectorAll('[data-qc]').forEach(function (b) { b.onclick = function () { st.c = b.getAttribute('data-qc'); paint(); }; });
     box.querySelectorAll('[data-qs]').forEach(function (b) { b.onclick = function () { st.id = b.getAttribute('data-qs'); paint(); }; });
     const re = box.querySelector('[data-qre]'); if (re) re.onclick = function () { st.id = ''; state.login.studentId = ''; state.login.studentName = ''; paint(); };
+    const sb = document.getElementById('submitBtn');
+    if (sb && !deadlineBlocked_(tab)) sb.disabled = !!(me && me.r);
   }
   paint();
 }
@@ -2235,7 +2242,7 @@ async function doSubmit(tab, confirmOverwrite) {
   if (payload.note !== undefined) state.noteSaved[tab.sheetName] = payload.note;
   delete state.noteDraft[tab.sheetName];
   Object.keys(state.picks).forEach(function (k) { if (k.indexOf(tab.sheetName + '|') === 0) delete state.picks[k]; });
-  if (state.login && state.login.open) delete state.noteSaved[tab.sheetName];   // QR: 다음 학생에게 앞 학생 글이 남지 않게
+  if (state.login && state.login.open) { delete state.noteSaved[tab.sheetName]; delete QR_ROSTER_[tab.sheetName]; }   // QR: 다음 학생에게 앞 학생 글이 남지 않게
 
   if (state.globalMode) {
     let res2;
@@ -2257,7 +2264,8 @@ function renderSuccess(tab, message) {
       '<div class="success-icon" style="color:var(--success-text);"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>' +
       '<div style="font-size:18px;font-weight:700;margin-bottom:6px;">제출 완료</div>' +
       '<p style="color:var(--text2);font-size:14px;margin:0;">' + escapeHtml(message || '제출이 완료되었습니다.') + '</p>' +
-      (state.login && state.login.open ? '<button class="btn-outline" id="againBtn" type="button" style="margin-top:16px;">다른 학생이 이어서 제출하기</button>' : '') +
+      (state.login && state.login.open ? '<p class="hint" style="margin:14px 0 0;line-height:1.7;">고치려면 같은 QR로 다시 들어와 <b>내 이름을 고르고 다시 내면</b> 돼요(새로 낸 내용으로 바뀌어요).<br>학생코드로 로그인하면 낸 내용을 보고 회수할 수도 있어요.</p>' +
+        '<button class="btn-outline" id="againBtn" type="button" style="margin-top:16px;">다른 학생이 이어서 제출하기</button>' : '') +
     '</div></div>' +
     footerHtml_()
   );
