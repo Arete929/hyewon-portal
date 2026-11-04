@@ -366,6 +366,13 @@
   .sched-row > b { font-size: 14px; min-width: 70px; }
   .sched-row input { width: auto; flex: 1; min-width: 200px; padding: 8px 10px; }
   .sched-row .hint { width: 100%; }
+  .sched-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 18px; align-items: start; }
+  .sched-row input[type=checkbox], .sched-row #smIn { flex: none; min-width: 0; }
+  .sp-col { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+  .sp-col > b { font-size: 14px; }
+  .sp-in { display: flex; gap: 6px; align-items: center; }
+  .sp-in input { flex: 1; min-width: 0; }
+  @media (max-width: 600px) { .sched-pair { grid-template-columns: 1fr; } }
   .mhero { display: none; }
   @media (max-width: 760px) {
     .mhero { display: flex; align-items: flex-end; gap: 12px; position: relative; height: 150px; padding: 0 18px 16px; margin-bottom: 4px;
@@ -1663,18 +1670,18 @@ async function renderDetail(tabName) {
         const dl = (tab.meta && tab.meta.deadline) || '';
         return '<div class="card wide tile" style="max-width:720px;">' +
           '<div class="tile-head"><span class="tile-label">⏰ 일정</span><span class="hint">예약 공개 · 제출 기한</span></div>' +
-          '<div class="sched-row"><b>예약 공개</b>' +
+          '<div class="sched-row sched-pair"><div class="sp-col"><b>예약 공개</b><div class="sp-in">' +
             '<input id="oaAt" type="datetime-local" value="' + escapeHtml((tab.meta && tab.meta.openAt) || '') + '">' +
             '<button class="btn-outline btn-sm" id="oaAtSave" type="button">예약</button>' +
-            (o ? '<button class="btn-outline btn-sm" id="oaAtClear" type="button">예약 없애기</button>' : '') +
+            (o ? '<button class="btn-outline btn-sm" id="oaAtClear" type="button">없애기</button>' : '') + '</div>' +
             '<span class="hint" id="oaAtMsg">' + (o ? (o.passed ? o.text + '에 열렸어요(예약).' : '<b style="color:var(--accent);">' + o.text + '에 저절로 열려요.</b> 그때까지는 «대기»라 학생에게 안 보여요.') : '시각을 정하면 그때 저절로 «진행중»이 돼요.') + '</span>' +
           '</div>' +
-          '<div class="sched-row"><b>제출 기한</b>' +
+          '<div class="sp-col"><b>제출 기한</b><div class="sp-in">' +
             '<input id="dlIn" type="datetime-local" value="' + escapeHtml(dl) + '">' +
             '<button class="btn-outline btn-sm" id="dlSave" type="button">저장</button>' +
-            (dl ? '<button class="btn-outline btn-sm" id="dlClear" type="button">기한 없애기</button>' : '') +
+            (dl ? '<button class="btn-outline btn-sm" id="dlClear" type="button">없애기</button>' : '') + '</div>' +
             '<span class="hint" id="dlMsg">' + (dl ? (tab.meta && tab.meta.lateOk === false ? '이 시각이 지나면 서버가 제출을 받지 않아요.' : '이 시각이 지나도 받되 «⏰ N일 초과»로 표시해요.') : '정하지 않으면 «마감»으로 바꿀 때까지 받아요.') + '</span>' +
-          '</div>' +
+          '</div></div>' +
           '<div class="sched-row"><b>늦은 제출</b>' +
             '<label style="display:flex;gap:8px;align-items:center;font-weight:600;font-size:14px;"><input type="checkbox" id="lateOk" style="width:auto;"' + (tab.meta && tab.meta.lateOk === false ? '' : ' checked') + '> 기한이 지나도 받기 (⏰ 초과로 표시)</label>' +
             tipHtml_('켜 두면 기한 뒤에도 학생이 내거나 회수·다시 낼 수 있고, 제출 현황·검토 창·학생 화면에 «⏰ N일 초과»가 붙어요. 초과일은 기한 날의 남은 시간과 다음 날 하루까지 1일, 그 뒤로는 날짜가 바뀔 때마다 1일씩 늘어요(예: 수 22:00 기한 → 수 22:01~목 23:59 = 1일). 끄면 기한 뒤에는 서버가 제출을 받지 않아요.') +
