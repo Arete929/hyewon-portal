@@ -394,6 +394,37 @@
   .gprev-h { font-size: 12px; font-weight: 800; color: var(--text2); margin-bottom: 6px; }
   .gprev-b { font-size: 14px; line-height: 1.7; white-space: pre-wrap; }
   html[data-theme="dark"] .gprev { background: transparent; }
+  .iprog { display: inline-flex; align-items: center; gap: 8px; margin-left: auto; margin-right: 10px; flex: none; }
+  .iprog:empty { display: none; }
+  .ip-t { font-size: 13px; color: var(--text2); font-weight: 700; white-space: nowrap; } .ip-t b { color: var(--accent); font-size: 15px; }
+  .ip-bar { width: 90px; height: 7px; background: #EEF2F0; border-radius: 999px; overflow: hidden; } .ip-bar i { display: block; height: 100%; background: #34A77F; border-radius: 999px; }
+  .ip-todo { font-size: 12px; font-weight: 700; color: #9A6400; background: #FFF4DB; border-radius: 999px; padding: 2px 8px; white-space: nowrap; }
+  @media (max-width: 560px) { .ip-bar { width: 50px; } .ip-todo { display: none; } }
+  .dt-sum { background: #fff; border-radius: 20px; padding: 16px 18px; margin: 4px 0 14px; max-width: 720px; box-shadow: 0 1px 2px rgba(0,0,0,.04); }
+  .ds-main { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; }
+  .ds-big { display: flex; align-items: baseline; gap: 6px; }
+  .ds-big span { font-size: 13px; font-weight: 800; color: var(--text2); }
+  .ds-big b { font-size: 34px; line-height: 1; color: var(--accent); }
+  .ds-big small { font-size: 15px; color: var(--text2); font-weight: 700; }
+  .ds-big em { font-style: normal; font-size: 12px; font-weight: 800; color: #0F5A44; background: #E3F1EC; border-radius: 999px; padding: 2px 9px; margin-left: 4px; }
+  .ds-bar { flex: 1; min-width: 140px; height: 10px; background: #EEF2F0; border-radius: 999px; overflow: hidden; }
+  .ds-bar i { display: block; height: 100%; background: linear-gradient(90deg, #0F766E, #34A77F); border-radius: 999px; }
+  .ds-dl { width: 100%; font-size: 13px; color: var(--text2); }
+  .ds-dl b { color: var(--text); } .ds-dl b.over { color: #C22B2B; }
+  .ds-chips { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-top: 12px; }
+  .ds-c { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; border: 1px solid var(--border); background: #FAFBFA; border-radius: 12px; padding: 8px 10px; font-family: inherit; cursor: default; text-align: left; }
+  .ds-c[data-go] { cursor: pointer; } .ds-c[data-go]:hover { border-color: var(--accent); }
+  .ds-c span { font-size: 11.5px; color: var(--text2); font-weight: 700; }
+  .ds-c b { font-size: 18px; color: var(--text); } .ds-c b small { font-size: 11px; color: var(--text3); }
+  .ds-c.warn b { color: #9A6400; } .ds-c.ok b { color: #087A55; } .ds-c.bad b { color: #C22B2B; }
+  @media (max-width: 760px) { .ds-chips { grid-template-columns: repeat(4, 1fr); } }
+  @media (max-width: 420px) { .ds-chips { grid-template-columns: repeat(3, 1fr); } }
+  .dtabs { display: flex; gap: 6px; max-width: 720px; margin: 0 0 14px; padding: 5px; background: #E9EEEC; border-radius: 14px; }
+  .dtabs button { flex: 1; border: 0; background: transparent; border-radius: 10px; padding: 10px 12px; font-family: inherit; font-size: 15px; font-weight: 800; color: var(--text2); cursor: pointer; }
+  .dtabs button.on { background: #fff; color: var(--accent); box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+  .dtabs button b { font-size: 13px; color: inherit; opacity: .8; margin-left: 2px; }
+  html[data-theme="dark"] .dt-sum, html[data-theme="dark"] .ds-c { background: transparent; }
+  html[data-theme="dark"] .dtabs { background: rgba(255,255,255,.06); } html[data-theme="dark"] .dtabs button.on { background: rgba(255,255,255,.12); }
   .rv-files { display: flex; flex-direction: column; gap: 6px; }
   .rvf { display: flex; align-items: center; gap: 10px; background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 9px 10px; }
   .rvf-ic { font-size: 22px; flex: none; }
@@ -917,7 +948,8 @@ async function renderDashboard() {
     const label = s === 'open' ? '진행중' : s === 'wait' ? (o ? '예약 ' + o.text : '대기') : '마감';
     const tg = (t.meta && t.meta.targets) || [];
     return '<a class="item" href="#" data-tab="' + escapeHtml(t.sheetName) + '"><span class="item-name">' + taskIconHtml_(t.sheetName, 26) + '<span class="task-ttl">' + escapeHtml(t.sheetName) + '</span>' +
-      (tg.length ? ' <span class="hint" style="font-weight:500;">· ' + escapeHtml(targetsLabel_(tg)) + '</span>' : '') + '</span><span class="pill ' + s + '">' + label + '</span></a>';
+      (tg.length ? ' <span class="hint" style="font-weight:500;">· ' + escapeHtml(targetsLabel_(tg)) + '</span>' : '') + '</span>' +
+      (s === 'open' ? '<span class="iprog" data-prog="' + escapeHtml(t.sheetName) + '"></span>' : '') + '<span class="pill ' + s + '">' + label + '</span></a>';
   }).join('');
 
   render(
@@ -932,6 +964,19 @@ async function renderDashboard() {
     a.onclick = function (e) { e.preventDefault(); renderDetail(a.getAttribute('data-tab')); };
   });
   document.getElementById('newTabBtn').onclick = function () { renderNewTab(); };
+  // 진행중 과제의 제출 현황(냄/대상) — 목록을 먼저 보여 주고 나중에 채워요
+  if (document.querySelector('[data-prog]')) {
+    api('getTaskProgress').then(function (r) {
+      if (!r || !r.success) return;
+      document.querySelectorAll('[data-prog]').forEach(function (el) {
+        const p = (r.tabs || {})[el.getAttribute('data-prog')]; if (!p) return;
+        const pct = p.total ? Math.round(p.done / p.total * 100) : 0;
+        el.innerHTML = '<span class="ip-t">제출 <b>' + p.done + '</b>' + (p.total ? '/' + p.total : '명') + '</span>' +
+          (p.total ? '<span class="ip-bar"><i style="width:' + pct + '%"></i></span>' : '') +
+          (p.todo ? '<span class="ip-todo">검토 전 ' + p.todo + '</span>' : '');
+      });
+    }).catch(function () {});
+  }
 }
 
 // 과제 QR 을 화면 가득 크게 보여줘요(교실 TV·폴드 펼친 화면·폰을 학생에게 보여줄 때). 바깥을 누르거나 ✕·Esc 로 닫아요.
@@ -1855,6 +1900,9 @@ async function renderDetail(tabName) {
           ? '학생 화면에서 붙여넣기·끌어다 놓기를 막고, 한 번에 <input id="apMin" type="number" min="5" max="500" value="' + apMin + '" style="width:72px;display:inline-block;padding:4px 8px;"> 자 이상 입력되면 작성 기록에 남겨요. <span id="apMsg"></span>'
           : '켜면 학생 화면에서 붙여넣기를 막고, 한 번에 일정 글자 수 이상 입력되면 작성 기록에 남겨요.') +
       '</div>' +
+      '<div id="dtSum" class="dt-sum"><span class="hint">제출 현황을 세는 중…</span></div>' +
+      '<div class="dtabs" role="tablist"><button type="button" data-dt="info" role="tab">📋 과제 정보</button><button type="button" data-dt="subs" role="tab">📥 제출 현황 <b id="dtSubN"></b></button></div>' +
+      '<div id="paneInfo" class="dpane">' +
       (function () {
         const o = openAtInfo_(tab);
         const tg = (tab.meta && tab.meta.targets) || [];
@@ -1956,14 +2004,28 @@ async function renderDetail(tabName) {
       '</div>' +
       '<div class="tabs">' +
         '<button data-view="roster">명단</button>' +
-        '<button data-view="submissions">제출 현황</button>' +
         '<button data-view="log">로그</button>' +
       '</div>' +
       '<div id="detailBody"></div>' +
       '<div class="dangerzone"><div><b>과제 삭제</b><span class="hint">과제와 명단 연결이 지워져요. 학생 답변은 «_이전제출» 시트에 남아요.</span></div>' +
         '<button class="btn-outline btn-danger" id="delTabBtn" type="button">🗑 삭제</button></div>' +
+      '</div>' +
+      '<div id="paneSubs" class="dpane"><div id="subsBody"><div class="loading">불러오는 중…</div></div></div>' +
     '</div>'
   );
+  // 큰 탭 — 과제마다 마지막으로 본 탭을 기억해요(처음엔 대기 과제는 정보, 그 밖은 제출 현황)
+  (function () {
+    let mem = {}; try { mem = JSON.parse(localStorage.getItem('hyewon_admin_dtab') || '{}') || {}; } catch (e) {}
+    function show(v) {
+      document.getElementById('paneInfo').style.display = v === 'info' ? '' : 'none';
+      document.getElementById('paneSubs').style.display = v === 'subs' ? '' : 'none';
+      document.querySelectorAll('[data-dt]').forEach(function (b) { const on = b.getAttribute('data-dt') === v; b.classList.toggle('on', on); b.setAttribute('aria-selected', on ? 'true' : 'false'); });
+      mem[tabName] = v; try { localStorage.setItem('hyewon_admin_dtab', JSON.stringify(mem)); } catch (e) {}
+    }
+    state.showDetailTab = show;
+    document.querySelectorAll('[data-dt]').forEach(function (b) { b.onclick = function () { show(b.getAttribute('data-dt')); }; });
+    show(mem[tabName] || (status === 'wait' ? 'info' : 'subs'));
+  })();
   document.getElementById('backBtn').onclick = function (e) { e.preventDefault(); renderDashboard(); };
   paintSaveStamp_();
   document.getElementById('iconPick').onclick = function () { toggleIconPanel_(tabName, tab); };
@@ -2137,9 +2199,9 @@ async function renderDetail(tabName) {
     b.onclick = function () { state.detailView = b.getAttribute('data-view'); renderDetail(tabName); };
   });
 
-  if (state.detailView === 'roster') renderRoster(tab);
-  else if (state.detailView === 'submissions') renderSubmissions(tab);
-  else renderLog(tab);
+  if (state.detailView === 'log') renderLog(tab);
+  else { state.detailView = 'roster'; document.querySelectorAll('.tabs button[data-view="roster"]').forEach(function (b) { b.classList.add('active'); }); renderRoster(tab); }
+  renderSubmissions(tab);
 }
 
 async function doSetStatus(tabName, status) {
@@ -2282,8 +2344,43 @@ function traceCellHtml_(t, min) {
   return '<td style="min-width:180px;">' + pill + '<div class="hint" style="margin-top:4px;line-height:1.5;">' + escapeHtml(parts.join(' · ')) + '</div></td>';
 }
 
+// ---------- 과제 화면 맨 위 «제출 현황 요약» ----------
+function remainText_(dl) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/.exec(String(dl || ''));
+  if (!m) return '';
+  const left = new Date(m[0] + ':00+09:00').getTime() - Date.now();
+  if (left <= 0) return '기한 지남';
+  const d = Math.floor(left / 864e5), h = Math.floor(left % 864e5 / 36e5), mi = Math.floor(left % 36e5 / 6e4);
+  return (d ? d + '일 ' : '') + (d || h ? h + '시간 ' : '') + (d ? '' : mi + '분 ') + '남음';
+}
+function paintDetailSummary_(tab, k) {
+  const el = document.getElementById('dtSum'); if (!el) return;
+  const total = k.done + k.miss, pct = total ? Math.round(k.done / total * 100) : 0;
+  const n = document.getElementById('dtSubN'); if (n) n.textContent = total ? k.done + '/' + total : String(k.done);
+  const dl = dlText_(k.deadline), rem = remainText_(k.deadline);
+  const chip = function (label, v, cls, go) { return '<button type="button" class="ds-c' + (cls ? ' ' + cls : '') + '"' + (go ? ' data-go="' + go + '"' : '') + '><span>' + label + '</span><b>' + v + '</b></button>'; };
+  el.innerHTML =
+    '<div class="ds-main"><div class="ds-big"><span>제출</span><b>' + k.done + '</b>' + (total ? '<small>/ ' + total + '명</small>' : '<small>명</small>') + (total ? '<em>' + pct + '%</em>' : '') + '</div>' +
+      (total ? '<div class="ds-bar"><i style="width:' + pct + '%"></i></div>' : '') +
+      (dl ? '<div class="ds-dl">⏰ ' + escapeHtml(dl) + ' · <b' + (rem === '기한 지남' ? ' class="over"' : '') + '>' + escapeHtml(rem) + '</b></div>' : '<div class="ds-dl hint">제출 기한 없음</div>') + '</div>' +
+    '<div class="ds-chips">' +
+      (total ? chip('안 냄', k.miss, k.miss ? 'warn' : '', 'miss') : '') +
+      chip('검토 전', k.todo, '', 'todo') + chip('검토 완료', k.reviewed, 'ok', '') + chip('반려', k.rej, k.rej ? 'bad' : '', 'rej') +
+      chip('기한 후', k.late, '', 'late') + chip('안내 확인', k.ack, '', '') +
+      chip('평균 점수', k.avg === null ? '—' : (Math.round(k.avg * 10) / 10) + (k.scoreMax ? '<small>/' + k.scoreMax + '</small>' : ''), '', '') +
+    '</div>';
+  el.querySelectorAll('[data-go]').forEach(function (b) {
+    b.onclick = function () {
+      const go = b.getAttribute('data-go');
+      if (state.showDetailTab) state.showDetailTab('subs');
+      if (go === 'miss') { const d = document.querySelector('details.sacc[data-acc="miss"]'); if (d) { d.open = true; d.scrollIntoView({ block: 'start', behavior: 'smooth' }); } return; }
+      const c = document.querySelector('#subChips [data-f="' + go + '"]'); if (c) { c.click(); c.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
+    };
+  });
+}
+
 async function renderSubmissions(tab) {
-  const body = document.getElementById('detailBody');
+  const body = document.getElementById('subsBody') || document.getElementById('detailBody');
   body.innerHTML = '<div class="loading">불러오는 중…</div>';
   let res;
   try { res = await api('getSubmissions', { tabName: tab.sheetName }); } catch (e) { return; }
@@ -2347,6 +2444,11 @@ async function renderSubmissions(tab) {
   const avg = nums.length ? (nums.reduce(function (a, b) { return a + b; }, 0) / nums.length) : null;
   const rejN = rows.filter(function (r) { return reviewIdx >= 0 && r[reviewIdx] === '반려'; }).length;
   const todoN = rows.filter(function (r) { const v = reviewIdx >= 0 ? r[reviewIdx] : ''; return v !== '검토완료' && v !== '반려'; }).length;
+  paintDetailSummary_(tab, {
+    done: rows.length, miss: missing.length, todo: todoN, rej: rejN, late: lateN, avg: avg, scoreMax: scoreMax,
+    reviewed: rows.filter(function (r) { return reviewIdx >= 0 && r[reviewIdx] === '검토완료'; }).length,
+    ack: Object.keys(acks).length, deadline: res.deadline || (tab.meta && tab.meta.deadline) || ''
+  });
   const tiles = rows.map(function (r, ri) {
     const t = traces[traceKey_(r[0])];
     const flag = !!t && (t.pasteTries > 0 || t.maxChunk >= apMin);
@@ -2366,9 +2468,7 @@ async function renderSubmissions(tab) {
   }).join('');
   let acc = {}; try { acc = JSON.parse(localStorage.getItem('hyewon_admin_subacc') || '{}') || {}; } catch (e) {}
   const gridView =
-    '<div class="subg"><div class="kpis kpis5"><div class="kpi"><span>제출</span><b>' + rows.length + (missing.length ? ' <small>/ ' + (rows.length + missing.length) + '</small>' : '') + '</b></div>' +
-    '<div class="kpi"><span>검토 전</span><b>' + todoN + '</b></div><div class="kpi"><span>반려</span><b>' + rejN + '</b></div>' +
-    '<div class="kpi"><span>기한 후 제출</span><b>' + lateN + '</b></div><div class="kpi"><span>평균 점수</span><b>' + (avg === null ? '—' : (Math.round(avg * 10) / 10) + (scoreMax ? ' <small>/' + scoreMax + '</small>' : '')) + '</b></div></div>' +
+    '<div class="subg">' +
     '<div class="chips" id="subChips"><button class="on" data-f="all">전체</button><button data-f="todo">검토 전</button><button data-f="rej">반려</button><button data-f="late">기한 후</button>' + (apOn ? '<button data-f="flag">복붙 의심</button>' : '') + '</div>' +
     '<details class="sacc" data-acc="done"' + (acc.done === false ? '' : ' open') + '><summary>✅ 낸 학생 <b>' + rows.length + '명</b></summary>' +
       (tiles ? '<div class="sgrid" id="subCards">' + tiles + '</div>' : '<p class="hint" style="margin:6px 2px;">아직 낸 학생이 없어요.</p>') + '</details>' +
