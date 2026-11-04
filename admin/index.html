@@ -451,6 +451,22 @@
   .merge-note { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; max-width: 720px; margin: 4px 0 12px; padding: 12px 14px; background: #FFF8E6; border: 1px solid #F5DFA8; border-radius: 14px; font-size: 13.5px; }
   .merge-note span:first-child { flex: 1; min-width: 200px; }
   html[data-theme="dark"] .merge-note { background: transparent; }
+  .inq-badge { display: inline-block; min-width: 18px; margin-left: auto; padding: 1px 6px; border-radius: 999px; background: #FF6B6B; color: #fff; font-size: 11px; font-weight: 800; text-align: center; font-style: normal; }
+  .inq-badge:empty { display: none; }
+  .bnav [data-bn="more"].dot { position: relative; } .bnav [data-bn="more"].dot:after { content: ''; position: absolute; top: 6px; right: 22%; width: 8px; height: 8px; border-radius: 50%; background: #FF6B6B; }
+  .inq-h .dot { width: 40px; height: 40px; border-radius: 50%; background: var(--accent); color: #fff; display: grid; place-items: center; font-weight: 700; font-size: 13px; flex: none; }
+  .side .nav .inq-badge { color: #fff !important; background: #FF6B6B !important; font-size: 11px !important; line-height: 16px; -webkit-text-fill-color: #fff; }
+  .inq-card { padding: 16px 18px; margin-bottom: 12px; } .inq-card.new { border-left: 4px solid #F5B400; }
+  .inq-h { display: flex; align-items: center; gap: 10px; } .inq-who { flex: 1; min-width: 0; } .inq-who b { display: block; font-size: 15px; } .inq-who small { color: var(--text2); font-size: 12px; }
+  .inq-txt { margin: 10px 0 0; font-size: 14.5px; line-height: 1.7; white-space: pre-wrap; word-break: break-word; }
+  .inq-files { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .inq-f { border: 1px solid var(--border); background: #fff; border-radius: 10px; padding: 6px 10px; font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .inq-f:hover { border-color: var(--accent); }
+  .inq-rep { margin-top: 10px; padding: 10px 12px; background: #F1FAF6; border: 1px solid #CDEBDD; border-radius: 12px; }
+  .inq-rep b { font-size: 12.5px; color: var(--accent); } .inq-rep small { margin-left: 6px; font-size: 11.5px; color: var(--text2); } .inq-rep p { margin: 4px 0 0; font-size: 14px; white-space: pre-wrap; }
+  .inq-form { margin-top: 10px; } .inq-form summary { cursor: pointer; font-size: 13px; font-weight: 800; color: var(--accent); }
+  .inq-ta { margin-top: 8px; }
+  html[data-theme="dark"] .inq-rep, html[data-theme="dark"] .inq-f { background: transparent; }
   .sched-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 18px; align-items: start; }
   .sched-row input[type=checkbox], .sched-row #smIn { flex: none; min-width: 0; }
   .sp-col { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
@@ -567,13 +583,13 @@ function bottomNavHtml_() {
     ['roster', '명단', '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 3-6 6.5-6s6.5 2.4 6.5 6"/><path d="M17 5.5a3 3 0 0 1 0 5.5M18.5 14.2c2 .7 3 2.5 3 5.8"/>'],
     ['more', '더보기', '<circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/>']
   ];
-  const moreOn = state.nav === 'notice' || state.nav === 'settings';
+  const moreOn = state.nav === 'notice' || state.nav === 'settings' || state.nav === 'inquiry';
   return '<nav class="bnav">' + it.map(function (x) {
     const on = x[0] === 'more' ? moreOn : state.nav === x[0];
     return '<button data-bn="' + x[0] + '"' + (on ? ' class="on"' : '') + '>' + svg(x[2]) + x[1] + '</button>';
   }).join('') + '</nav>' +
   '<div class="sheetbg" id="sheetBg"></div><div class="sheet" id="moreSheet">' +
-    '<button data-bn="notice">공지 보내기</button><button data-bn="settings">설정</button>' +
+    '<button data-bn="inquiry">💬 학생 문의<b class="inq-badge" data-inqb></b></button><button data-bn="notice">공지 보내기</button><button data-bn="settings">설정</button>' +
     '<button class="installBtn" type="button" style="display:none;">📲 관리자 앱으로 설치</button>' +
     '<a href="../report/" id="sheetStu" target="_blank" rel="noopener">학생 화면 보기</a><button id="sheetOut">로그아웃</button></div>';
 }
@@ -588,7 +604,7 @@ function wireBottomNav_() {
       if (k === 'more') { sheet.classList.toggle('open'); bg.classList.toggle('open'); return; }
       close();
       if (k === 'home') renderPortal(); else if (k === 'tasks') renderDashboard();
-      else if (k === 'roster') renderRosterImport(); else if (k === 'notice') renderNotice(); else renderSettings();
+      else if (k === 'roster') renderRosterImport(); else if (k === 'notice') renderNotice(); else if (k === 'inquiry') renderInquiries(); else renderSettings();
     };
   });
   document.getElementById('sheetStu').onclick = function (e) { close(); openStudentPreview(e); };
@@ -601,12 +617,13 @@ function render(inner) {
     return;
   }
   // 메뉴 아이콘 칸 색 = 로고 조각 색 (현황 청록 · 과제 노랑 · 명단 파랑 · 공지 빨강 · 설정 회색)
-  const tint = { home: ['#35D3C8', '#0B2C27'], tasks: ['rgba(255,216,74,.18)', '#FFD84A'], roster: ['rgba(61,139,242,.22)', '#6FA9FF'], notice: ['rgba(255,107,107,.2)', '#FF8A8A'], settings: ['rgba(255,255,255,.08)', '#CFE3DC'] };
+  const tint = { inquiry: ['rgba(167,139,250,.22)', '#C4B5FD'], home: ['#35D3C8', '#0B2C27'], tasks: ['rgba(255,216,74,.18)', '#FFD84A'], roster: ['rgba(61,139,242,.22)', '#6FA9FF'], notice: ['rgba(255,107,107,.2)', '#FF8A8A'], settings: ['rgba(255,255,255,.08)', '#CFE3DC'] };
   const items = [
     ['home', '현황', '<path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/>'],
     ['tasks', '과제', '<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 9h8M8 13h8M8 17h5"/>'],
     ['roster', '명단', '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 3-6 6.5-6s6.5 2.4 6.5 6"/><path d="M17 5.5a3 3 0 0 1 0 5.5M18.5 14.2c2 .7 3 2.5 3 5.8"/>'],
     ['notice', '공지', '<path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>'],
+    ['inquiry', '문의', '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 9h8M8 13h5"/>'],
     ['settings', '설정', '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>']
   ];
   const nav = items.map(function (it) {
@@ -633,9 +650,10 @@ function render(inner) {
     b.onclick = function () {
       const k = b.getAttribute('data-nav');
       if (k === 'home') renderPortal(); else if (k === 'tasks') renderDashboard();
-      else if (k === 'roster') renderRosterImport(); else if (k === 'notice') renderNotice(); else renderSettings();
+      else if (k === 'roster') renderRosterImport(); else if (k === 'notice') renderNotice(); else if (k === 'inquiry') renderInquiries(); else renderSettings();
     };
   });
+  paintInqBadge_();
   document.getElementById('navLogout').onclick = doLogout;
   document.getElementById('navStudentView').onclick = openStudentPreview;
   wireBottomNav_();
@@ -779,7 +797,7 @@ const SAVE_LABELS = {
   setReview: '검토 결과', saveRoster: '명단', autoRoster: '명단', setRosterSource: '명렬표 연결', setRosterException: '예외 학생',
   setRosterConfirm: '본인확인 표시', setAntiPaste: '복붙방지', setTeacherPush: '선생님 알림 항목', setTeacherProfile: '교사 정보',
   setTeacherFile: '안내 파일', clearTeacherFile: '안내 파일 삭제', setTargets: '대상', setTabStatus: '과제 상태', setSchedule: '예약 공개',
-  setOpenAccess: '제출 방식', setMasterCode: '마스터코드', setDescription: '과제 안내', setDeadline: '제출 기한',
+  setOpenAccess: '제출 방식', replyInquiry: '문의 답변', setMasterCode: '마스터코드', setDescription: '과제 안내', setDeadline: '제출 기한',
   setAutoPush: '학생 자동 알림', sendNotice: '공지', saveTeacherToken: '알림 기기 등록', removeTeacherToken: '알림 기기 해제',
   regenerateStudentCode: '학생코드', publishSharePage: '썸네일 페이지', notifyTask: '과제 알림 발송', ensureShortCode: '짧은 주소',
   deleteTab: '과제 삭제', addTab: '새 과제', addRosterStudent: '명단 학생 추가', changePassword: '비밀번호',
@@ -901,6 +919,7 @@ async function boot() {
   if (state.token) { openStart_(); } else { renderLogin(); }
 }
 function openStart_() {
+  if (qs('view') === 'inquiry') { try { history.replaceState(null, '', location.pathname + (qs('exec') ? '?exec=' + encodeURIComponent(qs('exec')) : '')); } catch (e) {} return renderInquiries(); }
   const t = state.pendingTab; state.pendingTab = '';
   if (t) { try { history.replaceState(null, '', location.pathname + (qs('exec') ? '?exec=' + encodeURIComponent(qs('exec')) : '')); } catch (e) {} renderDetail(t); }
   else renderPortal();
@@ -1913,6 +1932,93 @@ document.addEventListener('input', function (e) {
   const cc = document.getElementById('cc_' + t.id); if (cc) cc.textContent = t.value.length + '자';
   autoGrow_(t);
 });
+
+// ---------- 💬 학생 문의 ----------
+// 학생이 «선생님께 문의하기»로 보낸 글·사진·파일을 보고 답해요. 답을 보내면 학생 앱으로 알림이 가요.
+function paintInqBadge_() {
+  const put = function () {
+    const n = state.inqNew || 0;
+    const nav = document.querySelector('.side [data-nav="inquiry"]');
+    if (nav) { let b = nav.querySelector('.inq-badge'); if (!b) { b = document.createElement('b'); b.className = 'inq-badge'; nav.appendChild(b); } b.textContent = n ? String(n) : ''; }
+    document.querySelectorAll('[data-inqb]').forEach(function (b) { b.textContent = n ? String(n) : ''; });
+    const more = document.querySelector('.bnav [data-bn="more"]'); if (more) more.classList.toggle('dot', !!n);
+  };
+  put();
+  if (state.inqChecked || !state.token) return;
+  state.inqChecked = true;
+  api('listInquiries').then(function (r) { if (r && r.success) { state.inqNew = r.newCount || 0; put(); } }).catch(function () {});
+}
+async function renderInquiries(filter) {
+  state.nav = 'inquiry';
+  state.inqFilter = filter || state.inqFilter || 'open';
+  render('<div class="wrap"><h1 class="serif">💬 학생 문의</h1><div class="loading">불러오는 중…</div></div>');
+  let r; try { r = await api('listInquiries'); } catch (e) { r = null; }
+  if (state.nav !== 'inquiry') return;
+  if (!r || !r.success) { render('<div class="wrap"><h1 class="serif">💬 학생 문의</h1><div class="msg error">' + escapeHtml((r && r.message) || '불러오지 못했어요. 서버(Code.gs)가 버전 66 이상인지 확인해주세요.') + '</div></div>'); return; }
+  state.inqNew = r.newCount || 0; state.avatars = Object.assign({}, state.avatars || {}, r.avatars || {});
+  const all = r.items || [];
+  const isOpen = function (q) { return q.status === '새 문의' || q.status === '확인함'; };
+  const cnt = { open: all.filter(isOpen).length, done: all.filter(function (q) { return !isOpen(q); }).length, all: all.length };
+  const list = all.filter(function (q) { return state.inqFilter === 'all' ? true : state.inqFilter === 'open' ? isOpen(q) : !isOpen(q); });
+  const pill = function (st) { return '<span class="pill ' + (st === '새 문의' ? 'p-wait' : st === '확인함' ? 'p-ack' : 'p-done') + '">' + escapeHtml(st) + '</span>'; };
+  render(
+    '<div class="wrap" style="max-width:820px;">' +
+      '<h1 class="serif">💬 학생 문의</h1>' +
+      '<p class="lead">학생이 «선생님께 문의하기»로 보낸 글·사진·파일이에요. 답을 보내면 학생 앱에 알림이 가고 «내 문의»에 보여요.</p>' +
+      '<div class="chips" id="inqChips">' +
+        [['open', '답변 전', cnt.open], ['done', '답변 완료·해결', cnt.done], ['all', '전체', cnt.all]].map(function (c) { return '<button data-if="' + c[0] + '"' + (state.inqFilter === c[0] ? ' class="on"' : '') + '>' + c[1] + ' ' + c[2] + '</button>'; }).join('') +
+      '</div>' +
+      (list.length ? list.map(function (q) {
+        return '<div class="card inq-card' + (q.status === '새 문의' ? ' new' : '') + '" data-qid="' + escapeHtml(q.id) + '">' +
+          '<div class="inq-h">' + dotHtml_(q.studentId, q.name) + '<div class="inq-who"><b>' + escapeHtml(q.studentId + ' ' + q.name) + '</b><small>' + escapeHtml(histTime_(q.at)) + (q.tab ? ' · 📝 ' + escapeHtml(q.tab) : ' · 일반 문의') + '</small></div>' + pill(q.status) + '</div>' +
+          (q.text ? '<p class="inq-txt">' + escapeHtml(q.text) + '</p>' : '') +
+          (q.files.length ? '<div class="inq-files">' + q.files.map(function (f) {
+            return '<button type="button" class="inq-f" data-iqf="' + escapeHtml(f.id) + '">' + fileIcon_(fileExt_(f.name), '') + ' ' + escapeHtml(f.name) + '</button>';
+          }).join('') + '</div>' : '') +
+          (q.reply ? '<div class="inq-rep"><b>내 답변</b><small>' + escapeHtml(histTime_(q.replyAt)) + '</small><p>' + escapeHtml(q.reply) + '</p></div>' : '') +
+          '<details class="inq-form"' + (isOpen(q) ? ' open' : '') + '><summary>' + (q.reply ? '답변 고치기' : '답변 쓰기') + '</summary>' +
+            '<textarea class="ta-exp inq-ta" rows="3" maxlength="3000" placeholder="학생에게 보낼 답을 적어 주세요.">' + escapeHtml(q.reply || '') + '</textarea>' +
+            '<div class="row" style="gap:8px;flex-wrap:wrap;margin-top:8px;"><button class="btn btn-sm" data-iq-send type="button">답변 보내기</button>' +
+              (q.status === '새 문의' ? '<button class="btn-outline btn-sm" data-iq-st="확인함" type="button">👀 확인함</button>' : '') +
+              (q.status !== '해결' ? '<button class="btn-outline btn-sm" data-iq-st="해결" type="button">✅ 해결로 표시</button>' : '<button class="btn-outline btn-sm" data-iq-st="확인함" type="button">다시 열기</button>') +
+              '<span class="hint" data-iq-msg></span></div></details>' +
+        '</div>';
+      }).join('') : '<p class="hint">' + (state.inqFilter === 'open' ? '답할 문의가 없어요 🎉' : '문의가 없어요.') + '</p>') +
+    '</div>'
+  );
+  document.querySelectorAll('[data-if]').forEach(function (b) { b.onclick = function () { renderInquiries(b.getAttribute('data-if')); }; });
+  document.querySelectorAll('.inq-card').forEach(function (card) {
+    const id = card.getAttribute('data-qid'), q = all.find(function (x) { return x.id === id; });
+    const msg = function (t) { const m = card.querySelector('[data-iq-msg]'); if (m) m.textContent = t; };
+    async function save(reply, status) {
+      msg('저장 중…');
+      let res; try { res = await api('replyInquiry', { id: id, reply: reply, status: status }); } catch (e) { msg('서버에 연결하지 못했어요.'); return; }
+      if (!res || res.success !== true) { msg((res && res.message) || '저장하지 못했어요.'); return; }
+      state.inqChecked = false; renderInquiries();
+    }
+    const sb = card.querySelector('[data-iq-send]');
+    if (sb) sb.onclick = function () { const t = card.querySelector('.inq-ta').value.trim(); if (!t) { msg('답을 적어 주세요.'); return; } save(t, '답변 완료'); };
+    card.querySelectorAll('[data-iq-st]').forEach(function (b) { b.onclick = function () { save(q.reply || '', b.getAttribute('data-iq-st')); }; });
+    card.querySelectorAll('[data-iqf]').forEach(function (b) { b.onclick = function () { openInquiryFile_(b.getAttribute('data-iqf'), b); }; });
+  });
+}
+// 문의 첨부: 브라우저에서 바로(25MB 넘으면 드라이브로)
+async function openInquiryFile_(fileId, btn) {
+  const w = window.open('', '_blank');
+  if (w) { try { w.document.write('<meta charset="utf-8"><title>불러오는 중…</title><p style="font-family:sans-serif;padding:24px;color:#555">파일을 불러오는 중이에요…</p>'); } catch (e) {} }
+  btn.disabled = true;
+  let r = null; try { r = await api('getInquiryFileData', { fileId: fileId }); } catch (e) {}
+  btn.disabled = false;
+  const drive = 'https://drive.google.com/file/d/' + encodeURIComponent(fileId) + '/view';
+  if (!r || r.success !== true) { if (w) w.location.href = (r && r.url) || drive; return; }
+  const mime = r.mime || 'application/octet-stream';
+  if (!/^(image\/|application\/pdf|text\/plain|video\/)/.test(mime)) { if (w) w.location.href = drive; return; }   // PPT·한글 등은 드라이브 미리보기
+  const bin = atob(r.data), bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  const url = URL.createObjectURL(new Blob([bytes], { type: mime }));
+  if (w) w.location.href = url; else window.open(url, '_blank');
+  setTimeout(function () { URL.revokeObjectURL(url); }, 10 * 60 * 1000);
+}
 
 async function renderDetail(tabName) {
   state.nav = 'tasks';
@@ -3351,6 +3457,7 @@ async function loadTeacherPushBox_() {
     chk('withdraw', '↩️ 회수', '학생이 낸 과제를 거둬 갔을 때', '학생이 «회수»를 누르면 와요. 회수한 답은 «_이전제출» 시트에 남아 있어요. 검토 완료한 과제는 학생이 회수할 수 없어요.') +
     chk('allDone', '🎉 모두 제출', '명단 학생이 전부 냈을 때 한 번', '로그인 과제에서 명단에 있는 학생이 한 명도 빠짐없이 내면 과제마다 한 번 «🎉 모두 제출»이 와요. 명단이 없는 로그인 없는 과제는 해당되지 않아요.') +
     chk('deadlineReport', '⏰ 마감 요약', '기한이 지나면 냄·안 냄 인원', '제출 기한을 정한 과제는 기한이 지나고 15분 안에 «⏰ 마감: 과제명 / 냄 20 / 안 냄 3 — 안 낸 학생 학번 이름»이 와요. 과제(기한)마다 한 번만 와요.') +
+    chk('inquiry', '💬 학생 문의', '학생이 문의를 보내면', '학생이 «선생님께 문의하기»로 글·사진·파일을 보내면 «💬 문의: 3205 김아현 / 내용 앞부분»이 와요. 누르면 관리자 «문의» 화면이 열려요. 조용한 시간(밤 10시~아침 7시)에는 알림 없이 «문의»에만 쌓여요.') +
     chk('quiet', '🌙 밤에는 모아 두기', '밤 10시~아침 7시 알림은 아침 7시에 한 번에', '켜 두면 밤 10시부터 아침 7시 사이의 제출 소식은 바로 보내지 않고 모아 뒀다가 아침 7시 넘어 한 통으로 보내요. 끄면 밤에도 바로 와요.') +
     '<div class="row" style="gap:8px;margin-top:10px;flex-wrap:wrap;"><button class="btn btn-sm" id="tpSaveSet" type="button">알림 항목 저장</button><span class="hint" id="tpMsg2"></span></div>';
   const msg = function (t) { const m = document.getElementById('tpMsg2'); if (m) m.textContent = t; };

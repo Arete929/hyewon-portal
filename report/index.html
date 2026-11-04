@@ -238,6 +238,22 @@
   .gimg-ov { position: fixed; inset: 0; z-index: 9999; background: rgba(10,20,18,.88); display: flex; align-items: center; justify-content: center; padding: 16px; cursor: zoom-out; }
   .gimg-ov img { max-width: 100%; max-height: 100%; border-radius: 10px; }
   .gimg-ov span { position: absolute; top: 14px; right: 16px; color: #fff; font-weight: 800; font-size: 14px; }
+  .inq-fab { position: fixed; right: 16px; bottom: 90px; z-index: 20; border: 0; border-radius: 999px; padding: 12px 16px; background: var(--hyewon-emerald, #087A55); color: #fff; font-family: inherit; font-size: 14px; font-weight: 800; box-shadow: 0 6px 18px rgba(8,122,85,.35); cursor: pointer; }
+  @media (min-width: 600px) { .inq-fab { right: calc(50vw - 280px); } }
+  .inq-more { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; font-family: inherit; cursor: pointer; }
+  .inq-more > span { font-size: 26px; } .inq-more b { display: block; font-size: 15.5px; } .inq-more small { color: var(--text2); font-size: 12.5px; }
+  .inq-sel { width: 100%; margin: 0 0 10px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 12px; font-family: inherit; font-size: 14px; background: var(--surface); color: var(--text); }
+  .inq-add { display: inline-flex; align-items: center; gap: 6px; margin-top: 10px; padding: 9px 14px; border: 1.5px dashed var(--border); border-radius: 12px; font-size: 14px; font-weight: 700; color: var(--text2); cursor: pointer; }
+  .inq-item { border-top: 1px solid var(--border); padding: 12px 0; } .inq-item:first-child { border-top: 0; padding-top: 0; }
+  .inq-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; } .inq-top small { color: var(--text2); font-size: 12px; }
+  .inq-st { font-size: 12px; font-weight: 800; border-radius: 999px; padding: 3px 10px; background: #FFF4DB; color: #9A6400; }
+  .inq-st.seen { background: #E8F0FE; color: #2F5BD8; } .inq-st.ok { background: #E3F1EC; color: #087A55; }
+  .inq-q { margin: 8px 0 0; font-size: 14px; line-height: 1.65; white-space: pre-wrap; word-break: break-word; }
+  .inq-fl { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; } .inq-fl span { font-size: 12px; background: var(--bg); border-radius: 999px; padding: 3px 9px; color: var(--text2); }
+  .inq-a { margin-top: 10px; padding: 10px 12px; background: #F1FAF6; border: 1px solid #CDEBDD; border-radius: 12px; }
+  .inq-a b { font-size: 13px; color: var(--hyewon-emerald); } .inq-a small { margin-left: 6px; color: var(--text2); font-size: 11.5px; }
+  .inq-a p { margin: 4px 0 0; font-size: 14px; line-height: 1.65; white-space: pre-wrap; }
+  html[data-theme="dark"] .inq-a { background: transparent; }
   .ack-row { display: flex; justify-content: flex-end; margin-top: 12px; }
   .ack-btn { display: inline-flex; align-items: center; gap: 6px; border: 0; border-radius: 999px; padding: 9px 16px; background: var(--hyewon-emerald, #087A55); color: #fff; font-family: inherit; font-size: 13.5px; font-weight: 800; cursor: pointer; box-shadow: 0 4px 12px rgba(8,122,85,.25); }
   .ack-btn:disabled { opacity: .6; }
@@ -841,6 +857,7 @@ function renderMore_() {
           '<button type="button" data-theme-pick="light"' + (t === 'light' ? ' class="on"' : '') + '><span class="sw" style="background:linear-gradient(180deg,#FFFCF6 50%,#fff 50%);"></span>밝게</button>' +
           '<button type="button" data-theme-pick="dark"' + (t === 'dark' ? ' class="on"' : '') + '><span class="sw" style="background:linear-gradient(180deg,#0B2C27 50%,#133B34 50%);"></span>어둡게</button>' +
         '</div><p class="hint" style="margin:10px 0 0;">이 기기에서만 바뀌어요.</p></div>' +
+      (canInquire_() ? '<button type="button" class="detail-card inq-more" data-inq=""><span>💬</span><div><b>선생님께 문의하기</b><small>사진·파일을 함께 보낼 수 있어요 · 내 문의와 답변 보기</small></div></button>' : '') +
       '<div class="detail-card"><div class="sec-head">내 정보</div>' +
         (canAvatar_()
           ? '<div class="me-row"><label class="me-av" title="프로필 사진 바꾸기">' + (state.myAvatar ? '<img src="' + escapeHtml(state.myAvatar) + '" alt="">' : '<span>' + escapeHtml(String((state.login && state.login.studentName) || '?').slice(-2)) + '</span>') +
@@ -1001,6 +1018,110 @@ document.addEventListener('click', function (e) {
   ov.onclick = function () { ov.remove(); };
   document.body.appendChild(ov);
 });
+
+// ---------- 💬 선생님께 문의하기 ----------
+// 학생코드로 로그인한 학생만. 글 + 사진·파일 여러 개(10개, 하나 15MB). 큰 사진은 1600px JPG로 줄여 보내요.
+function canInquire_() { return !!(state.login && state.login.code && !state.login.master && !state.login.open && !state.login.preview && Number(state.config && state.config.serverVersion) >= 66); }
+function inqLinkHtml_(tab) {
+  return canInquire_() ? '<div style="text-align:center;margin:4px 0 12px;"><button type="button" class="linkbtn" data-inq="' + escapeHtml(tab.sheetName) + '">💬 이 과제에 대해 선생님께 문의하기</button></div>' : '';
+}
+document.addEventListener('click', function (e) {
+  const b = e.target.closest && e.target.closest('[data-inq]');
+  if (!b || !canInquire_()) return;
+  e.preventDefault(); renderInquiry_(b.getAttribute('data-inq') || '');
+});
+state.inq = { files: [], tab: '', text: '' };
+async function shrinkPhoto_(file) {
+  if (!/^image\/(jpeg|png|webp)$/.test(file.type) || file.size <= 1024 * 1024) return { name: file.name, type: file.type, blob: file };
+  try {
+    const bmp = await createImageBitmap(file), k = Math.min(1, 1600 / Math.max(bmp.width, bmp.height));
+    const cv = document.createElement('canvas'); cv.width = Math.round(bmp.width * k); cv.height = Math.round(bmp.height * k);
+    const cx = cv.getContext('2d'); cx.fillStyle = '#fff'; cx.fillRect(0, 0, cv.width, cv.height); cx.drawImage(bmp, 0, 0, cv.width, cv.height);
+    const blob = await new Promise(function (r) { cv.toBlob(r, 'image/jpeg', 0.85); });
+    return { name: file.name.replace(/\.[^.]+$/, '') + '.jpg', type: 'image/jpeg', blob: blob };
+  } catch (err) { return { name: file.name, type: file.type, blob: file }; }
+}
+function renderInquiry_(tabName) {
+  if (tabName !== undefined && tabName !== null) state.inq.tab = tabName;
+  const tabs = (state.myTabs || []).map(function (t) { return t.sheetName; });
+  const opts = '<option value="">일반 문의 (과제와 상관없음)</option>' + tabs.map(function (n) { return '<option value="' + escapeHtml(n) + '"' + (n === state.inq.tab ? ' selected' : '') + '>' + escapeHtml(n) + '</option>'; }).join('');
+  render(
+    appbarHtml_('선생님께 문의하기', true) +
+    '<div class="main" style="padding-top:16px;">' +
+      '<div class="detail-card"><div class="sec-head" style="color:var(--hyewon-emerald);">' + ic_('chat', 18, 'var(--hyewon-emerald)') + '새 문의</div>' +
+        '<label class="hint" for="inqTab" style="display:block;margin:0 0 6px;font-weight:700;">어떤 과제에 대한 문의인가요?</label>' +
+        '<select id="inqTab" class="inq-sel">' + opts + '</select>' +
+        '<textarea id="inqText" class="ta-exp" rows="5" maxlength="3000" placeholder="궁금한 점이나 문제를 적어 주세요. 화면을 찍은 사진을 함께 보내면 더 빨리 도와줄 수 있어요.">' + escapeHtml(state.inq.text) + '</textarea>' +
+        '<div class="ta-foot"><span class="charcount" id="inqCc">' + state.inq.text.length + '자</span></div>' +
+        '<label class="inq-add">📎 사진·파일 추가<input type="file" id="inqFile" multiple hidden></label>' +
+        '<div id="inqFiles" class="fpk"></div>' +
+        '<p class="hint" style="margin:6px 0 12px;">사진·파일은 10개까지, 하나에 15MB까지 보낼 수 있어요. 문의는 선생님만 봐요.</p>' +
+        '<button class="btn" id="inqSend" type="button">문의 보내기</button><div class="hint" id="inqMsg" style="margin-top:8px;"></div>' +
+      '</div>' +
+      '<div class="detail-card"><div class="sec-head">' + ic_('clock', 16, 'var(--text2)') + '내 문의</div><div id="inqList"><span class="hint">불러오는 중…</span></div></div>' +
+    '</div>' + footerHtml_() + bottombarHtml_('inquiry')
+  );
+  const back = wireChrome_(); if (back) back.onclick = function (e) { e.preventDefault(); renderToday(); };
+  const ta = document.getElementById('inqText'), cc = document.getElementById('inqCc');
+  ta.addEventListener('input', function () { state.inq.text = ta.value; cc.textContent = ta.value.length + '자'; autoGrow_(ta); });
+  autoGrow_(ta);
+  document.getElementById('inqTab').onchange = function () { state.inq.tab = this.value; };
+  function paintFiles() {
+    const box = document.getElementById('inqFiles');
+    box.innerHTML = state.inq.files.map(function (f, i) {
+      return '<div class="fpk-i"><span class="fpk-n">' + (/^image\//.test(f.type) ? '🖼 ' : '📎 ') + escapeHtml(f.name) + '</span><span class="fpk-s">' + fileSizeLabel(f.size) + '</span><button type="button" class="fpk-x" data-rmi="' + i + '" aria-label="빼기">✕</button></div>';
+    }).join('');
+    box.querySelectorAll('[data-rmi]').forEach(function (b) { b.onclick = function () { state.inq.files.splice(Number(b.getAttribute('data-rmi')), 1); paintFiles(); }; });
+  }
+  paintFiles();
+  document.getElementById('inqFile').onchange = function () {
+    Array.prototype.forEach.call(this.files || [], function (f) {
+      if (state.inq.files.length >= 10) return;
+      if (!state.inq.files.some(function (x) { return x.name === f.name && x.size === f.size; })) state.inq.files.push(f);
+    });
+    if ((this.files || []).length + 0 > 0 && state.inq.files.length >= 10) document.getElementById('inqMsg').textContent = '사진·파일은 10개까지예요.';
+    this.value = ''; paintFiles();
+  };
+  document.getElementById('inqSend').onclick = sendInquiry_;
+  loadMyInquiries_();
+}
+async function sendInquiry_() {
+  const btn = document.getElementById('inqSend'), msg = document.getElementById('inqMsg');
+  const text = (document.getElementById('inqText').value || '').trim(), files = state.inq.files.slice();
+  if (!text && !files.length) { msg.textContent = '문의 내용을 적어 주세요.'; return; }
+  btn.disabled = true;
+  const ids = [];
+  for (let i = 0; i < files.length; i++) {
+    btn.textContent = '사진·파일 올리는 중 ' + (i + 1) + '/' + files.length + '…';
+    const f = await shrinkPhoto_(files[i]);
+    if (f.blob.size > 15 * 1024 * 1024) { btn.disabled = false; btn.textContent = '문의 보내기'; msg.textContent = '«' + files[i].name + '»이(가) 15MB보다 커요. 빼고 보내 주세요.'; return; }
+    let r = null;
+    try { r = await api('uploadInquiryFile', { studentId: state.login.studentId, code: state.login.code, name: f.name, mimeType: f.type, base64: await fileToBase64(f.blob) }); } catch (e) {}
+    if (!r || r.success !== true) { btn.disabled = false; btn.textContent = '문의 보내기'; msg.textContent = (r && r.message) || '«' + files[i].name + '»을(를) 올리지 못했어요. 다시 해 주세요.'; return; }
+    ids.push(r.id);
+  }
+  btn.textContent = '보내는 중…';
+  let r = null;
+  try { r = await api('submitInquiry', { studentId: state.login.studentId, code: state.login.code, tabName: state.inq.tab, text: text, fileIds: ids }); } catch (e) {}
+  btn.disabled = false; btn.textContent = '문의 보내기';
+  if (!r || r.success !== true) { msg.textContent = (r && r.message) || '보내지 못했어요. 잠시 뒤 다시 해 주세요.'; return; }
+  state.inq = { files: [], tab: state.inq.tab, text: '' };
+  renderInquiry_(null);
+  const m2 = document.getElementById('inqMsg'); if (m2) m2.innerHTML = '<span style="color:var(--hyewon-emerald);font-weight:800;">✅ 선생님께 보냈어요. 답변이 오면 아래 «내 문의»에 보여요.</span>';
+}
+async function loadMyInquiries_() {
+  let r = null; try { r = await api('getMyInquiries', { studentId: state.login.studentId, code: state.login.code }); } catch (e) {}
+  const box = document.getElementById('inqList'); if (!box) return;
+  if (!r || !r.success) { box.innerHTML = '<span class="hint">불러오지 못했어요.</span>'; return; }
+  if (!r.items.length) { box.innerHTML = '<span class="hint">아직 보낸 문의가 없어요.</span>'; return; }
+  box.innerHTML = r.items.map(function (q) {
+    const done = q.status === '답변 완료' || q.status === '해결';
+    return '<div class="inq-item"><div class="inq-top"><span class="inq-st' + (done ? ' ok' : q.status === '확인함' ? ' seen' : '') + '">' + escapeHtml(q.status === '새 문의' ? '답변 기다리는 중' : q.status) + '</span><small>' + escapeHtml(histTime_(q.at)) + (q.tab ? ' · ' + escapeHtml(q.tab) : '') + '</small></div>' +
+      (q.text ? '<p class="inq-q">' + escapeHtml(q.text) + '</p>' : '') +
+      (q.files.length ? '<div class="inq-fl">' + q.files.map(function (n) { return '<span>📎 ' + escapeHtml(n) + '</span>'; }).join('') + '</div>' : '') +
+      (q.reply ? '<div class="inq-a"><b>선생님 답변</b><small>' + escapeHtml(histTime_(q.replyAt)) + '</small><p>' + escapeHtml(q.reply) + '</p></div>' : '') + '</div>';
+  }).join('');
+}
 
 // ---------- ✏️ 과제 제출 — 모든 과제에 기본으로 있는 학생 글 칸 ----------
 // 기본은 4줄 정도, «펼치기»를 누르면 크게 써요. 적던 글은 화면이 다시 그려져도 남아요(noteDraft).
@@ -1319,7 +1440,7 @@ function bottombarHtml_(active) {
     tabBtn('today', '과제', '<rect x="4" y="4" width="16" height="16" rx="2"></rect><path d="M8 9h8M8 13h8M8 17h5"></path>') +
     tabBtn('score', '성적', '<path d="M4 20V10"></path><path d="M10 20V4"></path><path d="M16 20v-7"></path><path d="M22 20H2"></path>') +
     tabBtn('more', '더보기', '<circle cx="5" cy="12" r="1.5"></circle><circle cx="12" cy="12" r="1.5"></circle><circle cx="19" cy="12" r="1.5"></circle>') +
-  '</div>';
+  '</div>' + (canInquire_() && active !== 'inquiry' ? '<button type="button" class="inq-fab" data-inq="">💬 선생님께 문의</button>' : '');
 }
 
 function doGlobalLogout_() {
@@ -1421,6 +1542,7 @@ function scoreHtml_(r) {
 }
 
 function renderToday() {
+  if (!state.inqOpened && qs('inq') && canInquire_()) { state.inqOpened = true; return renderInquiry_(''); }   // 답변 알림을 눌러 들어왔을 때
   const items = (state.myTabs || []).map(function (t) {
     const sub = sportCategoryLabel_(t.sheetName);
     return '<a class="assign-card" href="#" data-tab="' + escapeHtml(t.sheetName) + '">' +
@@ -1577,6 +1699,7 @@ function renderAssignmentForm(tab, entry, notice) {
         '<span>' + (entry.submitted ? '수정 제출하기' : '제출하기') + '</span>' +
         '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto;"><polyline points="9 18 15 12 9 6"></polyline></svg>' +
       '</button>' +
+      inqLinkHtml_(tab) +
       (state.login.open ? '' : '<p style="text-align:center;"><span class="hint">제출 시 ' + escapeHtml(state.login.studentId) + ' ' + escapeHtml(state.login.studentName) + ' 이름으로 기록됩니다</span></p>') +
     '</div>' +
     footerHtml_()
@@ -1633,6 +1756,7 @@ function renderSubmissionStatus(tab, entry) {
             '<span style="margin-left:auto;display:flex;">' + ic_('chev', 16, 'var(--hyewon-coral)', 2.4) + '</span>' +
           '</button>') +
       (canWithdraw ? '<div style="text-align:center;margin:-4px 0 12px;"><button class="linkbtn" id="withdrawBtn" type="button">제출 회수하기 (잘못 냈을 때)</button></div>' : '') +
+      inqLinkHtml_(tab) +
       '<div class="detail-card"><div class="sec-head">' + ic_('clock', 16, 'var(--text2)') + '제출 기록</div><div id="histArea"><span class="hint">불러오는 중…</span></div></div>' +
       '<div class="detail-card" id="myNoteCard" style="display:none;"><div class="sec-head">' + ic_('edit', 16, 'var(--text2)') + '내가 쓴 글</div><p id="myNoteText" class="my-note"></p></div>' +
       '<div class="detail-card" id="submittedFileCard" style="display:none;"><div class="sec-head">' + ic_('file', 16, 'var(--text2)') + '내가 낸 파일 <span class="hint" style="font-weight:500;margin-left:4px;">눌러서 열어 보기</span></div><div id="submittedFileArea"></div></div>' +
