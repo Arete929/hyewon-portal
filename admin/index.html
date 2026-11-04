@@ -44,11 +44,15 @@
   .pillbtn { border: 1px solid var(--border); border-radius: 999px; padding: 6px 14px; font-family: inherit; font-size: 13px; font-weight: 700; background: #fff; color: var(--text2); cursor: pointer; }
   .pillbtn.on { background: var(--accent); border-color: var(--accent); color: #fff; }
   .pillbtn:disabled { opacity: .6; cursor: default; }
-  .modesw { display: inline-flex; padding: 3px; background: #E9EEEC; border-radius: 999px; gap: 2px; vertical-align: middle; }
-  .modesw button { border: 0; background: transparent; border-radius: 999px; padding: 6px 14px; font-family: inherit; font-size: 13px; font-weight: 800; color: var(--text2); cursor: pointer; }
-  .modesw button.on { background: var(--accent); color: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.15); }
+  .modesw { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; background: #fff; border: 1px solid var(--border); border-radius: 999px; vertical-align: middle; }
+  .modesw .ms-l { border: 0; background: transparent; padding: 3px 2px; font-family: inherit; font-size: 13px; font-weight: 700; color: var(--text3, #9AA79F); cursor: pointer; }
+  .modesw:not(.qr) .ms-l[data-oam="code"], .modesw.qr .ms-l[data-oam="qr"] { color: var(--accent); font-weight: 800; }
+  .ms-tg { position: relative; width: 44px; height: 24px; border: 0; border-radius: 999px; background: var(--accent); cursor: pointer; padding: 0; flex: none; transition: background .2s; }
+  .modesw.qr .ms-tg { background: #0F766E; }
+  .ms-tg i { position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.3); transition: left .2s; }
+  .modesw.qr .ms-tg i { left: 23px; }
   .modesw button:disabled { opacity: .6; cursor: default; }
-  html[data-theme="dark"] .modesw { background: rgba(255,255,255,.08); }
+  html[data-theme="dark"] .modesw { background: transparent; }
   .verbox { margin: 8px 12px 0; font-size: 10.5px; line-height: 1.6; color: #7FA596; }
   .verbox b { color: #A9C4B9; font-weight: 600; }
   .verfoot { display: none; font-size: 11px; line-height: 1.7; color: var(--text3); padding: 0 16px 28px; }
@@ -1946,9 +1950,10 @@ async function renderDetail(tabName) {
       })() +
       '<div class="dt-pills">' +
         '<button type="button" class="pillbtn' + (ap ? ' on' : '') + '" id="apToggle">복붙방지 ' + (ap ? '켜짐' : '꺼짐') + '</button>' +
-        '<div class="modesw" role="radiogroup" aria-label="제출 방식" title="학생이 어떻게 들어와 내는지">' +
-          '<button type="button" role="radio" data-oam="code" aria-checked="' + (openAcc ? 'false' : 'true') + '" class="' + (openAcc ? '' : 'on') + '">🔑 학생코드</button>' +
-          '<button type="button" role="radio" data-oam="qr" aria-checked="' + (openAcc ? 'true' : 'false') + '" class="' + (openAcc ? 'on' : '') + '">📱 QR코드</button></div>' +
+        '<div class="modesw' + (openAcc ? ' qr' : '') + '" title="학생이 어떻게 들어와 내는지">' +
+          '<button type="button" class="ms-l" data-oam="code">🔑 학생코드</button>' +
+          '<button type="button" class="ms-tg" role="switch" aria-label="제출 방식: 켜면 QR코드" aria-checked="' + (openAcc ? 'true' : 'false') + '" data-oam="flip"><i></i></button>' +
+          '<button type="button" class="ms-l" data-oam="qr">📱 QR코드</button></div>' +
         '<button type="button" class="pillbtn" id="previewBtn" style="background:#4B3BB5;border-color:#4B3BB5;color:#fff;">👀 학생 화면 미리보기</button>' +
       (tab.meta && tab.meta.shortCode ? '<button type="button" class="pillbtn" id="qrHeadBtn" style="background:#0F766E;border-color:#0F766E;color:#fff;">📱 QR 크게</button>' : '') +
       '</div>' +
@@ -2196,7 +2201,7 @@ async function renderDetail(tabName) {
   // 제출 방식 스위치 — 🔑 학생코드(학번+학생코드로 로그인) / 📱 QR코드(로그인 없이 명단에서 골라 냄)
   document.querySelectorAll('[data-oam]').forEach(function (btn) {
     btn.onclick = async function () {
-      const wantQr = btn.getAttribute('data-oam') === 'qr';
+      const mode = btn.getAttribute('data-oam'), wantQr = mode === 'flip' ? !openAcc : mode === 'qr';
       if (wantQr === openAcc) return;
       if (wantQr && !confirm('📱 QR코드로 받을까요?\n\n로그인 없이 QR로 들어와 명단에서 이름을 골라 내요. 학생코드를 확인하지 않아서, 다른 학생 이름을 골라 덮어쓸 수도 있어요.')) return;
       if (!wantQr && !confirm('🔑 학생코드로 받을까요?\n\n학생은 학번과 학생코드로 로그인해서 내요. 이미 QR로 낸 내용은 그대로 남고, 로그인하면 보고 고치거나 회수할 수 있어요.')) return;
