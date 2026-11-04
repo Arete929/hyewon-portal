@@ -44,6 +44,11 @@
   .pillbtn { border: 1px solid var(--border); border-radius: 999px; padding: 6px 14px; font-family: inherit; font-size: 13px; font-weight: 700; background: #fff; color: var(--text2); cursor: pointer; }
   .pillbtn.on { background: var(--accent); border-color: var(--accent); color: #fff; }
   .pillbtn:disabled { opacity: .6; cursor: default; }
+  .modesw { display: inline-flex; padding: 3px; background: #E9EEEC; border-radius: 999px; gap: 2px; vertical-align: middle; }
+  .modesw button { border: 0; background: transparent; border-radius: 999px; padding: 6px 14px; font-family: inherit; font-size: 13px; font-weight: 800; color: var(--text2); cursor: pointer; }
+  .modesw button.on { background: var(--accent); color: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.15); }
+  .modesw button:disabled { opacity: .6; cursor: default; }
+  html[data-theme="dark"] .modesw { background: rgba(255,255,255,.08); }
   .verbox { margin: 8px 12px 0; font-size: 10.5px; line-height: 1.6; color: #7FA596; }
   .verbox b { color: #A9C4B9; font-weight: 600; }
   .verfoot { display: none; font-size: 11px; line-height: 1.7; color: var(--text3); padding: 0 16px 28px; }
@@ -770,7 +775,7 @@ const SAVE_LABELS = {
   setReview: '검토 결과', saveRoster: '명단', autoRoster: '명단', setRosterSource: '명렬표 연결', setRosterException: '예외 학생',
   setRosterConfirm: '본인확인 표시', setAntiPaste: '복붙방지', setTeacherPush: '선생님 알림 항목', setTeacherProfile: '교사 정보',
   setTeacherFile: '안내 파일', clearTeacherFile: '안내 파일 삭제', setTargets: '대상', setTabStatus: '과제 상태', setSchedule: '예약 공개',
-  setOpenAccess: '로그인 없이 받기', setMasterCode: '마스터코드', setDescription: '과제 안내', setDeadline: '제출 기한',
+  setOpenAccess: '제출 방식', setMasterCode: '마스터코드', setDescription: '과제 안내', setDeadline: '제출 기한',
   setAutoPush: '학생 자동 알림', sendNotice: '공지', saveTeacherToken: '알림 기기 등록', removeTeacherToken: '알림 기기 해제',
   regenerateStudentCode: '학생코드', publishSharePage: '썸네일 페이지', notifyTask: '과제 알림 발송', ensureShortCode: '짧은 주소',
   deleteTab: '과제 삭제', addTab: '새 과제', addRosterStudent: '명단 학생 추가', changePassword: '비밀번호',
@@ -1941,7 +1946,9 @@ async function renderDetail(tabName) {
       })() +
       '<div class="dt-pills">' +
         '<button type="button" class="pillbtn' + (ap ? ' on' : '') + '" id="apToggle">복붙방지 ' + (ap ? '켜짐' : '꺼짐') + '</button>' +
-        '<button type="button" class="pillbtn' + (openAcc ? ' on' : '') + '" id="oaToggle">로그인 없이 받기 ' + (openAcc ? '켜짐' : '꺼짐') + '</button>' +
+        '<div class="modesw" role="radiogroup" aria-label="제출 방식" title="학생이 어떻게 들어와 내는지">' +
+          '<button type="button" role="radio" data-oam="code" aria-checked="' + (openAcc ? 'false' : 'true') + '" class="' + (openAcc ? '' : 'on') + '">🔑 학생코드</button>' +
+          '<button type="button" role="radio" data-oam="qr" aria-checked="' + (openAcc ? 'true' : 'false') + '" class="' + (openAcc ? 'on' : '') + '">📱 QR코드</button></div>' +
         '<button type="button" class="pillbtn" id="previewBtn" style="background:#4B3BB5;border-color:#4B3BB5;color:#fff;">👀 학생 화면 미리보기</button>' +
       (tab.meta && tab.meta.shortCode ? '<button type="button" class="pillbtn" id="qrHeadBtn" style="background:#0F766E;border-color:#0F766E;color:#fff;">📱 QR 크게</button>' : '') +
       '</div>' +
@@ -2186,14 +2193,20 @@ async function renderDetail(tabName) {
       tab.meta.openMode = mode === 'anyone' ? 'anyone' : undefined;
     };
   });
-  document.getElementById('oaToggle').onclick = async function () {
-    const btn = this; btn.disabled = true;
-    if (!openAcc && !confirm('로그인 없이 받을까요?\n\n학생코드 확인이 없어서 학번과 이름을 아는 누구나 제출할 수 있어요.')) { btn.disabled = false; return; }
-    let r;
-    try { r = await api('setOpenAccess', { tabName: tabName, on: !openAcc }); } catch (e) { btn.disabled = false; return; }
-    if (!r || r.success !== true) { btn.disabled = false; alert((r && r.message) || '바꾸지 못했어요. 서버(Code.gs)가 버전 29 이상인지 확인해주세요.'); return; }
-    renderDetail(tabName);
-  };
+  // 제출 방식 스위치 — 🔑 학생코드(학번+학생코드로 로그인) / 📱 QR코드(로그인 없이 명단에서 골라 냄)
+  document.querySelectorAll('[data-oam]').forEach(function (btn) {
+    btn.onclick = async function () {
+      const wantQr = btn.getAttribute('data-oam') === 'qr';
+      if (wantQr === openAcc) return;
+      if (wantQr && !confirm('📱 QR코드로 받을까요?\n\n로그인 없이 QR로 들어와 명단에서 이름을 골라 내요. 학생코드를 확인하지 않아서, 다른 학생 이름을 골라 덮어쓸 수도 있어요.')) return;
+      if (!wantQr && !confirm('🔑 학생코드로 받을까요?\n\n학생은 학번과 학생코드로 로그인해서 내요. 이미 QR로 낸 내용은 그대로 남고, 로그인하면 보고 고치거나 회수할 수 있어요.')) return;
+      document.querySelectorAll('[data-oam]').forEach(function (b) { b.disabled = true; });
+      let r;
+      try { r = await api('setOpenAccess', { tabName: tabName, on: wantQr }); } catch (e) { r = null; }
+      if (!r || r.success !== true) { document.querySelectorAll('[data-oam]').forEach(function (b) { b.disabled = false; }); alert((r && r.message) || '바꾸지 못했어요. 서버(Code.gs)가 버전 29 이상인지 확인해주세요.'); return; }
+      renderDetail(tabName);
+    };
+  });
   if (document.getElementById('oaQr')) loadQrLib_().then(function () {
     const box = document.getElementById('oaQr'); if (!box) return;
     const q = qrcode(0, 'M'); q.addData(document.getElementById('oaUrl').value); q.make();
