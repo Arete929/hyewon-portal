@@ -220,6 +220,13 @@
   .ta-x.on { color: var(--hyewon-emerald); border-color: #CDEBDD; }
   .ta-x.on svg { transform: rotate(-90deg); }
   .my-note { margin: 0; font-size: 14px; line-height: 1.7; white-space: pre-wrap; word-break: break-word; }
+  .gimg-wrap { display: block; margin: 8px 0; }
+  .gimg { display: block; max-width: 100%; max-height: 70vh; border-radius: 12px; border: 1px solid rgba(0,0,0,.08); background: #F3F5F4; min-height: 60px; min-width: 120px; cursor: zoom-in; }
+  .gimg.ok { min-height: 0; min-width: 0; background: none; }
+  .gimg-miss { font-size: 12.5px; color: #9AA79F; }
+  .gimg-ov { position: fixed; inset: 0; z-index: 9999; background: rgba(10,20,18,.88); display: flex; align-items: center; justify-content: center; padding: 16px; cursor: zoom-out; }
+  .gimg-ov img { max-width: 100%; max-height: 100%; border-radius: 10px; }
+  .gimg-ov span { position: absolute; top: 14px; right: 16px; color: #fff; font-weight: 800; font-size: 14px; }
   .ack-row { display: flex; justify-content: flex-end; margin-top: 12px; }
   .ack-btn { display: inline-flex; align-items: center; gap: 6px; border: 0; border-radius: 999px; padding: 9px 16px; background: var(--hyewon-emerald, #087A55); color: #fff; font-family: inherit; font-size: 13.5px; font-weight: 800; cursor: pointer; box-shadow: 0 4px 12px rgba(8,122,85,.25); }
   .ack-btn:disabled { opacity: .6; }
@@ -880,6 +887,40 @@ async function mountQrPick_(tab) {
   paint();
 }
 
+// ---------- 과제 안내 이미지 — 글 안의 [[이미지:파일ID]] 를 그 자리에 그림으로 보여 줘요 ----------
+const GIMG_RE = /\[\[이미지:([-\w]{20,})\]\]/g;
+function guideHtml_(text) {
+  text = String(text || '');
+  let out = '', last = 0, m;
+  GIMG_RE.lastIndex = 0;
+  while ((m = GIMG_RE.exec(text))) {
+    out += escapeHtml(text.slice(last, m.index).replace(/^\n|\n$/g, ''));
+    out += '<span class="gimg-wrap"><img class="gimg" data-gimg="' + escapeHtml(m[1]) + '" alt="안내 이미지"></span>';
+    last = m.index + m[0].length;
+  }
+  return out + escapeHtml(text.slice(last).replace(/^\n/, ''));
+}
+const GIMG_CACHE_ = {};
+function loadGuideImgs_() {
+  document.querySelectorAll('img[data-gimg]:not([data-gl])').forEach(function (img) {
+    img.setAttribute('data-gl', '1');
+    const id = img.getAttribute('data-gimg');
+    if (!GIMG_CACHE_[id]) GIMG_CACHE_[id] = api('guideImage', { id: id }).then(function (r) { return r && r.success ? 'data:' + r.mime + ';base64,' + r.data : ''; }).catch(function () { delete GIMG_CACHE_[id]; return ''; });
+    GIMG_CACHE_[id].then(function (src) {
+      if (src) { img.src = src; img.classList.add('ok'); }
+      else { const w = img.closest('.gimg-wrap'); if (w) w.innerHTML = '<span class="gimg-miss">이미지를 불러오지 못했어요</span>'; }
+    });
+  });
+}
+new MutationObserver(function () { if (document.querySelector('img[data-gimg]:not([data-gl])')) loadGuideImgs_(); }).observe(document.documentElement, { childList: true, subtree: true });
+document.addEventListener('click', function (e) {
+  const img = e.target.closest && e.target.closest('img.gimg.ok'); if (!img) return;
+  const ov = document.createElement('div'); ov.className = 'gimg-ov';
+  ov.innerHTML = '<img alt="안내 이미지 크게 보기"><span>닫기 ✕</span>'; ov.querySelector('img').src = img.src;
+  ov.onclick = function () { ov.remove(); };
+  document.body.appendChild(ov);
+});
+
 // ---------- ✏️ 과제 제출 — 모든 과제에 기본으로 있는 학생 글 칸 ----------
 // 기본은 4줄 정도, «펼치기»를 누르면 크게 써요. 적던 글은 화면이 다시 그려져도 남아요(noteDraft).
 function noteCardHtml_(tab) {
@@ -928,7 +969,7 @@ function ackBtnHtml_(tab) {
 }
 function guideCardHtml_(tab) {
   return '<div class="detail-card mint"><div class="sec-head" style="color:var(--hyewon-emerald);">' + ic_('mega', 18, 'var(--hyewon-emerald)') + '과제 안내</div>' +
-    '<p style="margin:0;font-size:14px;line-height:1.7;color:var(--text);white-space:pre-wrap;">' + escapeHtml(tab.description) + '</p>' +
+    '<p style="margin:0;font-size:14px;line-height:1.7;color:var(--text);white-space:pre-wrap;">' + guideHtml_(tab.description) + '</p>' +
     '<div class="ack-row" id="ackRow">' + ackBtnHtml_(tab) + '</div></div>';
 }
 document.addEventListener('click', async function (e) {

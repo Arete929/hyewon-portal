@@ -381,6 +381,19 @@
   .ta-foot .charcount { font-size: 12px; color: var(--text2); }
   .ta-x { border: 1.5px solid var(--border); background: var(--surface, #fff); color: var(--text2); border-radius: 999px; padding: 5px 12px; font-family: inherit; font-size: 12.5px; font-weight: 800; cursor: pointer; }
   .ta-x.on { color: var(--accent); border-color: var(--accent); }
+  .gimg-wrap { display: block; margin: 8px 0; }
+  .gimg { display: block; max-width: 100%; max-height: 70vh; border-radius: 12px; border: 1px solid rgba(0,0,0,.08); background: #F3F5F4; min-height: 60px; min-width: 120px; cursor: zoom-in; }
+  .gimg.ok { min-height: 0; min-width: 0; background: none; }
+  .gimg-miss { font-size: 12.5px; color: #9AA79F; }
+  .gimg-ov { position: fixed; inset: 0; z-index: 9999; background: rgba(10,20,18,.88); display: flex; align-items: center; justify-content: center; padding: 16px; cursor: zoom-out; }
+  .gimg-ov img { max-width: 100%; max-height: 100%; border-radius: 10px; }
+  .gimg-ov span { position: absolute; top: 14px; right: 16px; color: #fff; font-weight: 800; font-size: 14px; }
+  .ta-img { display: inline-flex; align-items: center; gap: 4px; }
+  .ta-foot .hint { margin-right: auto; font-size: 12px; }
+  .gprev { margin-top: 10px; padding: 12px 14px; border: 1px dashed var(--border); border-radius: 12px; background: #FAFCFB; }
+  .gprev-h { font-size: 12px; font-weight: 800; color: var(--text2); margin-bottom: 6px; }
+  .gprev-b { font-size: 14px; line-height: 1.7; white-space: pre-wrap; }
+  html[data-theme="dark"] .gprev { background: transparent; }
   .sched-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 18px; align-items: start; }
   .sched-row input[type=checkbox], .sched-row #smIn { flex: none; min-width: 0; }
   .sp-col { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
@@ -1256,7 +1269,11 @@ function announceText_(o) {
   lines.push('⏰ 제출 기한: ' + (dlText_(o.deadline) || '선생님이 마감할 때까지'));
   lines.push('🔐 제출 방법: ' + (o.openAcc ? '링크를 열고 학번·이름을 적어 제출' : '학번과 학생코드로 로그인해서 제출'));
   lines.push('🔗 제출 링크: ' + o.url);
-  if (o.desc) { lines.push('', '📝 안내', String(o.desc).trim()); }
+  if (o.desc) {
+    const hasImg = /\[\[이미지:[-\w]+\]\]/.test(o.desc);
+    const txt = String(o.desc).replace(/\[\[이미지:[-\w]+\]\]/g, '').replace(/\n{3,}/g, '\n\n').trim();
+    if (txt || hasImg) lines.push('', '📝 안내', (txt + (hasImg ? (txt ? '\n' : '') + '(그림은 과제 화면에서 볼 수 있어요)' : '')).trim());
+  }
   lines.push('', '※ 링크가 바로 안 열리면, 주소를 복사해서 크롬 브라우저에 붙여넣어 열어 주세요.');
   if (!o.openAcc) lines.push('※ 학생코드를 모르면 담임 선생님이나 ' + (t.name ? t.name + ' 선생님' : '과목 선생님') + '께 물어보세요.');
   lines.push('※ 기한 안에 빠짐없이 꼭! 제출해 주세요. ✨');
@@ -1546,7 +1563,8 @@ function renderNewTab(notice) {
           '<span class="hint" id="tabTargetsNote"></span></div>' +
         '<div class="field"><label for="tabDesc">과제 안내 <span class="hint">(선택 · 학생 화면 «과제 안내»에 보여요)</span></label>' +
         '<textarea id="tabDesc" class="ta-exp" rows="4" placeholder="예: 동작 3가지를 연결해 연습하고 활동 영상을 제출하세요."></textarea>' +
-        '<div class="ta-foot"><span class="charcount" id="cc_tabDesc"></span><button type="button" class="ta-x" data-tx="tabDesc"><span>⤢ 펼치기</span></button></div>' +'</div>' +
+        '<div class="ta-foot"><span class="hint" id="gm_tabDesc">이미지는 붙여 넣거나(Ctrl+V) 끌어다 놓아도 돼요</span><label class="ta-x ta-img"><span>🖼 이미지 넣기</span><input type="file" accept="image/*" multiple data-gimgup="tabDesc" hidden></label><span class="charcount" id="cc_tabDesc"></span><button type="button" class="ta-x" data-tx="tabDesc"><span>⤢ 펼치기</span></button></div>' +
+        '<div class="gprev" id="gp_tabDesc" style="display:none;"></div>' +'</div>' +
         '<label style="margin-bottom:8px;display:block;">항목</label>' +
         '<div id="fieldRows"></div>' +
         '<button class="btn-outline btn-sm" id="addFieldBtn" type="button">+ 항목 추가</button>' +
@@ -1649,6 +1667,104 @@ function autoGrow_(ta) {
   if (!ta) return;
   if (ta.scrollHeight > ta.clientHeight + 1) ta.style.height = (ta.scrollHeight + 2) + 'px';
 }
+// ---------- 과제 안내 이미지 — 글 안의 [[이미지:파일ID]] 를 그 자리에 그림으로 보여 줘요 ----------
+const GIMG_RE = /\[\[이미지:([-\w]{20,})\]\]/g;
+function guideHtml_(text) {
+  text = String(text || '');
+  let out = '', last = 0, m;
+  GIMG_RE.lastIndex = 0;
+  while ((m = GIMG_RE.exec(text))) {
+    out += escapeHtml(text.slice(last, m.index).replace(/^\n|\n$/g, ''));
+    out += '<span class="gimg-wrap"><img class="gimg" data-gimg="' + escapeHtml(m[1]) + '" alt="안내 이미지"></span>';
+    last = m.index + m[0].length;
+  }
+  return out + escapeHtml(text.slice(last).replace(/^\n/, ''));
+}
+const GIMG_CACHE_ = {};
+function loadGuideImgs_() {
+  document.querySelectorAll('img[data-gimg]:not([data-gl])').forEach(function (img) {
+    img.setAttribute('data-gl', '1');
+    const id = img.getAttribute('data-gimg');
+    if (!GIMG_CACHE_[id]) GIMG_CACHE_[id] = api('guideImage', { id: id }).then(function (r) { return r && r.success ? 'data:' + r.mime + ';base64,' + r.data : ''; }).catch(function () { delete GIMG_CACHE_[id]; return ''; });
+    GIMG_CACHE_[id].then(function (src) {
+      if (src) { img.src = src; img.classList.add('ok'); }
+      else { const w = img.closest('.gimg-wrap'); if (w) w.innerHTML = '<span class="gimg-miss">이미지를 불러오지 못했어요</span>'; }
+    });
+  });
+}
+new MutationObserver(function () { if (document.querySelector('img[data-gimg]:not([data-gl])')) loadGuideImgs_(); }).observe(document.documentElement, { childList: true, subtree: true });
+document.addEventListener('click', function (e) {
+  const img = e.target.closest && e.target.closest('img.gimg.ok'); if (!img) return;
+  const ov = document.createElement('div'); ov.className = 'gimg-ov';
+  ov.innerHTML = '<img alt="안내 이미지 크게 보기"><span>닫기 ✕</span>'; ov.querySelector('img').src = img.src;
+  ov.onclick = function () { ov.remove(); };
+  document.body.appendChild(ov);
+});
+// ---------- 과제 안내 칸: 이미지 붙여 넣기 · 끌어다 놓기 · «이미지 넣기» ----------
+// 큰 사진은 긴 쪽 1600px JPG로 줄여서 올려요. 올린 뒤 글 칸 그 자리에 [[이미지:…]] 표시가 들어가고, 아래 미리보기에 그림이 보여요.
+async function prepGuideImage_(file) {
+  if (!/^image\/(png|jpeg|gif|webp)$/.test(file.type)) throw new Error('PNG·JPG·GIF·WEBP 이미지만 넣을 수 있어요.');
+  if (file.type === 'image/gif' || file.size <= 600 * 1024) return { mime: file.type, base64: await fileToBase64(file) };
+  const bmp = await createImageBitmap(file);
+  const k = Math.min(1, 1600 / Math.max(bmp.width, bmp.height));
+  const cv = document.createElement('canvas'); cv.width = Math.round(bmp.width * k); cv.height = Math.round(bmp.height * k);
+  const cx = cv.getContext('2d'); cx.fillStyle = '#fff'; cx.fillRect(0, 0, cv.width, cv.height); cx.drawImage(bmp, 0, 0, cv.width, cv.height);
+  const blob = await new Promise(function (res) { cv.toBlob(res, 'image/jpeg', 0.86); });
+  return { mime: 'image/jpeg', base64: await fileToBase64(blob) };
+}
+async function insertGuideImage_(ta, file) {
+  const msg = document.getElementById('gm_' + ta.id);
+  const say = function (t) { if (msg) msg.textContent = t; };
+  say('이미지 올리는 중…');
+  const tabName = ta.getAttribute('data-tab') || ((document.getElementById('tabName') || {}).value || '').trim();
+  let r;
+  try {
+    const im = await prepGuideImage_(file);
+    r = await api('uploadGuideImage', { tabName: tabName, name: file.name || '붙여넣은 이미지', mimeType: im.mime, base64: im.base64 });
+  } catch (e) { say((e && e.message) || '이미지를 올리지 못했어요.'); return; }
+  if (!r || r.success !== true) { say((r && r.message) || '이미지를 올리지 못했어요. 서버(Code.gs)가 버전 56 이상인지 확인해주세요.'); return; }
+  const tag = '[[이미지:' + r.id + ']]';
+  const s = ta.selectionStart == null ? ta.value.length : ta.selectionStart, en = ta.selectionEnd == null ? s : ta.selectionEnd;
+  const before = ta.value.slice(0, s), after = ta.value.slice(en);
+  const ins = (before && !/\n$/.test(before) ? '\n' : '') + tag + (after && !/^\n/.test(after) ? '\n' : '');
+  ta.setRangeText(ins, s, en, 'end');
+  ta.dispatchEvent(new Event('input', { bubbles: true }));
+  say('이미지를 넣었어요. 저장을 눌러야 학생 화면에 보여요.');
+}
+function imageFilesOf_(dt) {
+  return Array.prototype.slice.call((dt && dt.files) || []).filter(function (f) { return /^image\//.test(f.type); });
+}
+document.addEventListener('paste', function (e) {
+  const ta = e.target; if (!ta.classList || !ta.classList.contains('ta-exp')) return;
+  const cd = e.clipboardData; const imgs = imageFilesOf_(cd);
+  if (!imgs.length || (cd.getData('text/plain') || '').trim()) return;   // 글을 붙여 넣을 땐 그대로
+  e.preventDefault(); imgs.reduce(function (p, f) { return p.then(function () { return insertGuideImage_(ta, f); }); }, Promise.resolve());
+});
+document.addEventListener('dragover', function (e) { if (e.target.classList && e.target.classList.contains('ta-exp')) e.preventDefault(); });
+document.addEventListener('drop', function (e) {
+  const ta = e.target; if (!ta.classList || !ta.classList.contains('ta-exp')) return;
+  const imgs = imageFilesOf_(e.dataTransfer); if (!imgs.length) return;
+  e.preventDefault(); imgs.reduce(function (p, f) { return p.then(function () { return insertGuideImage_(ta, f); }); }, Promise.resolve());
+});
+document.addEventListener('change', function (e) {
+  const inp = e.target; if (!inp.getAttribute || !inp.getAttribute('data-gimgup')) return;
+  const ta = document.getElementById(inp.getAttribute('data-gimgup')); const fs = Array.prototype.slice.call(inp.files || []);
+  inp.value = '';
+  if (ta) fs.reduce(function (p, f) { return p.then(function () { return insertGuideImage_(ta, f); }); }, Promise.resolve());
+});
+// 글에 이미지가 있으면 칸 아래에 미리보기
+let gprevT_ = null;
+document.addEventListener('input', function (e) {
+  const ta = e.target; if (!ta.classList || !ta.classList.contains('ta-exp')) return;
+  clearTimeout(gprevT_); gprevT_ = setTimeout(function () { paintGuidePrev_(ta); }, 250);
+});
+function paintGuidePrev_(ta) {
+  const pv = document.getElementById('gp_' + ta.id); if (!pv) return;
+  GIMG_RE.lastIndex = 0;
+  if (!GIMG_RE.test(ta.value)) { pv.style.display = 'none'; pv.innerHTML = ''; return; }
+  pv.style.display = ''; pv.innerHTML = '<div class="gprev-h">학생 화면 미리보기</div><div class="gprev-b">' + guideHtml_(ta.value) + '</div>';
+}
+
 // 글 칸 «펼치기» — 누르면 크게, 다시 누르면 원래대로 (과제 안내 쓰기 칸)
 document.addEventListener('click', function (e) {
   const b = e.target.closest && e.target.closest('[data-tx]'); if (!b) return;
@@ -1768,9 +1884,10 @@ async function renderDetail(tabName) {
       '<div class="card wide tile" style="max-width:720px;">' +
         '<div class="tile-head"><span class="tile-label">📢 과제 안내</span><span class="hint">학생 화면 «과제 안내»에 보여요</span>' +
           '<button class="btn-outline btn-sm" id="descEdit" type="button" style="margin-left:auto;">' + (tab.description ? '고치기' : '쓰기') + '</button></div>' +
-        '<div id="descView" class="tile-body">' + (tab.description ? escapeHtml(tab.description).replace(/\n/g, '<br>') : '<span class="hint">아직 안내가 없어요. «쓰기»를 눌러 과제 내용을 적어 주세요.</span>') + '</div>' +
-        '<div id="descForm" style="display:none;"><textarea id="descIn" class="ta-exp" rows="5">' + escapeHtml(tab.description || '') + '</textarea>' +
-          '<div class="ta-foot"><span class="charcount" id="cc_descIn"></span><button type="button" class="ta-x" data-tx="descIn"><span>⤢ 펼치기</span></button></div>' +
+        '<div id="descView" class="tile-body" style="white-space:pre-wrap;">' + (tab.description ? guideHtml_(tab.description) : '<span class="hint">아직 안내가 없어요. «쓰기»를 눌러 과제 내용을 적어 주세요.</span>') + '</div>' +
+        '<div id="descForm" style="display:none;"><textarea id="descIn" class="ta-exp" rows="5" data-tab="' + escapeHtml(tabName) + '">' + escapeHtml(tab.description || '') + '</textarea>' +
+          '<div class="ta-foot"><span class="hint" id="gm_descIn">이미지는 붙여 넣거나(Ctrl+V) 끌어다 놓아도 돼요</span><label class="ta-x ta-img"><span>🖼 이미지 넣기</span><input type="file" accept="image/*" multiple data-gimgup="descIn" hidden></label><span class="charcount" id="cc_descIn"></span><button type="button" class="ta-x" data-tx="descIn"><span>⤢ 펼치기</span></button></div>' +
+        '<div class="gprev" id="gp_descIn" style="display:none;"></div>' +
           '<div class="row" style="gap:8px;margin-top:8px;"><button class="btn btn-sm" id="descSave" type="button">저장</button><button class="btn-outline btn-sm" id="descCancel" type="button">취소</button><span class="hint" id="descMsg"></span></div></div>' +
       '</div>' +
       '<div class="card wide tile" style="max-width:720px;">' +
@@ -1814,7 +1931,7 @@ async function renderDetail(tabName) {
     if (b.getAttribute('data-status') === status) b.classList.add('on');
     b.onclick = function () { if (b.getAttribute('data-status') !== status) doSetStatus(tabName, b.getAttribute('data-status')); };
   });
-  document.getElementById('descEdit').onclick = function () { document.getElementById('descView').style.display = 'none'; document.getElementById('descForm').style.display = ''; const di = document.getElementById('descIn'), dc = document.getElementById('cc_descIn'); if (dc) dc.textContent = di.value.length + '자'; autoGrow_(di); di.focus(); };
+  document.getElementById('descEdit').onclick = function () { document.getElementById('descView').style.display = 'none'; document.getElementById('descForm').style.display = ''; const di = document.getElementById('descIn'), dc = document.getElementById('cc_descIn'); if (dc) dc.textContent = di.value.length + '자'; autoGrow_(di); paintGuidePrev_(di); di.focus(); };
   document.getElementById('descCancel').onclick = function () { document.getElementById('descView').style.display = ''; document.getElementById('descForm').style.display = 'none'; };
   document.getElementById('descSave').onclick = async function () {
     const msg = document.getElementById('descMsg'); msg.textContent = '저장 중…';
