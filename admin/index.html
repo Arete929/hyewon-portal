@@ -254,6 +254,15 @@
   .tl-note { margin-top: 4px; background: var(--bg); border-radius: 8px; padding: 6px 10px; white-space: pre-wrap; }
   .up-path { font-size: 15px; font-weight: 700; color: var(--accent); overflow-wrap: anywhere; }
   .tile { padding: 16px 18px; margin-bottom: 14px; }
+  @font-face {
+    font-family: 'BithumbGothicOriginal';
+    src: url('https://cdn.jsdelivr.net/gh/Project-Noonnu/2610082345@original/original/Bithumb Gothic Original.woff2') format('woff2');
+    font-weight: 700;
+    font-display: swap;
+    font-style: italic;
+  }
+  /* 과제 제목 — 빗썸고딕 이탤릭 */
+  .task-ttl { font-family: 'BithumbGothicOriginal', 'Noto Sans KR', sans-serif !important; font-style: italic; font-weight: 700 !important; letter-spacing: -0.01em; }
   .tile-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
   .tav { display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; object-fit: cover; vertical-align: middle; line-height: 1; flex: none; background: #fff; }
   .tav.subj { width: auto !important; display: inline-flex !important; padding: 0 .4em; border-radius: 999px; background: #E3F1EC; color: #0F5A44; letter-spacing: 0; white-space: nowrap; font-family: 'Gugi', sans-serif; font-weight: 400; text-shadow: none; box-sizing: border-box; }
@@ -884,7 +893,7 @@ async function renderDashboard() {
     const o = openAtInfo_(t);
     const label = s === 'open' ? '진행중' : s === 'wait' ? (o ? '예약 ' + o.text : '대기') : '마감';
     const tg = (t.meta && t.meta.targets) || [];
-    return '<a class="item" href="#" data-tab="' + escapeHtml(t.sheetName) + '"><span class="item-name">' + taskIconHtml_(t.sheetName, 26) + escapeHtml(t.sheetName) +
+    return '<a class="item" href="#" data-tab="' + escapeHtml(t.sheetName) + '"><span class="item-name">' + taskIconHtml_(t.sheetName, 26) + '<span class="task-ttl">' + escapeHtml(t.sheetName) + '</span>' +
       (tg.length ? ' <span class="hint" style="font-weight:500;">· ' + escapeHtml(targetsLabel_(tg)) + '</span>' : '') + '</span><span class="pill ' + s + '">' + label + '</span></a>';
   }).join('');
 
@@ -1675,7 +1684,7 @@ async function renderDetail(tabName) {
       '<a href="#" id="backBtn" class="hint">← 과제 목록</a>' +
       '<div class="dt-head">' +
         '<button type="button" class="dt-icon" id="iconPick" title="과제 이모지 바꾸기">' + taskIconHtml_(tabName, 44, true) + '<i>바꾸기</i></button>' +
-        '<h1 class="serif dt-title">' + escapeHtml(tabName) + '</h1>' +
+        '<h1 class="serif dt-title task-ttl">' + escapeHtml(tabName) + '</h1>' +
       '</div>' +
       '<div class="dt-meta">' + taskMetaHtml_() + '</div>' +
       '<div id="iconPanel" class="icon-panel" style="display:none;"></div>' +
