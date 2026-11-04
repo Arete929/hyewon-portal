@@ -404,6 +404,13 @@
   .rvf .btn, .rvf .btn-outline { flex: none; text-decoration: none; }
   .rvf.miss b { color: #9A6400; }
   html[data-theme="dark"] .rvf { background: transparent; }
+  .dot.av { padding: 0; overflow: hidden; background: #E9EEEC; }
+  .dot.av img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .rv-av { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; flex: none; border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,.15); }
+  .rv-avdel { font-size: 12px; color: var(--text2); margin-left: 4px; }
+  .merge-note { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; max-width: 720px; margin: 4px 0 12px; padding: 12px 14px; background: #FFF8E6; border: 1px solid #F5DFA8; border-radius: 14px; font-size: 13.5px; }
+  .merge-note span:first-child { flex: 1; min-width: 200px; }
+  html[data-theme="dark"] .merge-note { background: transparent; }
   .sched-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 18px; align-items: start; }
   .sched-row input[type=checkbox], .sched-row #smIn { flex: none; min-width: 0; }
   .sp-col { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
@@ -1087,12 +1094,19 @@ async function loadReviewFiles_(tabName, sid, root) {
     }).join('');
   });
 }
+// 학생 동그라미 — 학생이 «더보기 → 내 정보»에서 올린 사진, 없으면 이름 끝 두 글자
+function dotHtml_(sid, nm) {
+  const a = (state.avatars || {})[idKey_(sid)];
+  return a ? '<div class="dot av"><img src="' + escapeHtml(a) + '" alt=""></div>' : '<div class="dot">' + escapeHtml(String(nm || sid || '?').slice(-2)) + '</div>';
+}
 function openReviewSheet_(tabName, sid, name, status, feedback, onSaved, contentHtml, opt) {
   opt = opt || {};
   const scoreTxt = String(opt.score || ''), isNum = !scoreTxt || /^\d+(\.\d+)?$/.test(scoreTxt);
   const el = document.createElement('div');
   el.className = 'rvsheet';
-  el.innerHTML = '<div class="rv-panel"><div class="rv-head"><b>' + escapeHtml(sid + (name ? ' ' + name : '')) + '</b> ' + reviewPill_(status) +
+  const av = (state.avatars || {})[idKey_(sid)];
+  el.innerHTML = '<div class="rv-panel"><div class="rv-head">' + (av ? '<img class="rv-av" src="' + escapeHtml(av) + '" alt="" title="학생이 올린 프로필 사진">' : '') + '<b>' + escapeHtml(sid + (name ? ' ' + name : '')) + '</b> ' + reviewPill_(status) +
+      (av ? '<button type="button" class="btn-outline btn-sm rv-avdel" data-avdel>사진 지우기</button>' : '') +
       (opt.late && opt.late.days ? '<span class="pill late-p">⏰ ' + opt.late.days + '일 초과</span>' : '') +
       '<button class="rv-x" type="button" aria-label="닫기">✕</button></div>' +
     (opt.late && opt.late.days ? '<div class="late-box">⏰ <span>기한 <b>' + escapeHtml(histTime_(String(opt.deadline || '').replace('T', ' '))) + '</b> → 제출 <b>' + escapeHtml(histTime_(opt.submittedAt)) + '</b><br><b>' + opt.late.days + '일 초과</b> · ' + lateMinText_(opt.late.minutes) + ' 늦음 (자동 계산)</span></div>' : '') +
@@ -1110,6 +1124,14 @@ function openReviewSheet_(tabName, sid, name, status, feedback, onSaved, content
     '<h3 style="font-size:14px;margin:18px 0 10px;">제출 기록</h3><div id="rvHist"><span class="hint">불러오는 중…</span></div></div>';
   document.body.appendChild(el);
   loadReviewFiles_(tabName, sid, el);
+  const avd = el.querySelector('[data-avdel]');
+  if (avd) avd.onclick = async function () {
+    if (!confirm(sid + ' 학생의 프로필 사진을 지울까요? (학생은 다시 올릴 수 있어요)')) return;
+    let r; try { r = await api('clearStudentAvatar', { studentId: sid }); } catch (e) { return; }
+    if (!r || r.success !== true) { alert((r && r.message) || '지우지 못했어요. 서버(Code.gs)가 버전 60 이상인지 확인해주세요.'); return; }
+    delete (state.avatars || {})[idKey_(sid)];
+    const im = el.querySelector('.rv-av'); if (im) im.remove(); avd.remove();
+  };
   let changed = false;
   function close() { el.remove(); if (changed && onSaved) onSaved(); }
   el.onclick = function (e) { if (e.target === el) close(); };
@@ -1634,7 +1656,7 @@ function renderNewTab(notice) {
     row.querySelector('.delRow').onclick = function () { row.remove(); };
     rows.appendChild(row);
   }
-  addRow('항목1', 'short');
+  addRow('첨부 파일', 'file');   // 글은 학생 화면 «과제 제출» 칸에 기본으로 있어요
   document.getElementById('addFieldBtn').onclick = function () { addRow('', 'short'); };
   function modeNote_() {
     const qr = (document.querySelector('.modepick input[name=mode]:checked') || {}).value === 'qr';
@@ -1844,6 +1866,13 @@ async function renderDetail(tabName) {
       '</div>' +
       '<div class="dt-meta">' + taskMetaHtml_() + '</div>' +
       '<div id="iconPanel" class="icon-panel" style="display:none;"></div>' +
+      (function () {
+        const fs = (tab.fields || []).filter(function (f) { return f.type === 'file'; });
+        if (fs.length < 2) return '';
+        return '<div class="merge-note"><span>📎 파일 칸이 <b>' + fs.length + '개</b>예요 (' + fs.map(function (f) { return escapeHtml(f.name); }).join(' · ') + '). 학생은 칸을 나눠서 내야 해요.</span>' +
+          '<button type="button" class="btn btn-sm" id="mergeFiles">한 칸으로 합치기</button>' +
+          tipHtml_('«첨부 파일» 한 칸으로 합쳐요. 학생은 종류 상관없이 여러 파일을 한 칸에 내요. 이미 낸 파일은 지워지지 않고 모두 «첨부 파일» 칸으로 옮겨져요.') + '</div>';
+      })() +
       '<div class="dt-pills">' +
         '<button type="button" class="pillbtn' + (ap ? ' on' : '') + '" id="apToggle">복붙방지 ' + (ap ? '켜짐' : '꺼짐') + '</button>' +
         '<button type="button" class="pillbtn' + (openAcc ? ' on' : '') + '" id="oaToggle">로그인 없이 받기 ' + (openAcc ? '켜짐' : '꺼짐') + '</button>' +
@@ -1965,6 +1994,14 @@ async function renderDetail(tabName) {
     '</div>'
   );
   document.getElementById('backBtn').onclick = function (e) { e.preventDefault(); renderDashboard(); };
+  const mf = document.getElementById('mergeFiles');
+  if (mf) mf.onclick = async function () {
+    if (!confirm('파일 칸을 «첨부 파일» 한 칸으로 합칠까요?\n이미 낸 파일은 모두 그 칸으로 옮겨져요(지워지지 않아요).\n학생이 제출하는 중이 아닐 때 눌러 주세요.')) return;
+    mf.disabled = true; mf.textContent = '합치는 중…';
+    let r; try { r = await api('mergeFileFields', { tabName: tabName }); } catch (e) { r = null; }
+    if (!r || r.success !== true) { mf.disabled = false; mf.textContent = '한 칸으로 합치기'; alert((r && r.message) || '합치지 못했어요. 서버(Code.gs)가 버전 60 이상인지 확인해주세요.'); return; }
+    renderDetail(tabName);
+  };
   paintSaveStamp_();
   document.getElementById('iconPick').onclick = function () { toggleIconPanel_(tabName, tab); };
   document.querySelectorAll('[data-status]').forEach(function (b) {
@@ -2333,11 +2370,12 @@ async function renderSubmissions(tab) {
     const done = rv === '검토완료';
     const nm = nameIdx >= 0 ? r[nameIdx] : '';
     const sub = [timeIdx >= 0 ? r[timeIdx] : '', flag && t.maxChunk ? '한 번에 ' + t.maxChunk + '자' : ''].filter(Boolean).join(' · ');
-    return '<div class="srow" data-ri="' + ri + '" style="cursor:pointer;" data-flag="' + (flag ? 1 : 0) + '" data-done="' + (done ? 1 : 0) + '"><div class="dot">' + escapeHtml(String(nm || r[0] || '?').slice(-2)) + '</div>' +
+    return '<div class="srow" data-ri="' + ri + '" style="cursor:pointer;" data-flag="' + (flag ? 1 : 0) + '" data-done="' + (done ? 1 : 0) + '">' + dotHtml_(r[0], nm) +
       '<div class="t">' + escapeHtml(nm ? r[0] + ' ' + nm : r[0]) + '<small>' + escapeHtml(sub) + '</small>' + submissionPreviewHtml_(fields, r) + '</div>' +
       '<span class="tag ' + (rv === '반려' ? 'no' : flag ? 'wr' : 'ok') + '">' + (rv === '반려' ? '반려' : flag ? '복붙 의심' : done ? '검토완료' : '제출') + '</span></div>';
   }).join('');
   const lateArr = res.late || [], missing = res.missing || [], acks = res.acks || {};
+  state.avatars = res.avatars || {};
   const ackBadge = function (sid) { const a = acks[idKey_(sid)]; return a ? '<span class="pill p-ack" title="과제 안내 확인 ' + escapeHtml(a.at) + '">📢 안내 확인</span>' : ''; };
   const ackMissN = missing.filter(function (m) { return acks[idKey_(m.studentId)]; }).length;
   const scoreIdx = fields.findIndex(function (f) { return f.type === 'score'; });
@@ -2355,13 +2393,13 @@ async function renderSubmissions(tab) {
     const nm = nameIdx >= 0 ? r[nameIdx] : '';
     const pill = rv === '반려' ? '<span class="pill p-rej">반려</span>' : rv === '검토완료' ? '<span class="pill p-done">검토완료</span>' : '<span class="pill p-wait">검토 전</span>';
     return '<div class="stile' + (rv === '반려' ? ' rej' : '') + (lt && lt.days ? ' latet' : '') + '" data-ri="' + ri + '" data-st="' + (rv === '반려' ? 'rej' : rv === '검토완료' ? 'done' : 'todo') + '" data-late="' + (lt && lt.days ? 1 : 0) + '" data-flag="' + (flag ? 1 : 0) + '">' +
-      '<div class="st-top"><div class="dot">' + escapeHtml(String(nm || r[0] || '?').slice(-2)) + '</div><div class="st-nm">' + escapeHtml(r[0] + (nm ? ' ' + nm : '')) + '<small>' + escapeHtml(timeIdx >= 0 ? histTime_(r[timeIdx]).replace(/^\d{4}-/, '') : '') + '</small></div></div>' +
+      '<div class="st-top">' + dotHtml_(r[0], nm) + '<div class="st-nm">' + escapeHtml(r[0] + (nm ? ' ' + nm : '')) + '<small>' + escapeHtml(timeIdx >= 0 ? histTime_(r[timeIdx]).replace(/^\d{4}-/, '') : '') + '</small></div></div>' +
       '<div class="st-badges">' + pill + (lt && lt.days ? '<span class="pill late-p">⏰ ' + lt.days + '일 초과</span>' : '') + (flag ? '<span class="pill p-flag">복붙 의심</span>' : '') + ackBadge(r[0]) + '</div>' +
       submissionPreviewHtml_(fields, r) +
       scoreHtml_(scoreIdx >= 0 ? r[scoreIdx] : '', scoreMax) + '</div>';
   }).join('');
   const missTiles = missing.map(function (m) {
-    return '<div class="stile miss"><div class="st-top"><div class="dot">' + escapeHtml(String(m.name || m.studentId).slice(-2)) + '</div><div class="st-nm">' + escapeHtml(m.studentId + (m.name ? ' ' + m.name : '')) + '<small>아직 안 냄</small></div></div>' +
+    return '<div class="stile miss"><div class="st-top">' + dotHtml_(m.studentId, m.name) + '<div class="st-nm">' + escapeHtml(m.studentId + (m.name ? ' ' + m.name : '')) + '<small>아직 안 냄</small></div></div>' +
       '<div class="st-badges"><span class="pill p-none">미제출</span>' + (dlPassed_(res.deadline) ? '<span class="pill late-p">⏰ 기한 지남</span>' : '') + ackBadge(m.studentId) + '</div></div>';
   }).join('');
   let acc = {}; try { acc = JSON.parse(localStorage.getItem('hyewon_admin_subacc') || '{}') || {}; } catch (e) {}
