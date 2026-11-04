@@ -1943,6 +1943,7 @@ async function renderDetail(tabName) {
         '<button type="button" class="pillbtn' + (ap ? ' on' : '') + '" id="apToggle">복붙방지 ' + (ap ? '켜짐' : '꺼짐') + '</button>' +
         '<button type="button" class="pillbtn' + (openAcc ? ' on' : '') + '" id="oaToggle">로그인 없이 받기 ' + (openAcc ? '켜짐' : '꺼짐') + '</button>' +
         '<button type="button" class="pillbtn" id="previewBtn" style="background:#4B3BB5;border-color:#4B3BB5;color:#fff;">👀 학생 화면 미리보기</button>' +
+      (tab.meta && tab.meta.shortCode ? '<button type="button" class="pillbtn" id="qrHeadBtn" style="background:#0F766E;border-color:#0F766E;color:#fff;">📱 QR 크게</button>' : '') +
       '</div>' +
       '<div id="tabSaved" class="tab-saved" data-tab="' + escapeHtml(tabName) + '"></div>' +
       '<div class="hint" style="margin:6px 0 12px;line-height:1.9;">' +
@@ -2077,6 +2078,11 @@ async function renderDetail(tabName) {
     show(mem[tabName] || (status === 'wait' ? 'info' : 'subs'));
   })();
   document.getElementById('backBtn').onclick = function (e) { e.preventDefault(); renderDashboard(); };
+  const qrHead = document.getElementById('qrHeadBtn');
+  if (qrHead) qrHead.onclick = function () {
+    const code = tab.meta.shortCode, hasPage = !!tab.meta.sharePage;
+    showBigQr_(tabName, new URL('../', location.href).href + (hasPage ? code + '/' : '?' + code));
+  };
   const mf = document.getElementById('mergeFiles');
   if (mf) mf.onclick = async function () {
     if (!confirm('파일 칸을 «첨부 파일» 한 칸으로 합칠까요?\n이미 낸 파일은 모두 그 칸으로 옮겨져요(지워지지 않아요).\n학생이 제출하는 중이 아닐 때 눌러 주세요.')) return;
