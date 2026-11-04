@@ -187,6 +187,21 @@
   .hn-del { color: #C2232A; text-decoration: line-through; }
   .hn-keep { color: var(--text3); }
   .hn-late { display: inline-block; margin-top: 4px; font-size: 11px; font-weight: 800; background: #FFE7D6; color: #B4501D; border-radius: 999px; padding: 1px 8px; }
+  .qp-row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 8px; }
+  .qp-l { font-size: 12.5px; font-weight: 800; color: var(--text2); min-width: 34px; }
+  .qp-chip { border: 1.5px solid var(--border); background: var(--card, #fff); color: var(--text); border-radius: 999px; padding: 7px 14px; font-family: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
+  .qp-chip.on { background: var(--hyewon-emerald, #087A55); border-color: var(--hyewon-emerald, #087A55); color: #fff; }
+  .qp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 6px; }
+  .qp-st { display: flex; align-items: center; gap: 6px; border: 1.5px solid var(--border); background: var(--card, #fff); color: var(--text); border-radius: 12px; padding: 9px 10px; font-family: inherit; font-size: 14.5px; font-weight: 700; cursor: pointer; text-align: left; }
+  .qp-st span { display: inline-flex; align-items: center; justify-content: center; min-width: 24px; height: 24px; border-radius: 8px; background: #E8F4EF; color: #0F5A44; font-size: 12.5px; font-weight: 800; }
+  .qp-st:active, .qp-chip:active { transform: scale(.97); }
+  .qp-me { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1.5px solid #CDEBDD; background: #F1FAF6; border-radius: 14px; }
+  .qp-me b { display: block; font-size: 15.5px; }
+  .qp-me small { color: var(--text2); font-size: 12.5px; }
+  .qp-ok { display: inline-flex; width: 28px; height: 28px; border-radius: 50%; background: var(--hyewon-emerald, #087A55); align-items: center; justify-content: center; flex: none; }
+  .qp-re { margin-left: auto; font-size: 13px; }
+  html[data-theme="dark"] .qp-me { background: transparent; }
+  html[data-theme="dark"] .qp-st span { background: rgba(255,255,255,.08); color: inherit; }
   .ack-row { display: flex; justify-content: flex-end; margin-top: 12px; }
   .ack-btn { display: inline-flex; align-items: center; gap: 6px; border: 0; border-radius: 999px; padding: 9px 16px; background: var(--hyewon-emerald, #087A55); color: #fff; font-family: inherit; font-size: 13.5px; font-weight: 800; cursor: pointer; box-shadow: 0 4px 12px rgba(8,122,85,.25); }
   .ack-btn:disabled { opacity: .6; }
@@ -788,6 +803,63 @@ function reviewClass_(entry) {
 }
 // 제출 기록 타임라인 (학생·선생님 화면 공통 모양)
 const HIST_STYLE = { '안내 확인': ['#2F5BD8', '📢'], '점수': ['#0F3B34', '🏅'], '제출': ['#087A55', '📤'], '다시 제출': ['#2F6FED', '🔁'], '회수': ['#8A6D3B', '↩️'], '반려': ['#E5484D', '⛔'], '검토 완료': ['#087A55', '✅'], '검토중으로 되돌림': ['#9A6400', '⏳'], '피드백': ['#6B4BD8', '💬'] };
+// ---------- QR 과제 «누가 제출하나요?» — 목록에서 고르기 ----------
+// 학번·이름을 치다 틀리는 일이 없게 학년 → 반 → 번호·이름을 눌러 골라요. 이름은 가운데를 가려서 보여요(김○지).
+// 명렬을 못 불러오면(서버가 예전 버전 등) 예전처럼 직접 적는 칸을 보여 줘요.
+const QR_ROSTER_ = {};
+async function mountQrPick_(tab) {
+  const box = document.getElementById('qrPick'); if (!box) return;
+  let list = QR_ROSTER_[tab.sheetName];
+  if (!list) {
+    let r = null;
+    try { r = await api('qrRoster', { tabName: tab.sheetName }, 'GET'); } catch (e) {}
+    if (r && r.success && r.students && r.students.length) list = QR_ROSTER_[tab.sheetName] = r.students;
+  }
+  if (!box.isConnected) return;
+  if (!list) {
+    box.innerHTML = '<div class="row" style="display:flex;gap:10px;">' +
+        '<div class="field" style="flex:0 0 110px;margin:0;"><label>학번 (4자리)</label><input id="openId" type="text" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="3201" value="' + escapeHtml(state.login.studentId) + '"></div>' +
+        '<div class="field" style="flex:1;margin:0;"><label>이름</label><input id="openName" type="text" maxlength="20" autocomplete="off" placeholder="이름" value="' + escapeHtml(state.login.studentName) + '"></div>' +
+      '</div><p class="hint" style="margin:10px 0 0;">로그인 없이 제출하는 과제예요. 학번과 이름을 정확히 적어주세요(명렬과 맞춰 봐요).</p>';
+    return;
+  }
+  const g_ = function (x) { return x.id.charAt(0); }, c_ = function (x) { return x.id.charAt(1); };
+  const uniq = function (a) { return a.filter(function (v, i) { return a.indexOf(v) === i; }); };
+  const grades = uniq(list.map(g_));
+  const st = { g: '', c: '', id: '' };
+  const pre = list.find(function (x) { return x.id === state.login.studentId; });
+  if (pre) { st.g = g_(pre); st.c = c_(pre); st.id = pre.id; }
+  else if (grades.length === 1) st.g = grades[0];
+  function classes() { return uniq(list.filter(function (x) { return g_(x) === st.g; }).map(c_)); }
+  if (!st.c && st.g && classes().length === 1) st.c = classes()[0];
+  function chip(attr, val, label, on) { return '<button type="button" class="qp-chip' + (on ? ' on' : '') + '" ' + attr + '="' + val + '">' + label + '</button>'; }
+  function paint() {
+    const me = st.id && list.find(function (x) { return x.id === st.id; });
+    let h = '<div class="qp">';
+    if (me) {
+      h += '<div class="qp-me"><span class="qp-ok">' + ic_('check', 16, '#fff', 3) + '</span><div><b>' + escapeHtml(me.id) + ' · ' + escapeHtml(me.n) + '</b><small>' + Number(me.id.charAt(0)) + '학년 ' + Number(me.id.charAt(1)) + '반 ' + Number(me.id.slice(2)) + '번</small></div>' +
+        '<button type="button" class="linklike qp-re" data-qre>다시 고르기</button></div>';
+    } else {
+      h += '<div class="qp-row"><span class="qp-l">학년</span>' + grades.map(function (g) { return chip('data-qg', g, g + '학년', st.g === g); }).join('') + '</div>';
+      if (st.g) h += '<div class="qp-row"><span class="qp-l">반</span>' + classes().map(function (c) { return chip('data-qc', c, c + '반', st.c === c); }).join('') + '</div>';
+      if (st.g && st.c) {
+        h += '<div class="qp-l" style="margin:4px 0 6px;">내 번호·이름</div><div class="qp-grid">' +
+          list.filter(function (x) { return g_(x) === st.g && c_(x) === st.c; }).map(function (x) {
+            return '<button type="button" class="qp-st" data-qs="' + escapeHtml(x.id) + '"><span>' + Number(x.id.slice(2)) + '</span>' + escapeHtml(x.n) + '</button>';
+          }).join('') + '</div>';
+      }
+      h += '<p class="hint" style="margin:10px 0 0;">학년 → 반을 누르고 내 번호·이름을 골라 주세요. 이름은 가운데 글자를 가려서 보여요.</p>';
+    }
+    h += '<input type="hidden" id="openId" value="' + escapeHtml(me ? me.id : '') + '"><input type="hidden" id="openName" value="' + escapeHtml(me ? me.n : '') + '"></div>';
+    box.innerHTML = h;
+    box.querySelectorAll('[data-qg]').forEach(function (b) { b.onclick = function () { st.g = b.getAttribute('data-qg'); st.c = ''; if (classes().length === 1) st.c = classes()[0]; paint(); }; });
+    box.querySelectorAll('[data-qc]').forEach(function (b) { b.onclick = function () { st.c = b.getAttribute('data-qc'); paint(); }; });
+    box.querySelectorAll('[data-qs]').forEach(function (b) { b.onclick = function () { st.id = b.getAttribute('data-qs'); paint(); }; });
+    const re = box.querySelector('[data-qre]'); if (re) re.onclick = function () { st.id = ''; state.login.studentId = ''; state.login.studentName = ''; paint(); };
+  }
+  paint();
+}
+
 // ---------- 과제 안내 «확인했습니다» ----------
 const ACK_KEY = 'hyewon_ack_';
 function ackAtOf_(tab) {
@@ -820,7 +892,7 @@ document.addEventListener('click', async function (e) {
   } else {
     const oi = document.getElementById('openId'), on = document.getElementById('openName');
     data.studentId = oi ? oi.value.trim() : ''; data.studentName = on ? on.value.trim() : '';
-    if (!data.studentName) { alert('위의 «누가 제출하나요?»에 이름' + (tab.meta && tab.meta.openMode === 'anyone' ? '' : '과 학번') + '을 먼저 적어 주세요.'); if (on) on.focus(); return; }
+    if (!data.studentName) { alert(document.querySelector('.qp') ? '위의 «누가 제출하나요?»에서 학년·반을 누르고 내 이름을 먼저 골라 주세요.' : '위의 «누가 제출하나요?»에 이름' + (tab.meta && tab.meta.openMode === 'anyone' ? '' : '과 학번') + '을 먼저 적어 주세요.'); if (on && on.type !== 'hidden') on.focus(); return; }
   }
   b.disabled = true;
   let r;
@@ -1781,14 +1853,12 @@ function renderForm(tab, notice) {
         : '') +
       (open
         ? '<div class="detail-card"><div class="sec-head">' + ic_('info', 16, 'var(--text2)') + '누가 제출하나요?</div>' +
-            '<div class="row" style="display:flex;gap:10px;">' +
-              (tab.meta && tab.meta.openMode === 'anyone'
-                ? '<div class="field" style="flex:0 0 140px;margin:0;"><label>소속·학번 <span class="hint">(선택)</span></label><input id="openId" type="text" maxlength="20" autocomplete="off" placeholder="예: 3201, 학부모" value="' + escapeHtml(state.login.studentId) + '"></div>'
-                : '<div class="field" style="flex:0 0 110px;margin:0;"><label>학번 (4자리)</label><input id="openId" type="text" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="3201" value="' + escapeHtml(state.login.studentId) + '"></div>') +
-              '<div class="field" style="flex:1;margin:0;"><label>이름</label><input id="openName" type="text" maxlength="20" autocomplete="off" placeholder="이름" value="' + escapeHtml(state.login.studentName) + '"></div>' +
-            '</div><p class="hint" style="margin:10px 0 0;">' + (tab.meta && tab.meta.openMode === 'anyone'
-              ? '학생이 아니어도 낼 수 있어요. 학생은 학번을, 그 밖의 분은 소속(예: 학부모·선생님)을 적어 주세요.'
-              : '로그인 없이 제출하는 과제예요. 학번과 이름을 정확히 적어주세요(명렬과 맞춰 봐요).') + '</p></div>'
+            (tab.meta && tab.meta.openMode === 'anyone'
+              ? '<div class="row" style="display:flex;gap:10px;">' +
+                  '<div class="field" style="flex:0 0 140px;margin:0;"><label>소속·학번 <span class="hint">(선택)</span></label><input id="openId" type="text" maxlength="20" autocomplete="off" placeholder="예: 3201, 학부모" value="' + escapeHtml(state.login.studentId) + '"></div>' +
+                  '<div class="field" style="flex:1;margin:0;"><label>이름</label><input id="openName" type="text" maxlength="20" autocomplete="off" placeholder="이름" value="' + escapeHtml(state.login.studentName) + '"></div>' +
+                '</div><p class="hint" style="margin:10px 0 0;">학생이 아니어도 낼 수 있어요. 학생은 학번을, 그 밖의 분은 소속(예: 학부모·선생님)을 적어 주세요.</p>'
+              : '<div id="qrPick"><span class="hint">명단 불러오는 중…</span></div>') + '</div>'
         : '<div class="identity rowbetween">' +
           '<div><b>' + escapeHtml(state.login.studentId) + ' · ' + escapeHtml(state.login.studentName) + '</b>' +
           '<small>학생코드로 확인됨</small></div>' +
@@ -1807,6 +1877,7 @@ function renderForm(tab, notice) {
   const tb = document.getElementById('themeBtn2');
   if (tb) tb.onclick = function () { setTheme_(getTheme_() === 'dark' ? 'light' : 'dark'); };
   wireFieldEvents(tab, inputs);
+  if (open && !(tab.meta && tab.meta.openMode === 'anyone')) mountQrPick_(tab);
   document.getElementById('submitBtn').onclick = function () { doSubmit(tab, false); };
   const lo = document.getElementById('logoutBtn');
   if (lo) lo.onclick = function () {
@@ -1869,6 +1940,7 @@ async function doSubmit(tab, confirmOverwrite) {
     state.login.studentId = oi ? oi.value.trim() : '';
     state.login.studentName = on ? on.value.trim() : '';
     const anyone = !!(tab.meta && tab.meta.openMode === 'anyone');
+    if (!anyone && document.querySelector('.qp') && !state.login.studentId) { return renderCurrentForm(tab, '«누가 제출하나요?»에서 학년·반을 누르고 내 이름을 골라 주세요.'); }
     if (!anyone && !/^\d{4}$/.test(state.login.studentId)) { return renderCurrentForm(tab, '학번을 4자리 숫자로 입력해주세요.'); }
     if (!state.login.studentName) { return renderCurrentForm(tab, '이름을 입력해주세요.'); }
   }
