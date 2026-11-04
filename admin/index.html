@@ -1134,10 +1134,31 @@ async function loadReviewFiles_(tabName, sid, root) {
         '<div class="rvf-t"><b title="' + escapeHtml(f.name) + '">' + escapeHtml(base) + (ext ? '<span class="rvf-x">.' + escapeHtml(ext) + '</span>' : '') + '</b><small>' + (ext ? ext.toUpperCase() + ' · ' : '') + fileSizeLabel(f.size || 0) + '</small></div>' +
         (office
           ? '<a class="btn btn-sm" href="' + dl + '" target="_blank" rel="noopener">⬇ 내려받기</a><a class="btn-outline btn-sm" href="' + view + '" target="_blank" rel="noopener">미리보기</a>'
-          : '<a class="btn btn-sm" href="' + view + '" target="_blank" rel="noopener">열기</a><a class="btn-outline btn-sm" href="' + dl + '" target="_blank" rel="noopener">⬇</a>') +
+          : (browserViewable_(ext, f.mime)
+            ? '<button type="button" class="btn btn-sm" data-bview="' + escapeHtml(f.id) + '" data-drive="' + view + '">열기</button><a class="btn-outline btn-sm" href="' + view + '" target="_blank" rel="noopener">드라이브</a>'
+            : '<a class="btn btn-sm" href="' + view + '" target="_blank" rel="noopener">열기</a>') +
+            '<a class="btn-outline btn-sm" href="' + dl + '" target="_blank" rel="noopener" title="내려받기">⬇</a>') +
         '</div>';
     }).join('');
+    box.querySelectorAll('[data-bview]').forEach(function (b) {
+      b.onclick = function () { openInBrowser_(tabName, sid, b.getAttribute('data-bview'), b.getAttribute('data-drive'), b); };
+    });
   });
+}
+// PDF·사진은 브라우저의 보기 화면으로(드라이브 미리보기가 안 될 때도 열려요). 새 탭은 누를 때 바로 열어 둬야 막히지 않아요.
+function browserViewable_(ext, mime) { return ext === 'pdf' || /^(jpe?g|png|gif|webp|txt)$/.test(ext) || /^image\/(jpeg|png|gif|webp)$/.test(mime || '') || mime === 'application/pdf'; }
+async function openInBrowser_(tabName, sid, fileId, driveUrl, btn) {
+  const w = window.open('', '_blank');
+  if (w) { try { w.document.write('<meta charset="utf-8"><title>불러오는 중…</title><p style="font-family:sans-serif;padding:24px;color:#555">파일을 불러오는 중이에요…</p>'); } catch (e) {} }
+  const old = btn.textContent; btn.disabled = true; btn.textContent = '여는 중…';
+  let r = null; try { r = await api('getSubmissionFileData', { tabName: tabName, studentId: sid, fileId: fileId }); } catch (e) {}
+  btn.disabled = false; btn.textContent = old;
+  if (!r || r.success !== true) { if (w) w.location.href = driveUrl; else window.open(driveUrl, '_blank'); return; }
+  const bin = atob(r.data), bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  const url = URL.createObjectURL(new Blob([bytes], { type: r.mime || 'application/pdf' }));
+  if (w) w.location.href = url; else window.open(url, '_blank');
+  setTimeout(function () { URL.revokeObjectURL(url); }, 10 * 60 * 1000);
 }
 // 학생 동그라미 — 학생이 «더보기 → 내 정보»에서 올린 사진, 없으면 이름 끝 두 글자
 function dotHtml_(sid, nm) {
