@@ -456,7 +456,22 @@ function brandLabel() {
   return (state.toolCfg && state.toolCfg.label) || (state.config && state.config.title) || '과제 제출';
 }
 
+// 서버가 잠깐 붐빌 때(한 번에 많은 학생이 낼 때 등) 학생에게 오류를 보이지 않고 조용히 다시 보내요.
+// 다시 보내도 괜찮은 요청만 — 제출(submit)은 제출 번호(subId)가 있어서 두 번 들어가지 않아요.
+const API_RETRY_ = ['getConfig', 'getStatus', 'getMySubmissions', 'getMySubmissionFile', 'getMyHistory', 'getNotices', 'getMyScores', 'qrRoster', 'guideImage', 'startUpload', 'submit', 'studentLogin'];
+const API_WAITS_ = [1200, 2500, 4000, 6000, 8000, 10000, 12000, 15000];
 async function api(action, data, method) {
+  if (API_RETRY_.indexOf(action) < 0) return apiOnce_(action, data, method);
+  for (let n = 0; ; n++) {
+    let r = null, err = null;
+    try { r = await apiOnce_(action, data, method); } catch (e) { err = e; }
+    const transient = err || !r || r.busy === true;
+    if (!transient || n >= API_WAITS_.length) { if (err) throw err; return r; }
+    if (typeof state.onApiWait === 'function') { try { state.onApiWait(n + 1); } catch (e) {} }
+    await new Promise(function (res) { setTimeout(res, API_WAITS_[n] + Math.floor(Math.random() * 1000)); });
+  }
+}
+async function apiOnce_(action, data, method) {
   method = method || 'POST';
   if (method === 'GET') {
     const url = new URL(state.exec);
@@ -2148,7 +2163,9 @@ async function doSubmit(tab, confirmOverwrite) {
 
   let res;
   try {
-    res = await api('submit', payload);
+    payload.subId = Date.now().toString(36) + Math.random().toString(36).slice(2, 10);   // 다시 보내도 한 번만 들어가게
+    state.onApiWait = function (n) { btn.textContent = '제출하는 중… 내는 학생이 많아 잠깐 기다려요' + (n > 2 ? ' (' + n + ')' : ''); };
+    try { res = await api('submit', payload); } finally { state.onApiWait = null; }
   } catch (e) {
     btn.disabled = false; btn.textContent = '제출하기';
     return renderCurrentForm(tab, '서버에 연결할 수 없습니다. 다시 시도해주세요.');
