@@ -187,6 +187,11 @@
   .hn-del { color: #C2232A; text-decoration: line-through; }
   .hn-keep { color: var(--text3); }
   .hn-late { display: inline-block; margin-top: 4px; font-size: 11px; font-weight: 800; background: #FFE7D6; color: #B4501D; border-radius: 999px; padding: 1px 8px; }
+  .ack-row { display: flex; justify-content: flex-end; margin-top: 12px; }
+  .ack-btn { display: inline-flex; align-items: center; gap: 6px; border: 0; border-radius: 999px; padding: 9px 16px; background: var(--hyewon-emerald, #087A55); color: #fff; font-family: inherit; font-size: 13.5px; font-weight: 800; cursor: pointer; box-shadow: 0 4px 12px rgba(8,122,85,.25); }
+  .ack-btn:disabled { opacity: .6; }
+  .ack-done { font-size: 12.5px; font-weight: 800; color: var(--hyewon-emerald, #087A55); background: #fff; border: 1.5px solid #CDEBDD; border-radius: 999px; padding: 6px 12px; }
+  html[data-theme="dark"] .ack-done { background: transparent; }
   .upl-note { display: flex; gap: 8px; align-items: flex-start; margin: 18px 0 0; padding: 10px 12px; border-radius: 12px; background: var(--hyewon-mint, #E3F1EC); color: var(--hyewon-emerald, #087A55); font-size: 12.5px; line-height: 1.6; }
   .upl-note b { font-weight: 800; }
   .qr-tag { display: inline-block; font-size: 10.5px; font-weight: 800; color: #4B3BB5; background: #ECE9FB; border-radius: 999px; padding: 1px 7px; }
@@ -782,7 +787,51 @@ function reviewClass_(entry) {
   return entry.reviewStatus === '검토완료' ? 'done' : 'pending';
 }
 // 제출 기록 타임라인 (학생·선생님 화면 공통 모양)
-const HIST_STYLE = { '제출': ['#087A55', '📤'], '다시 제출': ['#2F6FED', '🔁'], '회수': ['#8A6D3B', '↩️'], '반려': ['#E5484D', '⛔'], '검토 완료': ['#087A55', '✅'], '검토중으로 되돌림': ['#9A6400', '⏳'], '피드백': ['#6B4BD8', '💬'] };
+const HIST_STYLE = { '안내 확인': ['#2F5BD8', '📢'], '점수': ['#0F3B34', '🏅'], '제출': ['#087A55', '📤'], '다시 제출': ['#2F6FED', '🔁'], '회수': ['#8A6D3B', '↩️'], '반려': ['#E5484D', '⛔'], '검토 완료': ['#087A55', '✅'], '검토중으로 되돌림': ['#9A6400', '⏳'], '피드백': ['#6B4BD8', '💬'] };
+// ---------- 과제 안내 «확인했습니다» ----------
+const ACK_KEY = 'hyewon_ack_';
+function ackAtOf_(tab) {
+  const e = (state.myTabs || []).find(function (t) { return t.sheetName === tab.sheetName; });
+  if (e && e.ackAt) return e.ackAt;
+  return (state.ackNow || {})[tab.sheetName] || '';   // 이번 화면에서 막 누른 것(같은 폰을 여러 학생이 쓸 수 있어서 기기에 저장하지 않아요)
+}
+function ackBtnHtml_(tab) {
+  const at = ackAtOf_(tab);
+  return at
+    ? '<span class="ack-done">✅ 확인했어요 · ' + escapeHtml(String(at).replace(/^\d{4}-/, '').replace(/-/, '/')) + '</span>'
+    : '<button type="button" class="ack-btn" data-ack="' + escapeHtml(tab.sheetName) + '">' + ic_('check', 14, '#fff', 3) + '확인했습니다</button>';
+}
+function guideCardHtml_(tab) {
+  return '<div class="detail-card mint"><div class="sec-head" style="color:var(--hyewon-emerald);">' + ic_('mega', 18, 'var(--hyewon-emerald)') + '과제 안내</div>' +
+    '<p style="margin:0;font-size:14px;line-height:1.7;color:var(--text);white-space:pre-wrap;">' + escapeHtml(tab.description) + '</p>' +
+    '<div class="ack-row" id="ackRow">' + ackBtnHtml_(tab) + '</div></div>';
+}
+document.addEventListener('click', async function (e) {
+  const b = e.target.closest && e.target.closest('[data-ack]');
+  if (!b) return;
+  const name = b.getAttribute('data-ack');
+  const tab = state.config && (state.config.tabs || []).find(function (t) { return t.sheetName === name; });
+  if (!tab) return;
+  if (state.login && state.login.preview) { alert('미리보기 화면이에요. 학생이 누르면 선생님 화면에 확인한 시각이 남아요.'); return; }
+  if (isPeek_()) { alert('마스터코드로는 둘러볼 수만 있어요.'); return; }
+  const data = { tabName: name, studentId: '', code: '', studentName: '' };
+  if (state.login && state.login.code && !state.login.open) {
+    data.studentId = state.login.studentId; data.code = state.login.code;
+  } else {
+    const oi = document.getElementById('openId'), on = document.getElementById('openName');
+    data.studentId = oi ? oi.value.trim() : ''; data.studentName = on ? on.value.trim() : '';
+    if (!data.studentName) { alert('위의 «누가 제출하나요?»에 이름' + (tab.meta && tab.meta.openMode === 'anyone' ? '' : '과 학번') + '을 먼저 적어 주세요.'); if (on) on.focus(); return; }
+  }
+  b.disabled = true;
+  let r;
+  try { r = await api('ackGuide', data); } catch (err) { r = null; }
+  b.disabled = false;
+  if (!r || r.success !== true) { alert((r && r.message) || '저장하지 못했어요. 잠시 뒤 다시 눌러 주세요.'); return; }
+  state.ackNow = state.ackNow || {}; state.ackNow[name] = r.at || '';
+  const ent = (state.myTabs || []).find(function (t) { return t.sheetName === name; }); if (ent) ent.ackAt = r.at;
+  const row = document.getElementById('ackRow'); if (row) row.innerHTML = ackBtnHtml_(tab);
+});
+
 // ---------- 기한 지남 · 초과일 (선생님이 «기한이 지나도 받기»를 끄면 막혀요) ----------
 function deadlineBlocked_(tab) { return !!(deadlineInfo_(tab) || {}).over && !!(tab && tab.meta && tab.meta.lateOk === false); }
 // 지금 내면 며칠 초과인지(기한 날의 남은 시간 + 다음 날까지 1일, 그 뒤 날짜마다 1일)
@@ -1259,8 +1308,7 @@ function renderAssignmentForm(tab, entry, notice) {
       titleCardHtml_(tab.sheetName) +
       metaRowsHtml_(tab) +
       (tab.description
-        ? '<div class="detail-card mint"><div class="sec-head" style="color:var(--hyewon-emerald);">' + ic_('mega', 18, 'var(--hyewon-emerald)') + '과제 안내</div>' +
-            '<p style="margin:0;font-size:14px;line-height:1.7;color:var(--text);white-space:pre-wrap;">' + escapeHtml(tab.description) + '</p></div>'
+        ? guideCardHtml_(tab)
         : '') +
       (teacherFile
         ? '<div class="detail-card"><div class="sec-head">' + ic_('file', 16, 'var(--text2)') + '첨부 파일</div>' +
@@ -1729,8 +1777,7 @@ function renderForm(tab, notice) {
     '<div class="main" style="padding-top:8px;">' +
       metaRowsHtml_(tab) +
       (tab.description
-        ? '<div class="detail-card mint"><div class="sec-head" style="color:var(--hyewon-emerald);">' + ic_('mega', 18, 'var(--hyewon-emerald)') + '과제 안내</div>' +
-            '<p style="margin:0;font-size:14px;line-height:1.7;color:var(--text);white-space:pre-wrap;">' + escapeHtml(tab.description) + '</p></div>'
+        ? guideCardHtml_(tab)
         : '') +
       (open
         ? '<div class="detail-card"><div class="sec-head">' + ic_('info', 16, 'var(--text2)') + '누가 제출하나요?</div>' +
@@ -1924,6 +1971,7 @@ function renderSuccess(tab, message) {
     '</div></div>' +
     footerHtml_()
   );
+  state.ackNow = {};   // 다음 학생은 안내 확인을 새로 눌러요
   const ag = document.getElementById('againBtn');
   if (ag) ag.onclick = function () { state.login = { studentId: '', studentName: '', code: '', open: true }; renderForm(tab); };
 }

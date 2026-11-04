@@ -106,7 +106,7 @@
   .st-badges { display: flex; gap: 4px; flex-wrap: wrap; }
   .stile .pill, .rv-head .pill.late-p { font-size: 11px; padding: 2px 8px; border-radius: 999px; font-weight: 800; }
   .p-wait { background: #FFF1C7; color: #8a6500; } .p-done { background: #DDF5EB; color: #12805B; } .p-rej { background: #FDE3E1; color: #C2232A; }
-  .p-flag { background: #FFF1C7; color: #8a6500; } .p-none { background: #EEF1F0; color: var(--text2); } .late-p { background: #FFE7D6; color: #B4501D; }
+  .p-flag { background: #FFF1C7; color: #8a6500; } .p-ack { background: #E8F0FF; color: #2F5BD8; } .p-none { background: #EEF1F0; color: var(--text2); } .late-p { background: #FFE7D6; color: #B4501D; }
   .stile .s-files .fchip { font-size: 11px; padding: 2px 8px; margin-top: 0; }
   .stile .s-ans { font-size: 11px; }
   .t-score { font-size: 22px; font-weight: 900; color: #0F3B34; line-height: 1.1; margin-top: 2px; }
@@ -941,7 +941,7 @@ function histTime_(at) {
   const dow = '일월화수목금토'.charAt(new Date(+m[1], +m[2] - 1, +m[3]).getDay());
   return m[1] + '-' + m[2] + '-' + m[3] + '(' + dow + ') ' + m[4] + ':' + m[5];
 }
-const HIST_STYLE = { '점수': ['#0F3B34', '🏅'], '제출': ['#087A55', '📤'], '다시 제출': ['#2F6FED', '🔁'], '회수': ['#8A6D3B', '↩️'], '반려': ['#E5484D', '⛔'], '검토 완료': ['#087A55', '✅'], '검토중으로 되돌림': ['#9A6400', '⏳'], '피드백': ['#6B4BD8', '💬'] };
+const HIST_STYLE = { '안내 확인': ['#2F5BD8', '📢'], '점수': ['#0F3B34', '🏅'], '제출': ['#087A55', '📤'], '다시 제출': ['#2F6FED', '🔁'], '회수': ['#8A6D3B', '↩️'], '반려': ['#E5484D', '⛔'], '검토 완료': ['#087A55', '✅'], '검토중으로 되돌림': ['#9A6400', '⏳'], '피드백': ['#6B4BD8', '💬'] };
 function reviewPill_(v) {
   v = String(v || '');
   if (v === '반려') return '<span class="pill" style="color:#C22B2B;background:#FDEAEC;">반려</span>';
@@ -2137,7 +2137,9 @@ async function renderSubmissions(tab) {
       '<div class="t">' + escapeHtml(nm ? r[0] + ' ' + nm : r[0]) + '<small>' + escapeHtml(sub) + '</small>' + submissionPreviewHtml_(fields, r) + '</div>' +
       '<span class="tag ' + (rv === '반려' ? 'no' : flag ? 'wr' : 'ok') + '">' + (rv === '반려' ? '반려' : flag ? '복붙 의심' : done ? '검토완료' : '제출') + '</span></div>';
   }).join('');
-  const lateArr = res.late || [], missing = res.missing || [];
+  const lateArr = res.late || [], missing = res.missing || [], acks = res.acks || {};
+  const ackBadge = function (sid) { const a = acks[idKey_(sid)]; return a ? '<span class="pill p-ack" title="과제 안내 확인 ' + escapeHtml(a.at) + '">📢 안내 확인</span>' : ''; };
+  const ackMissN = missing.filter(function (m) { return acks[idKey_(m.studentId)]; }).length;
   const scoreIdx = fields.findIndex(function (f) { return f.type === 'score'; });
   const scoreMax = res.scoreMax || null;
   const lateN = lateArr.filter(function (x) { return x && x.days > 0; }).length;
@@ -2154,13 +2156,13 @@ async function renderSubmissions(tab) {
     const pill = rv === '반려' ? '<span class="pill p-rej">반려</span>' : rv === '검토완료' ? '<span class="pill p-done">검토완료</span>' : '<span class="pill p-wait">검토 전</span>';
     return '<div class="stile' + (rv === '반려' ? ' rej' : '') + (lt && lt.days ? ' latet' : '') + '" data-ri="' + ri + '" data-st="' + (rv === '반려' ? 'rej' : rv === '검토완료' ? 'done' : 'todo') + '" data-late="' + (lt && lt.days ? 1 : 0) + '" data-flag="' + (flag ? 1 : 0) + '">' +
       '<div class="st-top"><div class="dot">' + escapeHtml(String(nm || r[0] || '?').slice(-2)) + '</div><div class="st-nm">' + escapeHtml(r[0] + (nm ? ' ' + nm : '')) + '<small>' + escapeHtml(timeIdx >= 0 ? histTime_(r[timeIdx]).replace(/^\d{4}-/, '') : '') + '</small></div></div>' +
-      '<div class="st-badges">' + pill + (lt && lt.days ? '<span class="pill late-p">⏰ ' + lt.days + '일 초과</span>' : '') + (flag ? '<span class="pill p-flag">복붙 의심</span>' : '') + '</div>' +
+      '<div class="st-badges">' + pill + (lt && lt.days ? '<span class="pill late-p">⏰ ' + lt.days + '일 초과</span>' : '') + (flag ? '<span class="pill p-flag">복붙 의심</span>' : '') + ackBadge(r[0]) + '</div>' +
       submissionPreviewHtml_(fields, r) +
       scoreHtml_(scoreIdx >= 0 ? r[scoreIdx] : '', scoreMax) + '</div>';
   }).join('');
   const missTiles = missing.map(function (m) {
     return '<div class="stile miss"><div class="st-top"><div class="dot">' + escapeHtml(String(m.name || m.studentId).slice(-2)) + '</div><div class="st-nm">' + escapeHtml(m.studentId + (m.name ? ' ' + m.name : '')) + '<small>아직 안 냄</small></div></div>' +
-      '<div class="st-badges"><span class="pill p-none">미제출</span>' + (dlPassed_(res.deadline) ? '<span class="pill late-p">⏰ 기한 지남</span>' : '') + '</div></div>';
+      '<div class="st-badges"><span class="pill p-none">미제출</span>' + (dlPassed_(res.deadline) ? '<span class="pill late-p">⏰ 기한 지남</span>' : '') + ackBadge(m.studentId) + '</div></div>';
   }).join('');
   let acc = {}; try { acc = JSON.parse(localStorage.getItem('hyewon_admin_subacc') || '{}') || {}; } catch (e) {}
   const gridView =
@@ -2170,7 +2172,7 @@ async function renderSubmissions(tab) {
     '<div class="chips" id="subChips"><button class="on" data-f="all">전체</button><button data-f="todo">검토 전</button><button data-f="rej">반려</button><button data-f="late">기한 후</button>' + (apOn ? '<button data-f="flag">복붙 의심</button>' : '') + '</div>' +
     '<details class="sacc" data-acc="done"' + (acc.done === false ? '' : ' open') + '><summary>✅ 낸 학생 <b>' + rows.length + '명</b></summary>' +
       (tiles ? '<div class="sgrid" id="subCards">' + tiles + '</div>' : '<p class="hint" style="margin:6px 2px;">아직 낸 학생이 없어요.</p>') + '</details>' +
-    '<details class="sacc" data-acc="miss"' + (acc.miss ? ' open' : '') + '><summary>⏳ 안 낸 학생 <b>' + missing.length + '명</b></summary>' +
+    '<details class="sacc" data-acc="miss"' + (acc.miss ? ' open' : '') + '><summary>⏳ 안 낸 학생 <b>' + missing.length + '명</b>' + (ackMissN ? ' <span class="hint" style="font-weight:600;">· 안내 확인 ' + ackMissN + '명</span>' : '') + '</summary>' +
       (missTiles ? '<div class="sgrid">' + missTiles + '</div>' : '<p class="hint" style="margin:6px 2px;">' + (rows.length ? '모두 냈어요 🎉 (명단이나 대상이 없으면 안 낸 학생을 셀 수 없어요)' : '명단이나 대상이 정해지면 안 낸 학생이 보여요.') + '</p>') + '</details>' +
     '<div class="row" style="gap:8px;margin:10px 0 16px;flex-wrap:wrap;"><button class="btn-outline btn-sm" id="tblToggle" type="button">표로 보기</button><span class="hint">타일을 누르면 낸 내용·점수·검토·기록을 볼 수 있어요.</span></div></div>';
   const mobileList =
