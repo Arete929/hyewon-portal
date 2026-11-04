@@ -202,6 +202,15 @@
   .qp-re { margin-left: auto; font-size: 13px; }
   html[data-theme="dark"] .qp-me { background: transparent; }
   html[data-theme="dark"] .qp-st span { background: rgba(255,255,255,.08); color: inherit; }
+  .ta-exp { width: 100%; min-height: 0; height: auto; resize: vertical; font-family: inherit; font-size: 15px; line-height: 1.65; transition: min-height .2s; }
+  .ta-exp.big { min-height: 62vh; }
+  .ta-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+  .ta-r { display: inline-flex; align-items: center; gap: 10px; margin-left: auto; }
+  .ta-x { display: inline-flex; align-items: center; gap: 4px; border: 1.5px solid var(--border); background: var(--surface); color: var(--text2); border-radius: 999px; padding: 5px 12px; font-family: inherit; font-size: 12.5px; font-weight: 800; cursor: pointer; }
+  .ta-x svg { transform: rotate(90deg); transition: transform .2s; }
+  .ta-x.on { color: var(--hyewon-emerald); border-color: #CDEBDD; }
+  .ta-x.on svg { transform: rotate(-90deg); }
+  .my-note { margin: 0; font-size: 14px; line-height: 1.7; white-space: pre-wrap; word-break: break-word; }
   .ack-row { display: flex; justify-content: flex-end; margin-top: 12px; }
   .ack-btn { display: inline-flex; align-items: center; gap: 6px; border: 0; border-radius: 999px; padding: 9px 16px; background: var(--hyewon-emerald, #087A55); color: #fff; font-family: inherit; font-size: 13.5px; font-weight: 800; cursor: pointer; box-shadow: 0 4px 12px rgba(8,122,85,.25); }
   .ack-btn:disabled { opacity: .6; }
@@ -346,6 +355,7 @@ const state = {
   tab: '',
   config: null,
   login: null,   // { studentId, studentName, code }
+  noteDraft: {}, noteSaved: {},   // «과제 제출» 글 — 적던 글 / 서버에 낸 글
   globalMode: false,   // 과제를 먼저 고르지 않고 로그인부터 하는 흐름(오늘의 과제)
   myTabs: null,        // getMySubmissions() 결과 — 이 학생이 속한 모든 과제의 제출 현황
   currentEntry: null,  // globalMode에서 지금 보고 있는 과제의 myTabs 항목
@@ -675,6 +685,7 @@ const IC = {
   check: '<polyline points="20 6 9 17 4 12"></polyline>',
   refresh: '<polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>',
   chev: '<polyline points="9 18 15 12 9 6"></polyline>',
+  edit: '<path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"></path>',
   down: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><path d="M12 15V3"></path>',
   file: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline>',
   info: '<rect x="4" y="3" width="16" height="18" rx="2"></rect><path d="M8 8h8M8 12h8M8 16h5"></path>'
@@ -858,6 +869,33 @@ async function mountQrPick_(tab) {
     const re = box.querySelector('[data-qre]'); if (re) re.onclick = function () { st.id = ''; state.login.studentId = ''; state.login.studentName = ''; paint(); };
   }
   paint();
+}
+
+// ---------- ✏️ 과제 제출 — 모든 과제에 기본으로 있는 학생 글 칸 ----------
+// 기본은 4줄 정도, «펼치기»를 누르면 크게 써요. 적던 글은 화면이 다시 그려져도 남아요(noteDraft).
+function noteCardHtml_(tab) {
+  // 서버가 «과제 제출» 글을 받을 수 있을 때(버전 55 이상)만 보여요 — 예전 서버에선 글이 저장되지 않아서요
+  if (!(state.config && Number(state.config.serverVersion) >= 55)) return '';
+  const v = state.noteDraft[tab.sheetName] !== undefined ? state.noteDraft[tab.sheetName] : (state.noteSaved[tab.sheetName] || '');
+  const ap = antiPasteMinOf_(tab);
+  return '<div class="detail-card note-card"><div class="sec-head" style="color:var(--hyewon-emerald);">' + ic_('edit', 18, 'var(--hyewon-emerald)') + '과제 제출</div>' +
+    '<textarea id="noteIn" class="ta-exp" rows="4" maxlength="20000" placeholder="과제 내용을 적어 주세요. (파일만 낼 때는 비워 둬도 돼요)">' + escapeHtml(v) + '</textarea>' +
+    '<div class="ta-foot">' + (ap ? '<span class="badge-anti">복사-붙여넣기 제한 · 한 번에 ' + ap + '자 이상 입력되면 기록돼요</span>' : '<span></span>') +
+      '<span class="ta-r"><span class="charcount" id="noteCc">' + v.length + '자</span>' +
+      '<button type="button" class="ta-x" data-tx="noteIn">' + ic_('chev', 13, 'currentColor', 2.6) + '<span>펼치기</span></button></span></div></div>';
+}
+document.addEventListener('click', function (e) {
+  const b = e.target.closest && e.target.closest('[data-tx]'); if (!b) return;
+  const ta = document.getElementById(b.getAttribute('data-tx')); if (!ta) return;
+  const big = ta.classList.toggle('big');
+  b.classList.toggle('on', big); b.querySelector('span').textContent = big ? '접기' : '펼치기';
+  if (big) { ta.focus(); ta.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
+});
+function wireNote_(tab) {
+  const ta = document.getElementById('noteIn'); if (!ta) return;
+  const cc = document.getElementById('noteCc');
+  ta.addEventListener('input', function () { cc.textContent = ta.value.length + '자'; state.noteDraft[tab.sheetName] = ta.value; });
+  wireAntiPaste_(tab, ta);
 }
 
 // ---------- 과제 안내 «확인했습니다» ----------
@@ -1393,7 +1431,8 @@ function renderAssignmentForm(tab, entry, notice) {
               : '') +
           '</div>'
         : '') +
-      '<div class="card">' + fieldsHtml + '</div>' +
+      noteCardHtml_(tab) +
+      (fieldsHtml ? '<div class="card">' + fieldsHtml + '</div>' : '') +
       (deadlineBlocked_(tab) ? '<div class="msg error">제출 기한이 지나서 더 이상 제출할 수 없어요.</div>' : lateNoticeHtml_(tab)) +
       '<button class="btn" id="submitBtn"' + (deadlineBlocked_(tab) ? ' disabled' : '') + ' style="margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:8px;">' +
         '<span>' + (entry.submitted ? '수정 제출하기' : '제출하기') + '</span>' +
@@ -1456,6 +1495,7 @@ function renderSubmissionStatus(tab, entry) {
           '</button>') +
       (canWithdraw ? '<div style="text-align:center;margin:-4px 0 12px;"><button class="linkbtn" id="withdrawBtn" type="button">제출 회수하기 (잘못 냈을 때)</button></div>' : '') +
       '<div class="detail-card"><div class="sec-head">' + ic_('clock', 16, 'var(--text2)') + '제출 기록</div><div id="histArea"><span class="hint">불러오는 중…</span></div></div>' +
+      '<div class="detail-card" id="myNoteCard" style="display:none;"><div class="sec-head">' + ic_('edit', 16, 'var(--text2)') + '내가 쓴 글</div><p id="myNoteText" class="my-note"></p></div>' +
       '<div class="detail-card" id="submittedFileCard" style="display:none;"><div class="sec-head">' + ic_('file', 16, 'var(--text2)') + '내가 낸 파일 <span class="hint" style="font-weight:500;margin-left:4px;">눌러서 열어 보기</span></div><div id="submittedFileArea"></div></div>' +
       '<div class="detail-card" style="padding-bottom:6px;"><div class="sec-head">' + ic_('info', 16, 'var(--text2)') + '과제 정보</div>' +
         metaRowsHtml_(tab).replace('class="detail-card meta-rows"', 'style="margin:0 -2px;"') +
@@ -1496,7 +1536,13 @@ async function loadSubmittedFile_(tab) {
   try {
     res = await api('getMySubmissionFile', { tabName: tab.sheetName, studentId: state.login.studentId, code: state.login.code });
   } catch (e) { return; }
-  if (!res || !res.success || !res.files || !res.files.length) return;
+  if (!res || !res.success) return;
+  if (typeof res.note === 'string') state.noteSaved[tab.sheetName] = res.note;
+  if (res.note) {
+    const nc = document.getElementById('myNoteCard');
+    if (nc) { nc.style.display = ''; document.getElementById('myNoteText').textContent = res.note; }
+  }
+  if (!res.files || !res.files.length) return;
 
   const card = document.getElementById('submittedFileCard');
   if (card) card.style.display = '';
@@ -1721,9 +1767,11 @@ async function doLogin(tab) {
 // ---------- 제출 폼 ----------
 
 function fieldInputs(tab) {
-  return tab.fields.filter(function (f) {
+  // 글 칸을 먼저, 파일 칸을 뒤에 모아요(과제를 만든 뒤에 글 칸을 더해도 위에 보이게). 칸 위치(idx)는 tab.fields 기준이라 순서와 무관해요.
+  const list = tab.fields.filter(function (f) {
     return f.type === 'short' || f.type === 'long' || f.type === 'file';
   });
+  return list.filter(function (f) { return f.type !== 'file'; }).concat(list.filter(function (f) { return f.type === 'file'; }));
 }
 
 // renderForm(예전 흐름)과 renderAssignmentForm(오늘의 과제 흐름)이 함께 씁니다.
@@ -1782,44 +1830,49 @@ function antiPasteMinOf_(tab) {
   return (n >= 5 && n <= 500) ? n : 20;
 }
 
+function wireAntiPaste_(tab, ta) {
+  const apMin = antiPasteMinOf_(tab);
+  if (apMin) {
+    // «한 번에 apMin 자 이상» 들어온 입력을 기록합니다. maxChunk = 한 번에 들어온 가장 긴 글자 수,
+    // chunks = apMin 자 이상 들어온 횟수. 붙여넣기·끌어다 놓기는 막고, 그 밖의 방법(자동 완성·음성 입력 등)은 막을 수 없어 기록만 합니다.
+    function seen(len) {
+      state.antiPaste.maxChunk = Math.max(state.antiPaste.maxChunk, len);
+      if (len >= apMin) state.antiPaste.chunks++;
+    }
+    ta.dataset.lastLen = '0';
+    ta.addEventListener('paste', function (e) {
+      e.preventDefault();
+      state.antiPaste.pasteTries++;
+      const text = (e.clipboardData || window.clipboardData).getData('text') || '';
+      seen(text.length);
+    });
+    ta.addEventListener('drop', function (e) {
+      e.preventDefault();
+      state.antiPaste.pasteTries++;
+      const text = (e.dataTransfer && e.dataTransfer.getData('text')) || '';
+      seen(text.length);
+    });
+    ta.addEventListener('input', function () {
+      const len = ta.value.length;
+      const added = len - Number(ta.dataset.lastLen || 0);
+      ta.dataset.lastLen = String(len);
+      if (added >= 2) seen(added);                       // 한 글자씩 치는 입력(1자)은 건너뜁니다
+    });
+    ta.addEventListener('keydown', function (e) {
+      if (e.key === 'Backspace' || e.key === 'Delete') state.antiPaste.deletes++;
+    });
+  }
+}
+
 function wireFieldEvents(tab, inputs) {
   inputs.forEach(function (f, i) {
     if (f.type !== 'long') return;
     const ta = document.getElementById('f_' + i);
     const cc = document.getElementById('cc_f_' + i);
     ta.addEventListener('input', function () { cc.textContent = ta.value.length + '자'; });
-    const apMin = antiPasteMinOf_(tab);
-    if (apMin) {
-      // «한 번에 apMin 자 이상» 들어온 입력을 기록합니다. maxChunk = 한 번에 들어온 가장 긴 글자 수,
-      // chunks = apMin 자 이상 들어온 횟수. 붙여넣기·끌어다 놓기는 막고, 그 밖의 방법(자동 완성·음성 입력 등)은 막을 수 없어 기록만 합니다.
-      function seen(len) {
-        state.antiPaste.maxChunk = Math.max(state.antiPaste.maxChunk, len);
-        if (len >= apMin) state.antiPaste.chunks++;
-      }
-      ta.dataset.lastLen = '0';
-      ta.addEventListener('paste', function (e) {
-        e.preventDefault();
-        state.antiPaste.pasteTries++;
-        const text = (e.clipboardData || window.clipboardData).getData('text') || '';
-        seen(text.length);
-      });
-      ta.addEventListener('drop', function (e) {
-        e.preventDefault();
-        state.antiPaste.pasteTries++;
-        const text = (e.dataTransfer && e.dataTransfer.getData('text')) || '';
-        seen(text.length);
-      });
-      ta.addEventListener('input', function () {
-        const len = ta.value.length;
-        const added = len - Number(ta.dataset.lastLen || 0);
-        ta.dataset.lastLen = String(len);
-        if (added >= 2) seen(added);                       // 한 글자씩 치는 입력(1자)은 건너뜁니다
-      });
-      ta.addEventListener('keydown', function (e) {
-        if (e.key === 'Backspace' || e.key === 'Delete') state.antiPaste.deletes++;
-      });
-    }
+    wireAntiPaste_(tab, ta);
   });
+  wireNote_(tab);
   inputs.forEach(function (f, i) {
     if (f.type !== 'file') return;
     document.getElementById('f_' + i).addEventListener('change', function (e) {
@@ -1865,7 +1918,8 @@ function renderForm(tab, notice) {
           '<button class="linklike" id="logoutBtn" style="padding:4px 0;">로그아웃</button>' +
         '</div>') +
       (notice ? '<div class="msg error">' + escapeHtml(notice) + '</div>' : '') +
-      '<div class="card">' + fieldsHtml + '</div>' +
+      noteCardHtml_(tab) +
+      (fieldsHtml ? '<div class="card">' + fieldsHtml + '</div>' : '') +
       (over ? '<div class="msg error">제출 기한이 지나서 더 이상 제출할 수 없어요.</div>' : lateNoticeHtml_(tab)) +
       '<button class="btn" id="submitBtn"' + (over ? ' disabled' : '') + ' style="margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:8px;">' +
         '<span>제출하기</span><span style="margin-left:auto;display:flex;">' + ic_('chev', 16, '#fff', 2.4) + '</span></button>' +
@@ -1989,6 +2043,9 @@ async function doSubmit(tab, confirmOverwrite) {
     files: files,
     confirm: !!confirmOverwrite
   };
+  const noteEl = document.getElementById('noteIn');
+  // 글을 적었거나, 예전에 낸 글을 불러와 보여 준 경우에만 보내요(안 보내면 서버가 예전 글을 그대로 둬요)
+  if (noteEl && (noteEl.value.trim() || state.noteSaved[tab.sheetName] !== undefined)) payload.note = noteEl.value;
   if (tab.meta && tab.meta.antiPaste) {
     payload.trace = {
       v: 1,
@@ -2018,6 +2075,9 @@ async function doSubmit(tab, confirmOverwrite) {
     btn.disabled = false; btn.textContent = '제출하기';
     return renderCurrentForm(tab, res.message || '제출에 실패했습니다.');
   }
+  if (payload.note !== undefined) state.noteSaved[tab.sheetName] = payload.note;
+  delete state.noteDraft[tab.sheetName];
+  if (state.login && state.login.open) delete state.noteSaved[tab.sheetName];   // QR: 다음 학생에게 앞 학생 글이 남지 않게
 
   if (state.globalMode) {
     let res2;
