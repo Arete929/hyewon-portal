@@ -323,6 +323,15 @@
   .hh-ttl span { font-size: 13px; color: var(--text2); }
   .hh-task { display: flex; align-items: center; gap: 12px; min-width: 0; }
   .hh-ttl .hh-ic { flex: none; width: 56px; height: 56px; border-radius: 16px; background: rgba(255,255,255,.92); box-shadow: 0 4px 14px rgba(0,0,0,.12); display: grid; place-items: center; overflow: hidden; }
+  .hh-top .ib.av { overflow: hidden; border: 2px solid #fff; box-shadow: 0 2px 8px rgba(0,0,0,.3); }
+  .hh-top .ib.av img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .me-row { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
+  .me-av { position: relative; flex: none; width: 76px; height: 76px; border-radius: 50%; background: var(--hyewon-emerald, #087A55); color: #fff; display: grid; place-items: center; cursor: pointer; box-shadow: 0 3px 10px rgba(0,0,0,.15); }
+  .me-av img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: block; }
+  .me-av span { font-size: 22px; font-weight: 800; }
+  .me-av i { position: absolute; right: -2px; bottom: -2px; width: 28px; height: 28px; border-radius: 50%; background: #fff; display: grid; place-items: center; font-style: normal; font-size: 14px; box-shadow: 0 1px 4px rgba(0,0,0,.2); }
+  .me-t { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+  .me-t b { font-size: 16px; } .me-t small { font-size: 12.5px; color: var(--text2); line-height: 1.5; }
   .hh-top .pill { background: rgba(255,255,255,.92) !important; color: #087A55 !important; box-shadow: 0 2px 8px rgba(0,0,0,.2); }
   .theme-pick { display: flex; gap: 8px; }
   .theme-pick button { flex: 1; padding: 14px 10px; border-radius: 14px; border: 1.5px solid var(--border); background: var(--surface); color: var(--text); font-family: inherit; font-size: 14px; font-weight: 700; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 8px; }
@@ -637,6 +646,7 @@ async function tryGlobalAutoLogin(saved) {
   if (!res.success) { clearLogin(); return renderGlobalLogin(); }
   state.login = { studentId: saved.studentId, studentName: res.studentName, code: saved.code, master: !!res.master };
   state.myTabs = res.tabs || [];
+  state.myAvatar = res.avatar || '';
   renderToday();
 }
 
@@ -710,6 +720,7 @@ async function doGlobalLogin() {
 
   state.login = { studentId: studentId, studentName: res.studentName, code: code, master: !!res.master };
   state.myTabs = res.tabs || [];
+  state.myAvatar = res.avatar || '';
   saveLogin(studentId, code);
   renderToday();
 }
@@ -812,7 +823,7 @@ function homeHeroHtml_() {
   return peekBarHtml_() + '<div class="home-hero"><picture><source srcset="../assets/login-bg.webp" type="image/webp"><img class="bg" src="../assets/login-bg.jpg" alt="" decoding="async"></picture>' +
     '<div class="hh-top"><img class="logo" src="../assets/logo.png" alt=""><span class="gugi">혜원포털</span>' +
       '<button class="ib" id="themeBtn2" type="button" aria-label="밝게/어둡게 바꾸기">' + themeIcon_() + '</button>' +
-      '<button class="ib" id="profileBtn2" type="button" aria-label="로그아웃"><svg width="16" height="16" viewBox="0 0 24 24" fill="#fff"><circle cx="12" cy="8" r="4"></circle><path d="M4 20c0-4 4-6 8-6s8 2 8 6"></path></svg></button>' +
+      '<button class="ib' + (state.myAvatar ? ' av' : '') + '" id="profileBtn2" type="button" aria-label="내 정보">' + (state.myAvatar ? '<img src="' + escapeHtml(state.myAvatar) + '" alt="">' : '<svg width="16" height="16" viewBox="0 0 24 24" fill="#fff"><circle cx="12" cy="8" r="4"></circle><path d="M4 20c0-4 4-6 8-6s8 2 8 6"></path></svg>') + '</button>' +
     '</div>' +
     '<div class="hh-ttl"><h1>오늘의 과제</h1><span>' + todayLabel_() + '</span></div></div>';
 }
@@ -828,7 +839,14 @@ function renderMore_() {
           '<button type="button" data-theme-pick="dark"' + (t === 'dark' ? ' class="on"' : '') + '><span class="sw" style="background:linear-gradient(180deg,#0B2C27 50%,#133B34 50%);"></span>어둡게</button>' +
         '</div><p class="hint" style="margin:10px 0 0;">이 기기에서만 바뀌어요.</p></div>' +
       '<div class="detail-card"><div class="sec-head">내 정보</div>' +
-        '<p style="margin:0 0 12px;font-size:14px;">' + escapeHtml((state.login && state.login.studentId) || '') + ' ' + escapeHtml((state.login && state.login.studentName) || '') + '</p>' +
+        (canAvatar_()
+          ? '<div class="me-row"><label class="me-av" title="프로필 사진 바꾸기">' + (state.myAvatar ? '<img src="' + escapeHtml(state.myAvatar) + '" alt="">' : '<span>' + escapeHtml(String((state.login && state.login.studentName) || '?').slice(-2)) + '</span>') +
+              '<i>📷</i><input type="file" accept="image/*" id="avIn" hidden></label>' +
+            '<div class="me-t"><b>' + escapeHtml((state.login && state.login.studentId) || '') + ' ' + escapeHtml((state.login && state.login.studentName) || '') + '</b>' +
+              '<small>사진을 눌러 프로필 사진을 바꿔요. 선생님 화면에 보여요.</small>' +
+              (state.myAvatar ? '<button type="button" class="linklike" id="avDel" style="align-self:flex-start;padding:2px 0;">사진 지우기</button>' : '') +
+              '<span class="hint" id="avMsg"></span></div></div>'
+          : '<p style="margin:0 0 12px;font-size:14px;">' + escapeHtml((state.login && state.login.studentId) || '') + ' ' + escapeHtml((state.login && state.login.studentName) || '') + '</p>') +
         '<button class="btn-outline" id="moreLogout" type="button">로그아웃</button></div>' +
     '</div>' +
     footerHtml_() +
@@ -839,6 +857,39 @@ function renderMore_() {
     b.onclick = function () { setTheme_(b.getAttribute('data-theme-pick')); renderMore_(); };
   });
   document.getElementById('moreLogout').onclick = doGlobalLogout_;
+  const avIn = document.getElementById('avIn');
+  if (avIn) avIn.onchange = async function () {
+    const f = avIn.files && avIn.files[0]; avIn.value = ''; if (!f) return;
+    const msg = document.getElementById('avMsg'); msg.textContent = '사진 올리는 중…';
+    let img;
+    try { img = await squareAvatar_(f); } catch (e) { msg.textContent = '이 사진은 읽을 수 없어요. 다른 사진으로 해 주세요.'; return; }
+    saveAvatar_(img, msg);
+  };
+  const avDel = document.getElementById('avDel');
+  if (avDel) avDel.onclick = function () { if (confirm('프로필 사진을 지울까요?')) saveAvatar_('', document.getElementById('avMsg')); };
+}
+// 프로필 사진 — 로그인한 학생(학생코드)만. 가운데를 정사각형으로 잘라 160px JPG로 줄여서 보내요.
+function canAvatar_() { return !!(state.login && state.login.code && !state.login.master && !state.login.open && !state.login.preview && Number(state.config && state.config.serverVersion) >= 60); }
+function squareAvatar_(file) {
+  return new Promise(function (resolve, reject) {
+    const url = URL.createObjectURL(file), im = new Image();
+    im.onload = function () {
+      const side = Math.min(im.naturalWidth, im.naturalHeight); if (!side) { URL.revokeObjectURL(url); return reject(new Error('empty')); }
+      const cv = document.createElement('canvas'); cv.width = cv.height = 160;
+      const cx = cv.getContext('2d'); cx.fillStyle = '#fff'; cx.fillRect(0, 0, 160, 160);
+      cx.drawImage(im, (im.naturalWidth - side) / 2, (im.naturalHeight - side) / 2, side, side, 0, 0, 160, 160);
+      URL.revokeObjectURL(url);
+      resolve(cv.toDataURL('image/jpeg', 0.82));
+    };
+    im.onerror = function () { URL.revokeObjectURL(url); reject(new Error('bad')); };
+    im.src = url;
+  });
+}
+async function saveAvatar_(img, msg) {
+  let r; try { r = await api('setStudentAvatar', { studentId: state.login.studentId, code: state.login.code, image: img }); } catch (e) { r = null; }
+  if (!r || r.success !== true) { if (msg) msg.textContent = (r && r.message) || '저장하지 못했어요. 잠시 뒤 다시 해 주세요.'; return; }
+  state.myAvatar = r.avatar || '';
+  renderMore_();
 }
 
 function reviewLabel_(entry) {
@@ -1235,8 +1286,8 @@ function appbarHtml_(title, withBack) {
   const right = withBack
     ? '<a href="#" id="homeBtn2" style="color:#fff;display:flex;" aria-label="오늘의 과제로"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"></path><path d="M5 10v10h14V10"></path></svg></a>'
     : '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>' +
-      '<button id="profileBtn2" aria-label="로그아웃" style="width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,0.25);">' +
-        '<svg width="14" height="14" viewBox="0 0 24 24" fill="#fff" style="margin:auto;"><circle cx="12" cy="8" r="4"></circle><path d="M4 20c0-4 4-6 8-6s8 2 8 6"></path></svg>' +
+      '<button id="profileBtn2" aria-label="내 정보" style="width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,0.25);overflow:hidden;padding:0;">' +
+        (state.myAvatar ? '<img src="' + escapeHtml(state.myAvatar) + '" alt="" style="width:100%;height:100%;object-fit:cover;display:block;">' : '<svg width="14" height="14" viewBox="0 0 24 24" fill="#fff" style="margin:auto;"><circle cx="12" cy="8" r="4"></circle><path d="M4 20c0-4 4-6 8-6s8 2 8 6"></path></svg>') +
       '</button>';
   return peekBarHtml_() + '<div class="appbar">' + left + '<div class="icons">' + right + '</div></div>';
 }
@@ -1285,7 +1336,7 @@ function wireChrome_() {
   const homeBtn2 = document.getElementById('homeBtn2');
   if (homeBtn2) homeBtn2.onclick = function (e) { e.preventDefault(); renderToday(); };
   const profileBtn2 = document.getElementById('profileBtn2');
-  if (profileBtn2) profileBtn2.onclick = doGlobalLogout_;
+  if (profileBtn2) profileBtn2.onclick = function () { renderMore_(); };
   const themeBtn2 = document.getElementById('themeBtn2');
   if (themeBtn2) themeBtn2.onclick = function () { setTheme_(getTheme_() === 'dark' ? 'light' : 'dark'); };
   return backBtn2;
