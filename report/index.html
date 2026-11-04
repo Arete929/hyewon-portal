@@ -891,10 +891,16 @@ document.addEventListener('click', function (e) {
   b.classList.toggle('on', big); b.querySelector('span').textContent = big ? '접기' : '펼치기';
   if (big) { ta.focus(); ta.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
 });
+// 글을 쓸수록 칸이 저절로 길어져요(줄어들지는 않아요 — 직접 늘린 높이는 그대로 둬요)
+function autoGrow_(ta) {
+  if (!ta) return;
+  if (ta.scrollHeight > ta.clientHeight + 1) ta.style.height = (ta.scrollHeight + 2) + 'px';
+}
 function wireNote_(tab) {
   const ta = document.getElementById('noteIn'); if (!ta) return;
   const cc = document.getElementById('noteCc');
-  ta.addEventListener('input', function () { cc.textContent = ta.value.length + '자'; state.noteDraft[tab.sheetName] = ta.value; });
+  ta.addEventListener('input', function () { cc.textContent = ta.value.length + '자'; state.noteDraft[tab.sheetName] = ta.value; autoGrow_(ta); });
+  autoGrow_(ta);
   wireAntiPaste_(tab, ta);
 }
 

@@ -1635,6 +1635,11 @@ async function doCreateTab() {
 
 // ---------- 과제 상세 ----------
 
+// 글을 쓸수록 칸이 저절로 길어져요(줄어들지는 않아요 — 직접 늘린 높이는 그대로 둬요)
+function autoGrow_(ta) {
+  if (!ta) return;
+  if (ta.scrollHeight > ta.clientHeight + 1) ta.style.height = (ta.scrollHeight + 2) + 'px';
+}
 // 글 칸 «펼치기» — 누르면 크게, 다시 누르면 원래대로 (과제 안내 쓰기 칸)
 document.addEventListener('click', function (e) {
   const b = e.target.closest && e.target.closest('[data-tx]'); if (!b) return;
@@ -1646,6 +1651,7 @@ document.addEventListener('click', function (e) {
 document.addEventListener('input', function (e) {
   const t = e.target; if (!t.classList || !t.classList.contains('ta-exp')) return;
   const cc = document.getElementById('cc_' + t.id); if (cc) cc.textContent = t.value.length + '자';
+  autoGrow_(t);
 });
 
 async function renderDetail(tabName) {
@@ -1799,7 +1805,7 @@ async function renderDetail(tabName) {
     if (b.getAttribute('data-status') === status) b.classList.add('on');
     b.onclick = function () { if (b.getAttribute('data-status') !== status) doSetStatus(tabName, b.getAttribute('data-status')); };
   });
-  document.getElementById('descEdit').onclick = function () { document.getElementById('descView').style.display = 'none'; document.getElementById('descForm').style.display = ''; const di = document.getElementById('descIn'), dc = document.getElementById('cc_descIn'); if (dc) dc.textContent = di.value.length + '자'; di.focus(); };
+  document.getElementById('descEdit').onclick = function () { document.getElementById('descView').style.display = 'none'; document.getElementById('descForm').style.display = ''; const di = document.getElementById('descIn'), dc = document.getElementById('cc_descIn'); if (dc) dc.textContent = di.value.length + '자'; autoGrow_(di); di.focus(); };
   document.getElementById('descCancel').onclick = function () { document.getElementById('descView').style.display = ''; document.getElementById('descForm').style.display = 'none'; };
   document.getElementById('descSave').onclick = async function () {
     const msg = document.getElementById('descMsg'); msg.textContent = '저장 중…';
