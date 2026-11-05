@@ -1153,7 +1153,9 @@ async function loadReviewFiles_(tabName, sid, root) {
     if (!list.length) return;
     box.innerHTML = list.map(function (f) {
       const ext = fileExt_(f.name);
-      const dl = 'https://drive.google.com/uc?export=download&id=' + encodeURIComponent(f.id), view = 'https://drive.google.com/file/d/' + encodeURIComponent(f.id) + '/view';
+      // 드라이브 주소는 서버 계정(학교 계정)으로 열리게 authuser 를 붙여요 — 다른 구글 계정이 먼저 로그인돼 있으면 403이 나서요
+      const au = r.runAs ? 'authuser=' + encodeURIComponent(r.runAs) : '';
+      const dl = 'https://drive.google.com/uc?export=download&id=' + encodeURIComponent(f.id) + (au ? '&' + au : ''), view = 'https://drive.google.com/file/d/' + encodeURIComponent(f.id) + '/view' + (au ? '?' + au : '');
       if (f.missing) return '<div class="rvf miss"><span class="rvf-ic">⚠️</span><div class="rvf-t"><b>파일을 찾을 수 없어요</b><small>지워졌거나 옮겨졌을 수 있어요</small></div></div>';
       const base = ext ? f.name.slice(0, -(ext.length + 1)) : f.name;
       return '<div class="rvf"><span class="rvf-ic">' + fileIcon_(ext, f.mime) + '</span>' +
@@ -1162,17 +1164,32 @@ async function loadReviewFiles_(tabName, sid, root) {
         ((browserViewable_(ext, f.mime) && (f.size || 0) <= BROWSER_FAST_MAX_)
           ? '<button type="button" class="btn btn-sm" data-bview="' + escapeHtml(f.id) + '" data-drive="' + view + '">열기</button>'
           : '<a class="btn btn-sm" href="' + view + '" target="_blank" rel="noopener">열기</a>') +
-        '<a class="btn-outline btn-sm" href="' + dl + '" target="_blank" rel="noopener" title="내려받기">⬇</a>' +
+        '<button type="button" class="btn-outline btn-sm" data-bdl="' + escapeHtml(f.id) + '" data-name="' + escapeHtml(f.name) + '" data-drive="' + dl + '" title="내려받기">⬇</button>' +
         '</div>';
     }).join('');
     box.querySelectorAll('[data-bview]').forEach(function (b) {
       b.onclick = function () { openInBrowser_(tabName, sid, b.getAttribute('data-bview'), b.getAttribute('data-drive'), b); };
+    });
+    box.querySelectorAll('[data-bdl]').forEach(function (b) {
+      b.onclick = function () { downloadViaServer_(tabName, sid, b.getAttribute('data-bdl'), b.getAttribute('data-name'), b.getAttribute('data-drive'), b); };
     });
   });
 }
 // PDF·사진은 브라우저의 보기 화면으로(드라이브 미리보기가 안 될 때도 열려요). 새 탭은 누를 때 바로 열어 둬야 막히지 않아요.
 const BROWSER_FAST_MAX_ = 10 * 1024 * 1024;   // 이보다 크면 서버를 거치는 시간이 길어서 드라이브 미리보기가 더 빨라요
 function browserViewable_(ext, mime) { return ext === 'pdf' || /^(jpe?g|png|gif|webp|txt)$/.test(ext) || /^image\/(jpeg|png|gif|webp)$/.test(mime || '') || mime === 'application/pdf'; }
+// «⬇»: 서버가 파일을 받아 원래 이름 그대로 저장해요(어느 구글 계정으로 로그인돼 있든 돼요). 25MB가 넘으면 드라이브(학교 계정)로.
+async function downloadViaServer_(tabName, sid, fileId, name, driveUrl, btn) {
+  const old = btn.textContent; btn.disabled = true; btn.textContent = '…';
+  let r = null; try { r = await api('getSubmissionFileData', { tabName: tabName, studentId: sid, fileId: fileId }); } catch (e) {}
+  btn.disabled = false; btn.textContent = old;
+  if (!r || r.success !== true) { window.open(driveUrl, '_blank'); return; }
+  const bin = atob(r.data), bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  const url = URL.createObjectURL(new Blob([bytes], { type: r.mime || 'application/octet-stream' }));
+  const a = document.createElement('a'); a.href = url; a.download = name || r.name || 'file'; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(function () { URL.revokeObjectURL(url); }, 60 * 1000);
+}
 async function openInBrowser_(tabName, sid, fileId, driveUrl, btn) {
   const w = window.open('', '_blank');
   if (w) { try { w.document.write('<meta charset="utf-8"><title>불러오는 중…</title><p style="font-family:sans-serif;padding:24px;color:#555">파일을 불러오는 중이에요…</p>'); } catch (e) {} }
@@ -1955,7 +1972,7 @@ async function renderInquiries(filter) {
   let r; try { r = await api('listInquiries'); } catch (e) { r = null; }
   if (state.nav !== 'inquiry') return;
   if (!r || !r.success) { render('<div class="wrap"><h1 class="serif">💬 학생 문의</h1><div class="msg error">' + escapeHtml((r && r.message) || '불러오지 못했어요. 서버(Code.gs)가 버전 66 이상인지 확인해주세요.') + '</div></div>'); return; }
-  state.inqNew = r.newCount || 0; state.avatars = Object.assign({}, state.avatars || {}, r.avatars || {});
+  state.inqNew = r.newCount || 0; state.avatars = Object.assign({}, state.avatars || {}, r.avatars || {}); state.runAs = r.runAs || state.runAs || '';
   const all = r.items || [];
   const isOpen = function (q) { return q.status === '새 문의' || q.status === '확인함'; };
   const cnt = { open: all.filter(isOpen).length, done: all.filter(function (q) { return !isOpen(q); }).length, all: all.length };
@@ -2009,7 +2026,7 @@ async function openInquiryFile_(fileId, btn) {
   btn.disabled = true;
   let r = null; try { r = await api('getInquiryFileData', { fileId: fileId }); } catch (e) {}
   btn.disabled = false;
-  const drive = 'https://drive.google.com/file/d/' + encodeURIComponent(fileId) + '/view';
+  const drive = 'https://drive.google.com/file/d/' + encodeURIComponent(fileId) + '/view' + (state.runAs ? '?authuser=' + encodeURIComponent(state.runAs) : '');
   if (!r || r.success !== true) { if (w) w.location.href = (r && r.url) || drive; return; }
   const mime = r.mime || 'application/octet-stream';
   if (!/^(image\/|application\/pdf|text\/plain|video\/)/.test(mime)) { if (w) w.location.href = drive; return; }   // PPT·한글 등은 드라이브 미리보기
