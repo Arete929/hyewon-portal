@@ -446,6 +446,12 @@
   .dlr.spin { animation: dlspin .9s linear infinite; }
   @keyframes dlspin { to { transform: rotate(360deg); } }
   .dlp { position: absolute; inset: 0; display: grid; place-items: center; font-size: 8.5px; font-weight: 800; color: var(--hyewon-emerald, #087A55); letter-spacing: -.3px; }
+  .btn.dlb .dlr .t { stroke: rgba(255,255,255,.3); }
+  .btn.dlb .dlr .a { stroke: #fff; }
+  .btn.dlb .dlp { color: #fff; }
+  .refreshing { display: flex; align-items: center; gap: 8px; margin: 0 0 10px; font-size: 12.5px; color: var(--text2); }
+  .rf-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--hyewon-emerald, #087A55); animation: rfpulse 1s ease-in-out infinite; }
+  @keyframes rfpulse { 50% { opacity: .25; transform: scale(.7); } }
   .dl-ok { color: var(--hyewon-emerald, #087A55); font-weight: 900; font-size: 15px; }
   .rvf-t { flex: 1; min-width: 0; display: flex; flex-direction: column; }
   .rvf-t b { font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -796,6 +802,8 @@ async function api(action, data, opts) {
     throw new Error('unauthorized');
   }
   try { if (json && json.teacher) rememberTeacher_(json.teacher); } catch (e) {}
+  // 무언가를 바꾼 요청이 성공하면, 기억해 둔 과제 설정은 낡은 것으로 봐요(다음 화면은 새로 받아서 그려요)
+  if (json && json.success === true && !/^(get|list|load|read|check|preview|auth|login|search|qr|guideImage|linkPreview|clientLog)/i.test(action)) { state.configStale = true; state.mutSeq = (state.mutSeq || 0) + 1; }
   try { if (json && json.success === true && SAVE_LABELS[action] && !(action === 'autoRoster' && !payload.apply)) markSaved_(SAVE_LABELS[action], payload.tabName, action); } catch (e) {}
   return json;
 }
@@ -855,8 +863,10 @@ function paintSaveStamp_() {
 async function apiGet(action) {
   const url = new URL(state.exec);
   url.searchParams.set('action', action);
+  const seq = state.mutSeq || 0;
   const res = await fetch(url.toString());
   const json = await res.json();
+  if (action === 'getConfig' && json && json.tabs && (state.mutSeq || 0) === seq) state.configStale = false;   // 받는 사이에 바뀐 게 없으면 최신
   try { if (json && json.teacher) rememberTeacher_(json.teacher); } catch (e) {}
   return json;
 }
@@ -1175,13 +1185,13 @@ async function loadReviewFiles_(tabName, sid, root) {
         '<div class="rvf-t"><b title="' + escapeHtml(f.name) + '">' + escapeHtml(base) + (ext ? '<span class="rvf-x">.' + escapeHtml(ext) + '</span>' : '') + '</b><small>' + (ext ? ext.toUpperCase() + ' · ' : '') + fileSizeLabel(f.size || 0) + '</small></div>' +
         // «열기» 하나로 브라우저에서: 작은 PDF·사진은 브라우저 보기 화면(가장 빠름), 그 밖(큰 파일·영상·PPT·한글·워드)은 드라이브 미리보기
         ((browserViewable_(ext, f.mime) && (f.size || 0) <= BROWSER_FAST_MAX_)
-          ? '<button type="button" class="btn btn-sm" data-bview="' + escapeHtml(f.id) + '" data-drive="' + view + '">열기</button>'
+          ? '<button type="button" class="btn btn-sm dlb" data-bview="' + escapeHtml(f.id) + '" data-size="' + (Number(f.size) || 0) + '" data-drive="' + view + '">열기</button>'
           : '<a class="btn btn-sm" href="' + view + '" target="_blank" rel="noopener">열기</a>') +
         '<button type="button" class="btn-outline btn-sm dlb" data-bdl="' + escapeHtml(f.id) + '" data-name="' + escapeHtml(f.name) + '" data-size="' + (Number(f.size) || 0) + '" data-drive="' + dl + '" title="내려받기">⬇</button>' +
         '</div>';
     }).join('');
     box.querySelectorAll('[data-bview]').forEach(function (b) {
-      b.onclick = function () { openInBrowser_(tabName, sid, b.getAttribute('data-bview'), b.getAttribute('data-drive'), b); };
+      b.onclick = function () { if (b.dataset.busy) return; openInBrowser_(tabName, sid, b.getAttribute('data-bview'), b.getAttribute('data-drive'), b, Number(b.getAttribute('data-size')) || 0); };
     });
     box.querySelectorAll('[data-bdl]').forEach(function (b) {
       b.onclick = function () { if (b.dataset.busy) return; downloadViaServer_(tabName, sid, b.getAttribute('data-bdl'), b.getAttribute('data-name'), b.getAttribute('data-drive'), b, Number(b.getAttribute('data-size')) || 0); };
@@ -1245,12 +1255,17 @@ async function downloadViaServer_(tabName, sid, fileId, name, driveUrl, btn, siz
   setTimeout(function () { URL.revokeObjectURL(url); }, 60 * 1000);
   done(true);
 }
-async function openInBrowser_(tabName, sid, fileId, driveUrl, btn) {
+async function openInBrowser_(tabName, sid, fileId, driveUrl, btn, size) {
   const w = window.open('', '_blank');
-  if (w) { try { w.document.write('<meta charset="utf-8"><title>불러오는 중…</title><p style="font-family:sans-serif;padding:24px;color:#555">파일을 불러오는 중이에요…</p>'); } catch (e) {} }
-  const old = btn.textContent; btn.disabled = true; btn.textContent = '여는 중…';
-  let r = null; try { r = await api('getSubmissionFileData', { tabName: tabName, studentId: sid, fileId: fileId }); } catch (e) {}
-  btn.disabled = false; btn.textContent = old;
+  if (w) { try { w.document.write('<meta charset="utf-8"><title>불러오는 중…</title><p style="font-family:sans-serif;padding:24px;color:#555">파일을 불러오는 중이에요… 원래 화면의 «열기» 단추에서 얼마나 받았는지 볼 수 있어요.</p>'); } catch (e) {} }
+  // ⬇와 같은 동그란 게이지(빙글빙글 → % 차오름)
+  const old = btn.innerHTML, oldTitle = btn.title;
+  btn.style.minWidth = btn.offsetWidth + 'px'; btn.dataset.busy = '1'; btn.classList.add('dl-busy'); dlRing_(btn, null);
+  const restore = function () { btn.innerHTML = old; btn.title = oldTitle; btn.classList.remove('dl-busy'); btn.style.minWidth = ''; delete btn.dataset.busy; };
+  let r = null;
+  try { r = await apiProgress_('getSubmissionFileData', { tabName: tabName, studentId: sid, fileId: fileId }, size ? Math.ceil(size * 4 / 3) + 400 : 0, function (p) { if (p != null) dlRing_(btn, p); }); } catch (e) {}
+  if (r && r.success === true) dlRing_(btn, 1);
+  setTimeout(restore, r && r.success === true ? 500 : 0);
   if (!r || r.success !== true) { if (w) w.location.href = driveUrl; else window.open(driveUrl, '_blank'); return; }
   const bin = atob(r.data), bytes = new Uint8Array(bin.length);
   for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
@@ -2129,12 +2144,26 @@ async function openInquiryFile_(fileId, btn) {
   setTimeout(function () { URL.revokeObjectURL(url); }, 10 * 60 * 1000);
 }
 
-async function renderDetail(tabName) {
+async function renderDetail(tabName, fresh) {
   state.nav = 'tasks';
   state.currentTab = tabName;
-  render('<div class="wrap"><div class="loading">불러오는 중…</div></div>');
-  let cfg;
-  try { cfg = await apiGet('getConfig'); } catch (e) { return; }
+  // 방금 본 과제 설정이 있으면 기다리지 않고 바로 그리고, 새 설정이 오면 달라졌을 때만 다시 그려요
+  const sigOf = function (c) { const t = c && (c.tabs || []).find(function (x) { return x.sheetName === tabName; }); return t ? JSON.stringify(t) : ''; };
+  let cfg = (!fresh && !state.configStale && sigOf(state.config)) ? state.config : null;
+  if (!cfg) {
+    render('<div class="wrap"><div class="loading">불러오는 중…</div></div>');
+    try { cfg = await apiGet('getConfig'); } catch (e) { return; }
+  } else {
+    const before = sigOf(cfg);
+    apiGet('getConfig').then(function (c2) {
+      if (!c2 || !c2.tabs || state.configStale) return;
+      state.config = c2;
+      if (state.currentTab !== tabName || state.nav !== 'tasks' || sigOf(c2) === before) return;
+      const ae = document.activeElement;
+      if (ae && /^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName)) return;   // 무언가 적는 중이면 건드리지 않아요
+      const y = window.scrollY; renderDetail(tabName, true).then(function () { window.scrollTo(0, y); });
+    }).catch(function () {});
+  }
   state.config = cfg;
   const tab = (cfg.tabs || []).find(function (t) { return t.sheetName === tabName; });
   if (!tab) return renderDashboard();
@@ -2674,12 +2703,39 @@ function paintDetailSummary_(tab, k) {
   });
 }
 
-async function renderSubmissions(tab) {
+// 제출 목록: 이번에 이미 본 과제면 지난 목록을 먼저 보여 주고, 새 목록이 오면(달라졌을 때만) 바꿔요.
+// keep = 방금 저장해서 다시 부르는 경우 — 지난 목록 대신 지금 화면을 그대로 두고 새 목록을 기다려요.
+state.subsCache = {};
+async function renderSubmissions(tab, keep) {
   const body = document.getElementById('subsBody') || document.getElementById('detailBody');
-  body.innerHTML = '<div class="loading">불러오는 중…</div>';
+  if (!body) return;
+  const key = tab.sheetName, cached = state.subsCache[key];
+  if (keep && body.querySelector('.srow, table, .msg')) {
+    refreshingTag_(body, true);
+  } else if (cached && !keep) {
+    paintSubmissions_(tab, cached.res, body);
+    refreshingTag_(body, true);
+  } else {
+    body.innerHTML = '<div class="loading">불러오는 중…</div>';
+  }
   let res;
-  try { res = await api('getSubmissions', { tabName: tab.sheetName }); } catch (e) { return; }
+  try { res = await api('getSubmissions', { tabName: key }); } catch (e) { refreshingTag_(body, false); return; }
+  if (state.currentTab !== key || !document.body.contains(body)) return;
   if (!res.success) { body.innerHTML = '<div class="msg error">' + escapeHtml(res.message || '불러오기 실패') + '</div>'; return; }
+  const sig = JSON.stringify(res);
+  const now = state.subsCache[key];
+  state.subsCache[key] = { res: res, sig: sig };
+  if (!keep && now && now.sig === sig && body.querySelector('.srow, table')) { refreshingTag_(body, false); return; }   // 그대로면 다시 그리지 않아요
+  const y = window.scrollY;
+  paintSubmissions_(tab, res, body);
+  if (now) window.scrollTo(0, y);
+}
+function refreshingTag_(body, on) {
+  let t = body.querySelector('.refreshing');
+  if (!on) { if (t) t.remove(); return; }
+  if (!t) { t = document.createElement('div'); t.className = 'refreshing'; t.innerHTML = '<span class="rf-dot"></span>새로 불러오는 중…'; body.prepend(t); }
+}
+function paintSubmissions_(tab, res, body) {
 
   const fields = res.fields || [];
   const rows = res.rows || [];
@@ -2800,7 +2856,7 @@ async function renderSubmissions(tab) {
 
   function openRev_(ri) {
     const r = rows[ri];
-    openReviewSheet_(tab.sheetName, r[0], nameIdx >= 0 ? r[nameIdx] : '', reviewIdx >= 0 ? r[reviewIdx] : '', feedbackIdx >= 0 ? r[feedbackIdx] : '', function () { renderSubmissions(tab); }, submissionContentHtml_(fields, r),
+    openReviewSheet_(tab.sheetName, r[0], nameIdx >= 0 ? r[nameIdx] : '', reviewIdx >= 0 ? r[reviewIdx] : '', feedbackIdx >= 0 ? r[feedbackIdx] : '', function () { renderSubmissions(tab, true); }, submissionContentHtml_(fields, r),
       { score: scoreIdx >= 0 ? r[scoreIdx] : '', scoreMax: scoreMax, late: lateArr[ri], deadline: res.deadline, submittedAt: timeIdx >= 0 ? r[timeIdx] : '' });
   }
   document.querySelectorAll('.revOpen').forEach(function (b) { b.onclick = function () { openRev_(Number(b.getAttribute('data-row'))); }; });
@@ -2825,7 +2881,7 @@ async function renderSubmissions(tab) {
       let res2;
       try { res2 = await api('setReview', { tabName: tab.sheetName, studentId: sid, reviewStatus: next, feedback: curFeedback }); }
       catch (e) { btn.disabled = false; return; }
-      if (res2.success) renderSubmissions(tab);
+      if (res2.success) renderSubmissions(tab, true);
       else { alert(res2.message || '저장 실패'); btn.disabled = false; }
     };
   });
@@ -2845,7 +2901,7 @@ async function renderSubmissions(tab) {
         let res2;
         try { res2 = await api('setReview', { tabName: tab.sheetName, studentId: sid, reviewStatus: curStatus, feedback: text }); }
         catch (e) { return; }
-        if (res2.success) renderSubmissions(tab);
+        if (res2.success) renderSubmissions(tab, true);
         else alert(res2.message || '저장 실패');
       };
     };
