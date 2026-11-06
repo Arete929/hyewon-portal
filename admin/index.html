@@ -797,7 +797,7 @@ const SAVE_LABELS = {
   setReview: '검토 결과', saveRoster: '명단', autoRoster: '명단', setRosterSource: '명렬표 연결', setRosterException: '예외 학생',
   setRosterConfirm: '본인확인 표시', setAntiPaste: '복붙방지', setTeacherPush: '선생님 알림 항목', setTeacherProfile: '교사 정보',
   setTeacherFile: '안내 파일', clearTeacherFile: '안내 파일 삭제', setTargets: '대상', setTabStatus: '과제 상태', setSchedule: '예약 공개',
-  setOpenAccess: '제출 방식', replyInquiry: '문의 답변', setMasterCode: '마스터코드', setDescription: '과제 안내', setDeadline: '제출 기한',
+  setOpenAccess: '제출 방식', setViewerAccounts: '제출 파일 보기 계정', replyInquiry: '문의 답변', setMasterCode: '마스터코드', setDescription: '과제 안내', setDeadline: '제출 기한',
   setAutoPush: '학생 자동 알림', sendNotice: '공지', saveTeacherToken: '알림 기기 등록', removeTeacherToken: '알림 기기 해제',
   regenerateStudentCode: '학생코드', publishSharePage: '썸네일 페이지', notifyTask: '과제 알림 발송', ensureShortCode: '짧은 주소',
   deleteTab: '과제 삭제', addTab: '새 과제', addRosterStudent: '명단 학생 추가', changePassword: '비밀번호',
@@ -1154,7 +1154,7 @@ async function loadReviewFiles_(tabName, sid, root) {
     box.innerHTML = list.map(function (f) {
       const ext = fileExt_(f.name);
       // 드라이브 주소는 서버 계정(학교 계정)으로 열리게 authuser 를 붙여요 — 다른 구글 계정이 먼저 로그인돼 있으면 403이 나서요
-      const au = r.runAs ? 'authuser=' + encodeURIComponent(r.runAs) : '';
+      const au = r.runAs && !r.sharedViewers ? 'authuser=' + encodeURIComponent(r.runAs) : '';
       const dl = 'https://drive.google.com/uc?export=download&id=' + encodeURIComponent(f.id) + (au ? '&' + au : ''), view = 'https://drive.google.com/file/d/' + encodeURIComponent(f.id) + '/view' + (au ? '?' + au : '');
       if (f.missing) return '<div class="rvf miss"><span class="rvf-ic">⚠️</span><div class="rvf-t"><b>파일을 찾을 수 없어요</b><small>지워졌거나 옮겨졌을 수 있어요</small></div></div>';
       const base = ext ? f.name.slice(0, -(ext.length + 1)) : f.name;
@@ -1286,6 +1286,43 @@ function openReviewSheet_(tabName, sid, name, status, feedback, onSaved, content
     box.innerHTML = (r && r.success) ? historyHtml_(r.items) : '<span class="hint">' + escapeHtml((r && r.message) || '기록을 불러오지 못했어요. 서버(Code.gs)가 버전 35 이상인지 확인해주세요.') + '</span>';
   }
   loadHist();
+}
+
+// ---------- 설정: 제출 파일을 볼 수 있는 계정 ----------
+async function loadViewerBox_(note) {
+  const box = document.getElementById('vwBox'); if (!box) return;
+  let r; try { r = await api('getViewerAccounts'); } catch (e) { r = null; }
+  if (!document.getElementById('vwBox')) return;
+  if (!r || !r.success) { box.innerHTML = '<span class="hint">' + escapeHtml((r && r.message) || '불러오지 못했어요. 서버(Code.gs)가 버전 68 이상인지 확인해주세요.') + '</span>'; return; }
+  const list = r.accounts || [];
+  box.innerHTML = '<p class="hint" style="margin:0 0 8px;">서버 계정: <b>' + escapeHtml(r.runAs || '-') + '</b> (이 계정은 늘 열려요)</p>' +
+    (list.length ? '<div class="sh-list">' + list.map(function (a) {
+      return '<div class="sh-row"><div class="sh-main"><b>👤 ' + escapeHtml(a.email) + '</b><small>' + (a.ok ? '✅ 보기 권한 있음' : '⚠️ 공유가 확인되지 않아요 — 저장을 다시 눌러 보세요') + '</small></div>' +
+        '<div class="sh-btns"><button type="button" class="btn-outline btn-sm btn-danger" data-vwdel="' + escapeHtml(a.email) + '">빼기</button></div></div>';
+    }).join('') + '</div>' : '<p class="hint" style="margin:0 0 8px;">아직 없어요.</p>') +
+    '<div class="row" style="gap:8px;margin-top:10px;flex-wrap:wrap;"><input id="vwIn" type="email" placeholder="예: myname@gmail.com" style="flex:1;min-width:220px;">' +
+    '<button type="button" class="btn btn-sm" id="vwAdd">추가</button></div>' +
+    '<div class="hint" id="vwMsg" style="margin-top:8px;">' + (note || '') + '</div>';
+  async function save(emails, done) {
+    const msg = document.getElementById('vwMsg'); msg.textContent = '공유하는 중…';
+    let s2; try { s2 = await api('setViewerAccounts', { emails: emails }); } catch (e) { msg.textContent = '서버에 연결하지 못했어요.'; return; }
+    if (!s2 || s2.success !== true) { msg.textContent = (s2 && s2.message) || '저장하지 못했어요.'; return; }
+    const bad = (s2.results || []).filter(function (x) { return !x.ok; });
+    loadViewerBox_(bad.length ? '⚠️ ' + bad.map(function (x) { return x.email + ': ' + x.message; }).join(' / ') + ' — 학교 Workspace가 학교 밖 공유를 막았을 수 있어요.' : (done || '저장했어요.'));
+  }
+  document.getElementById('vwAdd').onclick = function () {
+    const v = document.getElementById('vwIn').value.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) { document.getElementById('vwMsg').textContent = '이메일 주소를 확인해 주세요.'; return; }
+    save(list.map(function (a) { return a.email; }).concat([v]), '«' + v + '» 계정으로도 제출 파일을 열 수 있어요.');
+  };
+  document.getElementById('vwIn').onkeydown = function (e) { if (e.key === 'Enter') document.getElementById('vwAdd').click(); };
+  box.querySelectorAll('[data-vwdel]').forEach(function (b) {
+    b.onclick = function () {
+      const e = b.getAttribute('data-vwdel');
+      if (!confirm('«' + e + '» 계정의 보기 권한을 뺄까요?')) return;
+      save(list.map(function (a) { return a.email; }).filter(function (x) { return x !== e; }), '보기 권한을 뺐어요.');
+    };
+  });
 }
 
 // ---------- 설정: 제출 파일 저장 위치 ----------
@@ -1972,7 +2009,7 @@ async function renderInquiries(filter) {
   let r; try { r = await api('listInquiries'); } catch (e) { r = null; }
   if (state.nav !== 'inquiry') return;
   if (!r || !r.success) { render('<div class="wrap"><h1 class="serif">💬 학생 문의</h1><div class="msg error">' + escapeHtml((r && r.message) || '불러오지 못했어요. 서버(Code.gs)가 버전 66 이상인지 확인해주세요.') + '</div></div>'); return; }
-  state.inqNew = r.newCount || 0; state.avatars = Object.assign({}, state.avatars || {}, r.avatars || {}); state.runAs = r.runAs || state.runAs || '';
+  state.inqNew = r.newCount || 0; state.avatars = Object.assign({}, state.avatars || {}, r.avatars || {}); state.runAs = r.sharedViewers ? '' : (r.runAs || '');
   const all = r.items || [];
   const isOpen = function (q) { return q.status === '새 문의' || q.status === '확인함'; };
   const cnt = { open: all.filter(isOpen).length, done: all.filter(function (q) { return !isOpen(q); }).length, all: all.length };
@@ -3646,7 +3683,7 @@ async function loadSheetsBox_() {
 // 카드 제목(h2)으로 무리를 나눠요. 새 카드는 제목 낱말만 아래에 더하면 돼요(맞는 게 없으면 «기타»).
 const SETTING_GROUPS = [
   ['basic', '👤 기본', '교사 정보 · 비밀번호 · 학생 접속 · 테스트 계정', ['교사 정보', '비밀번호', '마스터코드', '학생 접속 주소', '테스트 계정']],
-  ['task', '📝 과제', '대상 묶음 · 이모지 · 제출 파일 저장 위치', ['대상 묶음', '과제 이모지', '제출 파일 저장 위치']],
+  ['task', '📝 과제', '대상 묶음 · 이모지 · 제출 파일 저장 위치·보기 계정', ['대상 묶음', '과제 이모지', '제출 파일 저장 위치', '제출 파일을 볼 수 있는 계정']],
   ['noti', '🔔 알림', '선생님 알림 · 학생 자동 알림', ['선생님 알림', '학생 자동 알림']],
   ['link', '🔗 연결', '시트 · 성적 · Firestore · 썸네일', ['연결된 시트', '성적 조회', 'Firestore', '썸네일']],
   ['server', '🛠 서버', '서버 이전 · 버전', ['서버 이전', '버전']]
@@ -3792,6 +3829,11 @@ async function renderSettings(notice) {
         '<div id="upBox"><span class="hint">불러오는 중…</span></div>' +
       '</div>' +
       '<div class="card wide" style="margin-bottom:16px;">' +
+        '<h2>📂 제출 파일을 볼 수 있는 계정</h2>' +
+        '<p class="hint" style="margin:0 0 10px;">학생 파일은 서버 계정 드라이브에 비공개로 쌓여요. 개인 구글 계정 등 다른 계정으로 로그인해도 «열기»·«미리보기»가 되게 하려면 여기 넣어 주세요. ' + tipHtml_('저장 폴더(«혜원포털 제출물»)를 그 계정에 «보기 권한»으로 공유해요. 폴더 안의 학생 제출 파일·문의 첨부·안내 이미지가 모두 열려요. 지우면 공유도 빠져요. 학교 Workspace가 학교 밖(gmail 등) 공유를 막아 두었으면 실패하고, 그 이유가 아래에 보여요. 계정은 5개까지예요.') + '</p>' +
+        '<div id="vwBox"><span class="hint">불러오는 중…</span></div>' +
+      '</div>' +
+      '<div class="card wide" style="margin-bottom:16px;">' +
         '<h2>카톡·밴드 썸네일 (GitHub 연결) ' + (st.githubReady ? '<span class="pill open">연결됨</span>' : '<span class="pill wait">연결 안 됨</span>') + '</h2>' +
         '<p class="hint" style="margin:0 0 10px;">과제 짧은 주소를 카톡·밴드에 보내면 과제명이 적힌 썸네일이 뜨게 해요. 서버가 혜원포털 저장소에 과제마다 작은 페이지를 써야 해서 GitHub 토큰이 필요해요.</p>' +
         (st.githubReady ? '' :
@@ -3815,6 +3857,7 @@ async function renderSettings(notice) {
   organizeSettings_();
   paintVer_();
   loadUploadBox_();
+  loadViewerBox_();
   loadAutoPushBox_();
   loadTeacherPushBox_();
   loadGroupsBox_();
