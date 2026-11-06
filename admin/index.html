@@ -74,6 +74,22 @@
   .hello .av { width: 42px; height: 42px; border-radius: 50%; background: var(--accent); color: #fff; display: grid; place-items: center; font-weight: 700; flex: none; }
   .hello h1 { font-size: 17px; margin: 0; line-height: 1.25; flex: 1; }
   .hello small { display: block; font-size: 11px; color: var(--text2); font-weight: 400; }
+  /* 학생 알림 현황 */
+  .ps-top { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-bottom: 14px; }
+  .ps-top .dk2 { background: #fff; border: 1px solid #E3EBE6; border-radius: 18px; padding: 14px 16px; display: flex; flex-direction: column; gap: 4px; }
+  .ps-kinds { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; } .ps-kinds span { font-size: 13px; background: #F2F7F4; border-radius: 999px; padding: 4px 10px; }
+  .ps-bar2 { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-bottom: 12px; }
+  .seg { border: 1px solid #DCE6E0; background: #fff; border-radius: 999px; padding: 6px 14px; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; color: #3B4A46; }
+  .seg small { font-weight: 600; color: #8A9894; margin-left: 2px; } .seg.on { background: #2E9E6B; border-color: #2E9E6B; color: #fff; } .seg.on small { color: rgba(255,255,255,.8); }
+  .psks { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 12px; }
+  .psk { background: #fff; border: 1px solid #E3EBE6; border-radius: 16px; padding: 14px; }
+  .psk-h { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 10px; margin-bottom: 10px; font-size: 14px; }
+  .psk-n { font-size: 12.5px; color: #5F6F6B; } .psk-n b { color: #12805B; font-size: 14px; }
+  .psk-l { display: flex; flex-wrap: wrap; gap: 6px; }
+  .psc { display: inline-flex; align-items: center; gap: 4px; font-size: 12.5px; padding: 4px 9px; border-radius: 999px; background: #F3F5F4; color: #8A9894; border: 1px solid #E6EBE8; }
+  .psc b { font-size: 11px; color: #A9B4B0; } .psc i { font-style: normal; font-size: 11px; }
+  .psc.on { background: #E6F6EE; color: #0F5B3E; border-color: #BFE4D3; font-weight: 700; } .psc.on b { color: #2E9E6B; }
+  @media (max-width: 760px) { .ps-top { grid-template-columns: 1fr 1fr; } .ps-top .dk2:last-child { grid-column: 1 / -1; } .psks { grid-template-columns: 1fr; } }
   /* 진행 중 과제 아코디언 */
   .tt-chev { display: inline-block; width: 14px; color: #8A9894; font-weight: 800; transition: transform .2s; }
   .tt-r.on { background: #F2FAF5; } .tt-r.on .tt-chev { transform: rotate(90deg); color: #2E9E6B; }
@@ -782,13 +798,13 @@ function bottomNavHtml_() {
     ['roster', '명단', '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 3-6 6.5-6s6.5 2.4 6.5 6"/><path d="M17 5.5a3 3 0 0 1 0 5.5M18.5 14.2c2 .7 3 2.5 3 5.8"/>'],
     ['more', '더보기', '<circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/>']
   ];
-  const moreOn = state.nav === 'notice' || state.nav === 'settings' || state.nav === 'inquiry';
+  const moreOn = state.nav === 'notice' || state.nav === 'settings' || state.nav === 'inquiry' || state.nav === 'pushstat';
   return '<nav class="bnav">' + it.map(function (x) {
     const on = x[0] === 'more' ? moreOn : state.nav === x[0];
     return '<button data-bn="' + x[0] + '"' + (on ? ' class="on"' : '') + '>' + svg(x[2]) + x[1] + '</button>';
   }).join('') + '</nav>' +
   '<div class="sheetbg" id="sheetBg"></div><div class="sheet" id="moreSheet">' +
-    '<button data-bn="inquiry">💬 학생 문의<b class="inq-badge" data-inqb></b></button><button data-bn="notice">공지 보내기</button><button data-bn="settings">설정</button>' +
+    '<button data-bn="inquiry">💬 학생 문의<b class="inq-badge" data-inqb></b></button><button data-bn="notice">공지 보내기</button><button data-bn="pushstat">🔔 학생 알림 현황</button><button data-bn="settings">설정</button>' +
     '<button class="installBtn" type="button" style="display:none;">📲 관리자 앱으로 설치</button>' +
     '<a href="../report/" id="sheetStu" target="_blank" rel="noopener">학생 화면 보기</a><button id="sheetOut">로그아웃</button></div>';
 }
@@ -803,7 +819,7 @@ function wireBottomNav_() {
       if (k === 'more') { sheet.classList.toggle('open'); bg.classList.toggle('open'); return; }
       close();
       if (k === 'home') renderPortal(); else if (k === 'tasks') renderDashboard();
-      else if (k === 'roster') renderRosterImport(); else if (k === 'notice') renderNotice(); else if (k === 'inquiry') renderInquiries(); else renderSettings();
+      else if (k === 'roster') renderRosterImport(); else if (k === 'notice') renderNotice(); else if (k === 'inquiry') renderInquiries(); else if (k === 'pushstat') renderPushStatus(); else renderSettings();
     };
   });
   document.getElementById('sheetStu').onclick = function (e) { close(); openStudentPreview(e); };
@@ -816,13 +832,14 @@ function render(inner) {
     return;
   }
   // 메뉴 아이콘 칸 색 = 로고 조각 색 (현황 청록 · 과제 노랑 · 명단 파랑 · 공지 빨강 · 설정 회색)
-  const tint = { inquiry: ['rgba(167,139,250,.22)', '#C4B5FD'], home: ['#35D3C8', '#0B2C27'], tasks: ['rgba(255,216,74,.18)', '#FFD84A'], roster: ['rgba(61,139,242,.22)', '#6FA9FF'], notice: ['rgba(255,107,107,.2)', '#FF8A8A'], settings: ['rgba(255,255,255,.08)', '#CFE3DC'] };
+  const tint = { pushstat: ['rgba(52,211,153,.2)', '#6EE7B7'], inquiry: ['rgba(167,139,250,.22)', '#C4B5FD'], home: ['#35D3C8', '#0B2C27'], tasks: ['rgba(255,216,74,.18)', '#FFD84A'], roster: ['rgba(61,139,242,.22)', '#6FA9FF'], notice: ['rgba(255,107,107,.2)', '#FF8A8A'], settings: ['rgba(255,255,255,.08)', '#CFE3DC'] };
   const items = [
     ['home', '현황', '<path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/>'],
     ['tasks', '과제', '<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 9h8M8 13h8M8 17h5"/>'],
     ['roster', '명단', '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 3-6 6.5-6s6.5 2.4 6.5 6"/><path d="M17 5.5a3 3 0 0 1 0 5.5M18.5 14.2c2 .7 3 2.5 3 5.8"/>'],
     ['notice', '공지', '<path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>'],
     ['inquiry', '문의', '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 9h8M8 13h5"/>'],
+    ['pushstat', '알림 현황', '<path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/><path d="M9.5 11.5l1.8 1.8 3.4-3.6"/>'],
     ['settings', '설정', '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>']
   ];
   const nav = items.map(function (it) {
@@ -849,7 +866,7 @@ function render(inner) {
     b.onclick = function () {
       const k = b.getAttribute('data-nav');
       if (k === 'home') renderPortal(); else if (k === 'tasks') renderDashboard();
-      else if (k === 'roster') renderRosterImport(); else if (k === 'notice') renderNotice(); else if (k === 'inquiry') renderInquiries(); else renderSettings();
+      else if (k === 'roster') renderRosterImport(); else if (k === 'notice') renderNotice(); else if (k === 'inquiry') renderInquiries(); else if (k === 'pushstat') renderPushStatus(); else renderSettings();
     };
   });
   paintInqBadge_();
@@ -3164,7 +3181,7 @@ function portalStatsHtml_(st) {
     '</div>';
 }
 // 웹 화면이 기대하는 서버 버전 — 서버 배포(GitHub Actions)가 실패해 서버가 뒤처지면 현황 맨 위에 알려요
-const WEB_EXPECTS_SERVER = 73;
+const WEB_EXPECTS_SERVER = 74;
 function serverBehindHtml_(v) {
   v = Number(v) || 0;
   if (!v || v >= WEB_EXPECTS_SERVER) return '';
@@ -3239,6 +3256,69 @@ function miniRing_(pct, color, label) {
     '<circle cx="29" cy="29" r="' + r + '" fill="none" stroke="' + color + '" stroke-width="7" stroke-linecap="round" stroke-dasharray="' + d.toFixed(1) + ' ' + c.toFixed(1) + '" transform="rotate(-90 29 29)"/>' +
     '<text x="29" y="33" text-anchor="middle" font-size="11.5" font-weight="800" fill="#14231F">' + escapeHtml(label) + '</text></svg>';
 }
+// ---------- 🔔 학생 알림 현황: 학생마다 «알림 받기»를 켰는지 ----------
+async function renderPushStatus() {
+  state.nav = 'pushstat';
+  const cached = state.pushStat;
+  render('<div class="wrap"><h1 class="serif">🔔 학생 알림 현황</h1><p class="lead">학생이 혜원포털에서 «알림 받기»를 켰는지 볼 수 있어요. 켠 학생에게만 공지·과제 알림이 가요.</p><div id="psBody">' + (cached ? '' : '<div class="loading">불러오는 중…</div>') + '</div></div>');
+  if (cached) paintPushStatus_(cached);
+  let r; try { r = await api('getNotiStatus'); } catch (e) { r = null; }
+  if (state.nav !== 'pushstat' || !document.getElementById('psBody')) return;
+  if (!r || !r.success) {
+    if (!cached) document.getElementById('psBody').innerHTML = '<div class="msg error">' + escapeHtml(r && r.error === 'unknown_action' ? '서버가 예전 버전이라 알림 현황을 볼 수 없어요(v74부터). 서버 배포 후 다시 열어 주세요.' : ((r && r.message) || '불러오지 못했어요.')) + '</div>';
+    return;
+  }
+  state.pushStat = r;
+  paintPushStatus_(r);
+}
+function paintPushStatus_(r) {
+  const body = document.getElementById('psBody'); if (!body) return;
+  const list = (r.students || []).slice().sort(function (a, b) { return a.id < b.id ? -1 : 1; });
+  const g = state.psGrade || 'all', onlyOff = !!state.psOff;
+  const grades = {}; list.forEach(function (x) { const k = String(x.id).charAt(0); grades[k] = grades[k] || { n: 0, on: 0 }; grades[k].n++; if (x.on) grades[k].on++; });
+  const shown = list.filter(function (x) { return g === 'all' || String(x.id).charAt(0) === g; });
+  const onN = shown.filter(function (x) { return x.on; }).length, tot = shown.length, pct = tot ? onN / tot : 0;
+  const kinds = {}; shown.forEach(function (x) { (x.kinds || []).forEach(function (k) { kinds[k] = (kinds[k] || 0) + 1; }); });
+  // 반별로
+  const classes = {};
+  shown.forEach(function (x) { const k = String(x.id).slice(0, 2); (classes[k] = classes[k] || []).push(x); });
+  const kIcon = { '안드로이드': '🤖', '아이폰': '🍎', 'PC': '💻', '기타': '📱' };
+  const chip = function (x) {
+    return '<span class="psc' + (x.on ? ' on' : '') + '" title="' + escapeHtml(x.id + ' ' + x.name + (x.on ? ' · 알림 켬 · 기기 ' + x.n + '대 · 마지막 ' + x.last : ' · 알림 안 켬')) + '">' +
+      '<b>' + escapeHtml(String(x.id).slice(2)) + '</b>' + escapeHtml(x.name) + (x.on ? '<i>' + (x.kinds || []).map(function (k) { return kIcon[k] || '📱'; }).join('') + '</i>' : '') + '</span>';
+  };
+  const cls = Object.keys(classes).sort().map(function (k) {
+    const arr = classes[k], on = arr.filter(function (x) { return x.on; }).length, p = Math.round(on / arr.length * 100);
+    const items = arr.filter(function (x) { return !onlyOff || !x.on; });
+    return '<div class="dcard psk"><div class="psk-h"><b>' + k.charAt(0) + '학년 ' + k.charAt(1) + '반</b><span class="pr-b"><i style="width:' + p + '%"></i></span><span class="psk-n"><b>' + on + '</b> / ' + arr.length + '명</span></div>' +
+      '<div class="psk-l">' + (items.length ? items.map(chip).join('') : '<span class="hint">모두 켰어요 🎉</span>') + '</div></div>';
+  }).join('');
+  const gbtn = function (k, label) { return '<button type="button" class="seg' + (g === k ? ' on' : '') + '" data-psg="' + k + '">' + label + '</button>'; };
+  body.innerHTML =
+    (r.sourceError ? '<div class="msg warn">혜원핏 명렬을 읽지 못했어요: ' + escapeHtml(r.sourceError) + '</div>' : '') +
+    '<div class="ps-top">' +
+      '<div class="dk2"><span class="dk2-l">알림 켠 학생</span><div class="dk2-m"><div class="dk2-t"><b>' + onN + '<small>/ ' + tot + '명</small></b><em>' + (g === 'all' ? '전체' : g + '학년') + ' · 켜야 공지·과제 알림을 받아요</em></div>' + miniRing_(pct, '#2E9E6B', Math.round(pct * 100) + '%') + '</div></div>' +
+      '<div class="dk2"><span class="dk2-l">안 켠 학생</span><div class="dk2-m"><div class="dk2-t"><b style="color:#B26A00;">' + (tot - onN) + '<small>명</small></b><em>아래 «안 켠 학생 복사»로 안내해요</em></div>' + miniRing_(tot ? (tot - onN) / tot : 0, '#F2A93B', tot ? Math.round((tot - onN) / tot * 100) + '%' : '0%') + '</div></div>' +
+      '<div class="dk2"><span class="dk2-l">켠 기기</span><div class="ps-kinds">' + (Object.keys(kinds).length ? Object.keys(kinds).map(function (k) { return '<span>' + (kIcon[k] || '📱') + ' ' + k + ' <b>' + kinds[k] + '</b></span>'; }).join('') : '<span class="hint">아직 없어요</span>') + '</div></div>' +
+    '</div>' +
+    '<div class="ps-bar2">' + gbtn('all', '전체') + Object.keys(grades).sort().map(function (k) { return gbtn(k, k + '학년 <small>' + grades[k].on + '/' + grades[k].n + '</small>'); }).join('') +
+      '<span style="flex:1;"></span><button type="button" class="seg' + (onlyOff ? ' on' : '') + '" id="psOff">안 켠 학생만</button><button type="button" class="btn-outline btn-sm" id="psCopy">📋 안 켠 학생 복사</button><button type="button" class="btn-outline btn-sm" id="psRe">↻ 새로고침</button></div>' +
+    '<div class="psks">' + (cls || '<p class="hint">학생이 없어요.</p>') + '</div>' +
+    ((r.extra && r.extra.length) ? '<div class="dcard" style="margin-top:14px;"><div class="dc-h">명렬에 없는 기기 <span class="hint">시험 계정·전학생 등</span></div><div class="psk-l">' + r.extra.map(function (x) { return chip(Object.assign({ on: true }, x)); }).join('') + '</div></div>' : '') +
+    '<p class="hint" style="margin-top:12px;">학생 안내: 혜원포털에 로그인 → «오늘의 과제» 화면의 🔔 «알림 받기» 누르기. 폰을 바꾸거나 앱을 지우면 다시 켜야 해요. 알림이 실패한 기기는 자동으로 빠져요.</p>';
+  body.querySelectorAll('[data-psg]').forEach(function (b2) { b2.onclick = function () { state.psGrade = b2.getAttribute('data-psg'); paintPushStatus_(r); }; });
+  document.getElementById('psOff').onclick = function () { state.psOff = !state.psOff; paintPushStatus_(r); };
+  document.getElementById('psRe').onclick = function () { state.pushStat = null; renderPushStatus(); };
+  document.getElementById('psCopy').onclick = async function () {
+    const off = shown.filter(function (x) { return !x.on; });
+    const byC = {}; off.forEach(function (x) { const k = String(x.id).slice(0, 2); (byC[k] = byC[k] || []).push(x.id + ' ' + x.name); });
+    const txt = '[혜원포털 알림 켜기 안내] 아래 학생은 혜원포털에 로그인해서 «오늘의 과제» 화면의 🔔 «알림 받기»를 눌러 켜 주세요.\n' + Object.keys(byC).sort().map(function (k) { return k.charAt(0) + '-' + k.charAt(1) + ': ' + byC[k].join(', '); }).join('\n');
+    const btn = this;
+    try { await navigator.clipboard.writeText(txt); btn.textContent = '✅ 복사했어요'; } catch (e) { prompt('복사해서 쓰세요', txt); }
+    setTimeout(function () { btn.textContent = '📋 안 켠 학생 복사'; }, 1800);
+  };
+}
+
 // ---------- 진행 중 과제 아코디언: 날짜별 제출 그래프(밀어서 넘기기) + 미검토 빠른 보기 ----------
 function wireDashAcc_(box, tabs) {
   box.querySelectorAll('[data-acc]').forEach(function (row) {
