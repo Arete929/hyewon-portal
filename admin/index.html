@@ -3389,7 +3389,8 @@ const VT_DESC = {
   options: '사람이 아니라 보기 중에서 골라요. 예) 체육대회 종목, 현장체험 장소'
 };
 const VST = { draft: ['만드는 중', 'd'], wait: ['예약', 'w'], open: ['진행 중', 'o'], closed: ['마감', 'c'] };
-function vNum_(n) { const e = ['0️⃣', '1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟']; return n >= 0 && n <= 10 ? e[n] : String(n); }
+// 숫자 이모지: 10은 🔟, 그 밖은 자리마다 1️⃣2️⃣처럼
+function vNum_(n) { const e = ['0️⃣', '1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣']; n = Math.max(0, Math.round(Number(n) || 0)); return n === 10 ? '🔟' : String(n).split('').map(function (d) { return e[+d]; }).join(''); }
 function vWhen_(iso) {
   const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/.exec(iso || ''); if (!m) return '';
   const d = new Date(m[0] + ':00+09:00'), days = ['일', '월', '화', '수', '목', '금', '토'];
@@ -3681,7 +3682,7 @@ function vNoticeText_(v, kind, cls, opt, res) {
   } else if (kind === 'result') {
     L.push('🏆 ' + tag + v.title + ' 결과');
     const votedN = roster.filter(function (x) { return done[x.id]; }).length;
-    L.push('👥 참여: ' + roster.length + '명 중 ' + votedN + '명');
+    L.push('👥 참여: ' + vNum_(roster.length) + '명 중 ' + vNum_(votedN) + '명');
     const sel = (v.winnersSel && v.winnersSel.ids) || [];
     const t = res ? vTally_(v, res) : {};
     const nm = res ? res.names : {};
