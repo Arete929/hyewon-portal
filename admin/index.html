@@ -438,6 +438,15 @@
   .rv-files { display: flex; flex-direction: column; gap: 6px; }
   .rvf { display: flex; align-items: center; gap: 10px; background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 9px 10px; }
   .rvf-ic { font-size: 22px; flex: none; }
+  .dlb { position: relative; min-width: 40px; display: inline-grid; place-items: center; text-align: center; }
+  .dlb.dl-busy { cursor: progress; padding-left: 6px; padding-right: 6px; }
+  .dlr { display: block; margin: -4px auto; }
+  .dlr .t { fill: none; stroke: var(--border); stroke-width: 3; }
+  .dlr .a { fill: none; stroke: var(--hyewon-emerald, #087A55); stroke-width: 3; stroke-linecap: round; transition: stroke-dasharray .15s linear; }
+  .dlr.spin { animation: dlspin .9s linear infinite; }
+  @keyframes dlspin { to { transform: rotate(360deg); } }
+  .dlp { position: absolute; inset: 0; display: grid; place-items: center; font-size: 8.5px; font-weight: 800; color: var(--hyewon-emerald, #087A55); letter-spacing: -.3px; }
+  .dl-ok { color: var(--hyewon-emerald, #087A55); font-weight: 900; font-size: 15px; }
   .rvf-t { flex: 1; min-width: 0; display: flex; flex-direction: column; }
   .rvf-t b { font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .rvf-x { color: var(--accent); }
@@ -1168,14 +1177,14 @@ async function loadReviewFiles_(tabName, sid, root) {
         ((browserViewable_(ext, f.mime) && (f.size || 0) <= BROWSER_FAST_MAX_)
           ? '<button type="button" class="btn btn-sm" data-bview="' + escapeHtml(f.id) + '" data-drive="' + view + '">열기</button>'
           : '<a class="btn btn-sm" href="' + view + '" target="_blank" rel="noopener">열기</a>') +
-        '<button type="button" class="btn-outline btn-sm" data-bdl="' + escapeHtml(f.id) + '" data-name="' + escapeHtml(f.name) + '" data-drive="' + dl + '" title="내려받기">⬇</button>' +
+        '<button type="button" class="btn-outline btn-sm dlb" data-bdl="' + escapeHtml(f.id) + '" data-name="' + escapeHtml(f.name) + '" data-size="' + (Number(f.size) || 0) + '" data-drive="' + dl + '" title="내려받기">⬇</button>' +
         '</div>';
     }).join('');
     box.querySelectorAll('[data-bview]').forEach(function (b) {
       b.onclick = function () { openInBrowser_(tabName, sid, b.getAttribute('data-bview'), b.getAttribute('data-drive'), b); };
     });
     box.querySelectorAll('[data-bdl]').forEach(function (b) {
-      b.onclick = function () { downloadViaServer_(tabName, sid, b.getAttribute('data-bdl'), b.getAttribute('data-name'), b.getAttribute('data-drive'), b); };
+      b.onclick = function () { if (b.dataset.busy) return; downloadViaServer_(tabName, sid, b.getAttribute('data-bdl'), b.getAttribute('data-name'), b.getAttribute('data-drive'), b, Number(b.getAttribute('data-size')) || 0); };
     });
   });
 }
@@ -1183,16 +1192,58 @@ async function loadReviewFiles_(tabName, sid, root) {
 const BROWSER_FAST_MAX_ = 10 * 1024 * 1024;   // 이보다 크면 서버를 거치는 시간이 길어서 드라이브 미리보기가 더 빨라요
 function browserViewable_(ext, mime) { return ext === 'pdf' || /^(jpe?g|png|gif|webp|txt)$/.test(ext) || /^image\/(jpeg|png|gif|webp)$/.test(mime || '') || mime === 'application/pdf'; }
 // «⬇»: 서버가 파일을 받아 원래 이름 그대로 저장해요(어느 구글 계정으로 로그인돼 있든 돼요). 25MB가 넘으면 드라이브(학교 계정)로.
-async function downloadViaServer_(tabName, sid, fileId, name, driveUrl, btn) {
-  const old = btn.textContent; btn.disabled = true; btn.textContent = '…';
-  let r = null; try { r = await api('getSubmissionFileData', { tabName: tabName, studentId: sid, fileId: fileId }); } catch (e) {}
-  btn.disabled = false; btn.textContent = old;
-  if (!r || r.success !== true) { window.open(driveUrl, '_blank'); return; }
+// ⬇ 단추 안의 동그란 게이지 — 서버가 파일을 꺼내는 동안은 빙글빙글, 받기 시작하면 받은 만큼 차올라요(%).
+function dlRing_(btn, pct) {
+  const C = 2 * Math.PI * 9;
+  if (pct == null) {
+    btn.innerHTML = '<svg class="dlr spin" viewBox="0 0 24 24" width="24" height="24"><circle cx="12" cy="12" r="9" class="t"/><circle cx="12" cy="12" r="9" class="a" stroke-dasharray="' + (C * .28).toFixed(1) + ' ' + C.toFixed(1) + '"/></svg>';
+    btn.title = '서버가 파일을 꺼내는 중…'; return;
+  }
+  const p = Math.max(0, Math.min(1, pct));
+  btn.innerHTML = '<svg class="dlr" viewBox="0 0 24 24" width="24" height="24"><circle cx="12" cy="12" r="9" class="t"/><circle cx="12" cy="12" r="9" class="a" transform="rotate(-90 12 12)" stroke-dasharray="' + (C * p).toFixed(1) + ' ' + C.toFixed(1) + '"/></svg><span class="dlp">' + Math.round(p * 100) + '</span>';
+  btn.title = '받는 중 ' + Math.round(p * 100) + '%';
+}
+// 서버 응답을 조금씩 읽으면서 얼마나 받았는지 알려 줘요(전체 크기를 모르면 파일 크기로 어림잡아요).
+async function apiProgress_(action, data, expectBytes, onPct) {
+  const body = new URLSearchParams(); body.set('action', action);
+  body.set('data', JSON.stringify(Object.assign({}, data || {}, state.token ? { token: state.token } : {})));
+  const res = await fetch(state.exec, { method: 'POST', body: body });
+  const total = Number(res.headers.get('Content-Length')) || expectBytes || 0;
+  if (!res.body || !res.body.getReader) { onPct(total ? .95 : null); return res.json(); }
+  const rd = res.body.getReader(), parts = []; let got = 0, last = 0;
+  for (;;) {
+    const x = await rd.read(); if (x.done) break;
+    parts.push(x.value); got += x.value.length;
+    const now = Date.now(); if (total && now - last > 80) { last = now; onPct(Math.min(.99, got / total)); }
+  }
+  const all = new Uint8Array(got); let o = 0; parts.forEach(function (u) { all.set(u, o); o += u.length; });
+  const json = JSON.parse(new TextDecoder().decode(all));
+  if (json && json.error === 'unauthorized') { state.token = ''; try { localStorage.removeItem(TOKEN_KEY); } catch (e) {} renderLogin('세션이 끊어졌습니다. 다시 로그인해주세요.'); throw new Error('unauthorized'); }
+  return json;
+}
+async function downloadViaServer_(tabName, sid, fileId, name, driveUrl, btn, size) {
+  const old = btn.innerHTML, oldTitle = btn.title;
+  btn.dataset.busy = '1'; btn.classList.add('dl-busy'); dlRing_(btn, null);
+  const done = function (ok) {
+    if (ok) { btn.innerHTML = '<span class="dl-ok">✓</span>'; btn.title = '받았어요'; }
+    setTimeout(function () { btn.innerHTML = old; btn.title = oldTitle; btn.classList.remove('dl-busy'); delete btn.dataset.busy; }, ok ? 1400 : 0);
+  };
+  // 서버가 보내는 양 ≈ 파일 크기 × 4/3(base64) + 조금
+  const expect = size ? Math.ceil(size * 4 / 3) + 400 : 0;
+  let r = null, started = false;
+  try {
+    r = await apiProgress_('getSubmissionFileData', { tabName: tabName, studentId: sid, fileId: fileId }, expect, function (p) {
+      if (p == null) return; started = true; dlRing_(btn, p);
+    });
+  } catch (e) {}
+  if (!r || r.success !== true) { done(false); window.open(driveUrl, '_blank'); return; }
+  dlRing_(btn, 1);
   const bin = atob(r.data), bytes = new Uint8Array(bin.length);
   for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
   const url = URL.createObjectURL(new Blob([bytes], { type: r.mime || 'application/octet-stream' }));
   const a = document.createElement('a'); a.href = url; a.download = name || r.name || 'file'; document.body.appendChild(a); a.click(); a.remove();
   setTimeout(function () { URL.revokeObjectURL(url); }, 60 * 1000);
+  done(true);
 }
 async function openInBrowser_(tabName, sid, fileId, driveUrl, btn) {
   const w = window.open('', '_blank');
