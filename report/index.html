@@ -65,8 +65,29 @@
   input[type=text], textarea { width: 100%; box-sizing: border-box; padding: 13px 14px; font-size: 16px; border: 1px solid var(--border); border-radius: 10px; background: #FCFCFB; font-family: inherit; color: var(--text); }
   textarea { min-height: 140px; resize: vertical; line-height: 1.6; }
   .otp { display: flex; gap: 6px; justify-content: flex-start; }
-  .otp input { flex: 1 1 0; min-width: 0; max-width: 40px; padding: 0; text-align: center; font-size: 18px; font-weight: 700; letter-spacing: 0; text-transform: uppercase; aspect-ratio: 3 / 4; }
-  .otp input.filled { background: #EAF7F1; border-color: #BFE4D3; color: #0B3D33; }
+  .otp input { flex: 1 1 0; min-width: 0; max-width: 40px; padding: 0; text-align: center; font-size: 19px; font-weight: 800; letter-spacing: 0; text-transform: uppercase; aspect-ratio: 3 / 4;
+    border: 1.5px solid #D9E3DF; border-radius: 12px; background: #F8FBFA; caret-color: var(--accent); outline: none;
+    transition: border-color .15s, box-shadow .15s, background .15s, transform .15s; animation: otpIn .45s cubic-bezier(.2,.9,.3,1.3) both; animation-delay: calc(var(--i, 0) * 35ms); }
+  .otp input:focus { border-color: var(--accent); background: #fff; box-shadow: 0 0 0 4px rgba(11,110,118,.14), 0 6px 14px rgba(11,110,118,.12); transform: translateY(-2px); }
+  .otp input.filled { background: #EAF7F1; border-color: #9FD8BF; color: #0B3D33; }
+  .otp input.pop { animation: otpPop .22s ease-out; }
+  .otp.full input { border-color: #5CC59A; }
+  .otp.bad input { border-color: #E5484D; background: #FFF3F3; }
+  .otp.shake { animation: otpShake .5s; }
+  @keyframes otpIn { from { opacity: 0; transform: translateY(10px) scale(.92); } to { opacity: 1; transform: none; } }
+  @keyframes otpPop { 0% { transform: scale(1); } 45% { transform: scale(1.14); } 100% { transform: scale(1); } }
+  @keyframes otpShake { 0%, 100% { transform: translateX(0); } 15% { transform: translateX(-8px); } 30% { transform: translateX(7px); } 45% { transform: translateX(-6px); } 60% { transform: translateX(5px); } 75% { transform: translateX(-3px); } }
+  .lspin { width: 16px; height: 16px; border-radius: 50%; border: 2.5px solid rgba(255,255,255,.35); border-top-color: #fff; animation: lspin .7s linear infinite; display: inline-block; }
+  @keyframes lspin { to { transform: rotate(360deg); } }
+  .login-ok { position: absolute; inset: 0; border-radius: inherit; background: rgba(255,255,255,.94); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; opacity: 0; transition: opacity .2s; z-index: 5; backdrop-filter: blur(4px); }
+  .login-ok.on { opacity: 1; }
+  .login-ok b { font-size: 17px; color: #0B3D33; } .login-ok span { font-size: 13px; color: var(--text2); }
+  .lo-c { fill: none; stroke: #2E9E6B; stroke-width: 4; stroke-dasharray: 170; stroke-dashoffset: 170; transform: rotate(-90deg); transform-origin: 32px 32px; }
+  .lo-k { fill: none; stroke: #2E9E6B; stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 40; stroke-dashoffset: 40; }
+  .login-ok.on .lo-c { animation: loDraw .5s ease-out forwards; } .login-ok.on .lo-k { animation: loDraw .3s .42s ease-out forwards; }
+  .login-ok.on svg { animation: otpPop .35s .7s ease-out; }
+  @keyframes loDraw { to { stroke-dashoffset: 0; } }
+  @media (prefers-reduced-motion: reduce) { .otp input, .otp.shake, .otp input.pop { animation: none; } }
   #otpCode input:nth-child(3n):not(:last-child) { margin-right: 10px; }
   .login-photo { position: relative; height: 270px; margin-top: 0; overflow: hidden; flex-shrink: 0; }
   .login-photo img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 36% 30%; }
@@ -381,6 +402,10 @@
   }
   html[data-theme="dark"] body { background: var(--bg); }
   html[data-theme="dark"] input[type=text], html[data-theme="dark"] textarea { background: rgba(255,255,255,.05); color: var(--text); }
+  html[data-theme="dark"] .otp input { background: rgba(255,255,255,.05); border-color: rgba(255,255,255,.16); color: #E6F2EE; }
+  html[data-theme="dark"] .otp input:focus { background: rgba(255,255,255,.09); border-color: #35D3C8; box-shadow: 0 0 0 4px rgba(53,211,200,.18); }
+  html[data-theme="dark"] .otp.bad input { background: rgba(229,72,77,.14); border-color: #E5484D; }
+  html[data-theme="dark"] .login-ok { background: rgba(16,24,22,.94); } html[data-theme="dark"] .login-ok b { color: #E6F2EE; }
   html[data-theme="dark"] .otp input.filled { background: rgba(53,211,200,.16); border-color: rgba(53,211,200,.45); color: #E6F2EE; }
   html[data-theme="dark"] .btn-outline, html[data-theme="dark"] .extras button, html[data-theme="dark"] .detail-card,
   html[data-theme="dark"] .file-chip, html[data-theme="dark"] .submitted-file { background: var(--surface); color: var(--text); box-shadow: none; }
@@ -710,12 +735,12 @@ function renderGlobalLogin(errorMsg) {
         '<div class="card login-card">' +
           '<h1 class="gugi" style="margin:0;font-size:28px;line-height:1.2;color:#0B6E76;text-align:center;">혜원포털</h1>' +
           '<p style="margin:2px 0 20px;font-size:14px;color:var(--text2);font-weight:600;text-align:center;">학생 로그인</p>' +
-          (errorMsg ? '<div class="msg error">' + escapeHtml(errorMsg) + '</div>' : '') +
+          '<div id="loginMsg">' + (errorMsg ? '<div class="msg error">' + escapeHtml(errorMsg) + '</div>' : '') + '</div>' +
           '<div class="field"><label>학번 <span style="color:var(--text3);font-weight:500;">(4자리)</span></label>' +
           '<div class="otp" id="otpId">' + otpBoxesHtml(4, true) + '</div></div>' +
           '<div class="field"><label>학생코드 <span style="color:var(--text3);font-weight:500;">(9자리)</span></label>' +
           '<div class="otp" id="otpCode">' + otpBoxesHtml(9, false) + '</div>' +
-          '<span class="hint">선생님이 나눠준 학생코드를 입력하세요</span></div>' +
+          '<span class="hint">혜원핏 학생코드 9자리 · 복사해서 붙여넣어도 돼요</span></div>' +
           '<button class="btn" id="loginBtn" style="display:flex;align-items:center;justify-content:center;gap:8px;">' +
             '<span>로그인하기</span>' +
             '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto;"><polyline points="9 18 15 12 9 6"></polyline></svg>' +
@@ -729,31 +754,27 @@ function renderGlobalLogin(errorMsg) {
       footerHtml_() +
     '</div>'
   );
-  wireOtp('otpId', true);
-  wireOtp('otpCode', false);
-  document.getElementById('loginBtn').onclick = doGlobalLogin;
-  document.getElementById('otpCode').addEventListener('keydown', function (e) {
-    if (e.key === 'Enter') doGlobalLogin();
-  });
-  const first = document.querySelector('#otpId input');
-  if (first) first.focus();
+  state.loginBusy = false;
+  wireLoginOtp_(doGlobalLogin);
 }
 
 async function doGlobalLogin() {
+  if (state.loginBusy) return;
   const studentId = otpValue('otpId');
   const code = otpValue('otpCode');
-  if (!studentId || !code) { return renderGlobalLogin('학번과 학생코드를 모두 입력해주세요.'); }
+  if (studentId.length !== 4) return loginFail_('학번 4자리를 입력해주세요.', 'otpId');
+  if (!code) return loginFail_('학생코드를 입력해주세요.', 'otpCode');
 
-  const btn = document.getElementById('loginBtn');
-  btn.disabled = true; btn.textContent = '확인 중…';
-
+  loginBusy_(true);
   let res;
   try {
     res = await api('getMySubmissions', { studentId: studentId, code: code });
   } catch (e) {
-    return renderGlobalLogin('서버에 연결할 수 없습니다. 다시 시도해주세요.');
+    return loginFail_('서버에 연결할 수 없습니다. 다시 시도해주세요.');
   }
-  if (!res.success) { return renderGlobalLogin(res.message || '로그인에 실패했습니다.'); }
+  if (!res || !res.success) return loginFail_((res && res.message) || '로그인에 실패했습니다.', 'otpCode');
+  await loginOk_(res.studentName);
+  state.loginBusy = false;
 
   state.login = { studentId: studentId, studentName: res.studentName, code: code, master: !!res.master };
   state.myTabs = res.tabs || [];
@@ -2053,44 +2074,40 @@ function renderLogin(tab, errorMsg) {
     '<div class="head"><h1 class="serif task-ttl">' + escapeHtml(tab.sheetName) + '</h1>' +
       '<p>학번과 학생코드로 로그인하세요</p></div>' +
     '<div class="center-pad" style="padding-top:0;">' +
-      '<div class="card">' +
-        (errorMsg ? '<div class="msg error">' + escapeHtml(errorMsg) + '</div>' : '') +
+      '<div class="card login-card">' +
+        '<div id="loginMsg">' + (errorMsg ? '<div class="msg error">' + escapeHtml(errorMsg) + '</div>' : '') + '</div>' +
         '<div class="field"><label>학번</label>' +
         '<div class="otp" id="otpId">' + otpBoxesHtml(4, true) + '</div></div>' +
         '<div class="field"><label>학생코드</label>' +
         '<div class="otp" id="otpCode">' + otpBoxesHtml(9, false) + '</div>' +
-        '<span class="hint">선생님이 나눠준 학생코드를 입력하세요</span></div>' +
+        '<span class="hint">혜원핏 학생코드 9자리 · 복사해서 붙여넣어도 돼요</span></div>' +
         '<button class="btn" id="loginBtn">로그인</button>' +
       '</div>' +
     '</div>' +
     footerHtml_()
   );
 
-  wireOtp('otpId', true);
-  wireOtp('otpCode', false);
-  document.getElementById('loginBtn').onclick = function () { doLogin(tab); };
-  document.getElementById('otpCode').addEventListener('keydown', function (e) {
-    if (e.key === 'Enter') doLogin(tab);
-  });
-  const first = document.querySelector('#otpId input');
-  if (first) first.focus();
+  state.loginBusy = false;
+  wireLoginOtp_(function () { doLogin(tab); });
 }
 
 async function doLogin(tab) {
+  if (state.loginBusy) return;
   const studentId = otpValue('otpId');
   const code = otpValue('otpCode');
-  if (!studentId || !code) { return renderLogin(tab, '학번과 학생코드를 모두 입력해주세요.'); }
+  if (studentId.length !== 4) return loginFail_('학번 4자리를 입력해주세요.', 'otpId');
+  if (!code) return loginFail_('학생코드를 입력해주세요.', 'otpCode');
 
-  const btn = document.getElementById('loginBtn');
-  btn.disabled = true; btn.textContent = '확인 중…';
-
+  loginBusy_(true);
   let res;
   try {
     res = await api('studentLogin', { tabName: tab.sheetName, studentId: studentId, code: code });
   } catch (e) {
-    return renderLogin(tab, '서버에 연결할 수 없습니다. 다시 시도해주세요.');
+    return loginFail_('서버에 연결할 수 없습니다. 다시 시도해주세요.');
   }
-  if (!res.success) { return renderLogin(tab, res.message || '로그인에 실패했습니다.'); }
+  if (!res || !res.success) return loginFail_((res && res.message) || '로그인에 실패했습니다.', 'otpCode');
+  await loginOk_(res.studentName);
+  state.loginBusy = false;
 
   state.login = { studentId: studentId, studentName: res.studentName, code: code, master: !!res.master };
   saveLogin(studentId, code);
@@ -2496,35 +2513,113 @@ function renderSuccess(tab, message) {
 function otpBoxesHtml(count, numeric) {
   let html = '';
   for (let i = 0; i < count; i++) {
-    html += '<input type="text" maxlength="1" autocomplete="one-time-code"' + (numeric ? ' inputmode="numeric"' : ' inputmode="text"') + '>';
+    html += '<input type="text" maxlength="1" autocomplete="one-time-code" style="--i:' + i + ';" aria-label="' + (i + 1) + '번째 칸"' + (numeric ? ' inputmode="numeric"' : ' inputmode="text" autocapitalize="characters"') + '>';
   }
   return html;
 }
-
-function wireOtp(containerId, numeric) {
+// 학번 4칸 → 학생코드 9칸이 한 줄처럼 이어져요. 다 채우면 onComplete(자동 로그인).
+function wireOtp(containerId, numeric, opt) {
+  opt = opt || {};
   const box = document.getElementById(containerId);
   const inputs = Array.prototype.slice.call(box.querySelectorAll('input'));
+  const clean = function (t) { return numeric ? String(t).replace(/[^0-9]/g, '') : String(t).toUpperCase().replace(/[^A-Z0-9]/g, ''); };
+  const nextBox = function () { const nb = opt.next && document.getElementById(opt.next); return nb ? nb.querySelector('input') : null; };
+  const prevBox = function () { const pb = opt.prev && document.getElementById(opt.prev); if (!pb) return null; const l = pb.querySelectorAll('input'); return l[l.length - 1]; };
+  const mark = function (inp) {
+    const had = inp.classList.contains('filled');
+    inp.classList.toggle('filled', !!inp.value);
+    if (inp.value && !had) { inp.classList.remove('pop'); void inp.offsetWidth; inp.classList.add('pop'); }
+  };
+  const check = function () { box.classList.toggle('full', inputs.every(function (x) { return x.value; })); if (typeof opt.onChange === 'function') opt.onChange(); };
   inputs.forEach(function (inp, i) {
+    inp.addEventListener('focus', function () { if (inp.value) { try { inp.select(); } catch (e) {} } });   // 바로 골라 둬야 빨리 쳐도 글자가 밀리지 않아요
     inp.addEventListener('input', function () {
-      let v = inp.value.slice(-1);
-      v = numeric ? v.replace(/[^0-9]/g, '') : v.toUpperCase().replace(/[^A-Z0-9]/g, '');
-      inp.value = v;
-      inp.classList.toggle('filled', !!v);
-      if (v && i < inputs.length - 1) inputs[i + 1].focus();
+      const raw = clean(inp.value);
+      if (raw.length > 1) {   // 자동 완성·한꺼번에 들어온 글자는 뒤 칸으로 나눠요
+        for (let j = 0; j < raw.length && i + j < inputs.length; j++) { inputs[i + j].value = raw[j]; mark(inputs[i + j]); }
+        const last = Math.min(i + raw.length, inputs.length) - 1;
+        if (last >= inputs.length - 1) { const nb = nextBox(); if (nb) nb.focus(); else inputs[last].focus(); } else inputs[last + 1].focus();
+        check(); return;
+      }
+      inp.value = raw;
+      mark(inp);
+      if (raw) { if (i < inputs.length - 1) inputs[i + 1].focus(); else { const nb = nextBox(); if (nb) nb.focus(); } }
+      check();
     });
     inp.addEventListener('keydown', function (e) {
-      if (e.key === 'Backspace' && !inp.value && i > 0) inputs[i - 1].focus();
+      if (e.key === 'Backspace' && !inp.value) { e.preventDefault(); const t = i > 0 ? inputs[i - 1] : prevBox(); if (t) { t.value = ''; t.classList.remove('filled'); t.focus(); check(); } }
+      else if (e.key === 'ArrowLeft') { e.preventDefault(); const t = i > 0 ? inputs[i - 1] : prevBox(); if (t) t.focus(); }
+      else if (e.key === 'ArrowRight') { e.preventDefault(); const t = i < inputs.length - 1 ? inputs[i + 1] : nextBox(); if (t) t.focus(); }
     });
     inp.addEventListener('paste', function (e) {
       e.preventDefault();
-      let text = (e.clipboardData || window.clipboardData).getData('text');
-      text = numeric ? text.replace(/[^0-9]/g, '') : text.toUpperCase().replace(/[^A-Z0-9]/g, '');
-      for (let j = 0; j < text.length && (i + j) < inputs.length; j++) inputs[i + j].value = text[j];
-      inputs[Math.min(i + text.length, inputs.length - 1)].focus();
+      let text = (e.clipboardData || window.clipboardData).getData('text') || '';
+      // «3307 ABCD23456» 처럼 학번과 코드를 같이 붙여넣으면 둘 다 채워요
+      const both = /^\s*(\d{4})[\s,/|:-]+([A-Za-z0-9]{4,12})\s*$/.exec(text);
+      if (both && opt.pair) { const ok = opt.pair(both[1], both[2]); if (ok) return; }
+      text = clean(text);
+      const start = text.length >= inputs.length - 2 ? 0 : i;   // 코드 전체를 붙여넣으면 첫 칸부터
+      inputs.forEach(function (x, k) { if (k >= start && k - start < text.length) { x.value = text[k - start]; mark(x); } });
+      const end = start + text.length;
+      if (end >= inputs.length) { const nb = nextBox(); (nb || inputs[inputs.length - 1]).focus(); } else inputs[end].focus();
+      check();
     });
   });
 }
-
+function otpFill_(containerId, text) {
+  const inputs = Array.prototype.slice.call(document.querySelectorAll('#' + containerId + ' input'));
+  inputs.forEach(function (x, k) { x.value = text[k] || ''; x.classList.toggle('filled', !!x.value); });
+}
+// 로그인 화면 공통: 칸 연결·자동 로그인·틀렸을 때 흔들기·맞았을 때 ✓
+function wireLoginOtp_(submit) {
+  const go = function () {
+    if (state.loginBusy) return;
+    if (otpValue('otpId').length === 4 && otpValue('otpCode').length === 9) setTimeout(submit, 120);   // 9칸을 다 채우면 바로
+  };
+  const pair = function (id, code) { otpFill_('otpId', id); otpFill_('otpCode', code.toUpperCase()); const c = document.querySelectorAll('#otpCode input'); (c[Math.min(code.length, c.length - 1)] || c[0]).focus(); go(); return true; };
+  wireOtp('otpId', true, { next: 'otpCode', pair: pair, onChange: go });
+  wireOtp('otpCode', false, { prev: 'otpId', pair: pair, onChange: go });
+  document.getElementById('otpCode').addEventListener('keydown', function (e) { if (e.key === 'Enter') submit(); });
+  document.getElementById('loginBtn').onclick = submit;
+  const first = document.querySelector('#otpId input');
+  if (first && !otpValue('otpId')) first.focus();
+}
+function loginBusy_(on) {
+  const btn = document.getElementById('loginBtn'); if (!btn) return;
+  state.loginBusy = !!on;
+  if (on) { btn.dataset.html = btn.dataset.html || btn.innerHTML; btn.disabled = true; btn.innerHTML = '<span class="lspin"></span><span>확인 중…</span>'; }
+  else { btn.disabled = false; if (btn.dataset.html) btn.innerHTML = btn.dataset.html; }
+}
+// 틀렸을 때: 화면을 다시 그리지 않고 칸만 흔들고, 학생코드만 비워요(학번은 그대로)
+function loginFail_(msg, which) {
+  loginBusy_(false);
+  const m = document.getElementById('loginMsg');
+  if (m) { m.innerHTML = '<div class="msg error">' + escapeHtml(msg) + '</div>'; }
+  (which ? [which] : ['otpId', 'otpCode']).forEach(function (id) {
+    const g = document.getElementById(id); if (!g) return;
+    g.classList.remove('shake', 'bad'); void g.offsetWidth; g.classList.add('shake', 'bad');
+    setTimeout(function () { g.classList.remove('shake'); }, 600);
+  });
+  if (which === 'otpCode') {
+    otpFill_('otpCode', '');
+    const c = document.querySelector('#otpCode input'); if (c) c.focus();
+  } else if (which === 'otpId') { const c = document.querySelector('#otpId input'); if (c) c.focus(); }
+  const clear = function () { ['otpId', 'otpCode'].forEach(function (id) { const g = document.getElementById(id); if (g) g.classList.remove('bad'); }); };
+  setTimeout(function () { document.querySelectorAll('.otp input').forEach(function (x) { x.addEventListener('input', clear, { once: true }); }); }, 0);
+}
+// 맞았을 때: 카드 위에 ✓가 그려지고 «○○ 학생, 반가워요» → 잠깐 뒤 들어가요
+function loginOk_(name) {
+  return new Promise(function (resolve) {
+    const card = document.querySelector('.login-card') || document.querySelector('.card');
+    if (!card) return resolve();
+    const ov = document.createElement('div'); ov.className = 'login-ok';
+    ov.innerHTML = '<svg viewBox="0 0 64 64" width="76" height="76"><circle class="lo-c" cx="32" cy="32" r="27"/><path class="lo-k" d="M20 33 l8 8 l16 -18"/></svg>' +
+      '<b>' + escapeHtml(name ? name + ' 학생, 반가워요!' : '로그인됐어요') + '</b><span>로그인됐어요</span>';
+    card.style.position = 'relative'; card.appendChild(ov);
+    requestAnimationFrame(function () { ov.classList.add('on'); });
+    setTimeout(resolve, 950);
+  });
+}
 function otpValue(containerId) {
   return Array.prototype.slice.call(document.querySelectorAll('#' + containerId + ' input'))
     .map(function (i) { return i.value; }).join('');
