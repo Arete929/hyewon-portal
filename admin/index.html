@@ -26,7 +26,7 @@
   #app { min-height: 100vh; }
   .shell { display: flex; min-height: 100vh; }
   .side { width: 232px; flex-shrink: 0; background: linear-gradient(180deg, #0F3B34 0%, #0B2C27 100%); color: #CFE3DC; padding: 0 14px 18px; display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
-  .side .photo { position: relative; height: 170px; margin: 0 -14px; flex: none; background: url(../assets/login-bg.webp) 34% 22% / cover; }
+  .side .photo { position: relative; height: 170px; margin: 0 -14px; flex: none; background: var(--hero, url(../assets/login-bg.webp)) 34% 22% / cover; }
   .side .photo:after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(15,59,52,0) 30%, rgba(15,59,52,.75) 72%, #0F3B34 100%); }
   .side .brandbox { position: relative; z-index: 1; display: flex; align-items: center; gap: 10px; margin: -44px 4px 18px; }
   .side .brandbox img { width: 44px; height: 44px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 4px 12px rgba(0,0,0,.35); flex: none; background: #fff; }
@@ -74,6 +74,12 @@
   .hello .av { width: 42px; height: 42px; border-radius: 50%; background: var(--accent); color: #fff; display: grid; place-items: center; font-weight: 700; flex: none; }
   .hello h1 { font-size: 17px; margin: 0; line-height: 1.25; flex: 1; }
   .hello small { display: block; font-size: 11px; color: var(--text2); font-weight: 400; }
+  /* 과목 고르기 · 머리 이미지 미리보기 */
+  .subj-pick { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 8px; }
+  .subj-pick button { padding: 6px 12px; border-radius: 999px; border: 1px solid #DCE6E0; background: #fff; font: inherit; font-size: 12.5px; font-weight: 800; color: #3B4A46; cursor: pointer; }
+  .subj-pick button.on { background: #0F3B34; border-color: #0F3B34; color: #fff; }
+  .subj-hero { display: flex; gap: 12px; align-items: center; }
+  .sh-img { flex: none; width: 180px; height: 101px; border-radius: 12px; background: #E8EFEA 34% 22% / cover; box-shadow: inset 0 0 0 1px rgba(0,0,0,.06); }
   /* 🗳 투표 */
   .vrounds { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
   .vrd { display: flex; gap: 12px; align-items: center; cursor: pointer; margin: 0; } .vrd:hover { border-color: #CDBFFF; }
@@ -783,7 +789,7 @@
   .mhero { display: none; }
   @media (max-width: 760px) {
     .mhero { display: flex; align-items: flex-end; gap: 12px; position: relative; height: 150px; padding: 0 18px 16px; margin-bottom: 4px;
-      background: linear-gradient(180deg, rgba(15,59,52,0) 35%, rgba(15,59,52,.85) 100%), url(../assets/login-bg.webp) 34% 22% / cover; border-radius: 0 0 26px 26px; }
+      background: linear-gradient(180deg, rgba(15,59,52,0) 35%, rgba(15,59,52,.85) 100%), var(--hero, url(../assets/login-bg.webp)) 34% 22% / cover; border-radius: 0 0 26px 26px; }
     .mhero .mh-logo { width: 58px; height: 58px; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 4px 14px rgba(0,0,0,.35); background: #fff; flex: none; }
     .mhero .gugi { display: block; color: #fff; font-size: 26px; line-height: 1.1; text-shadow: 0 2px 8px rgba(0,0,0,.45); }
     .mhero small { display: inline-block; margin-top: 4px; font-size: 12px; font-weight: 800; color: #0F3B34; background: #FFD84A; border-radius: 999px; padding: 2px 10px; }
@@ -963,6 +969,7 @@ function render(inner) {
   });
   paintInqBadge_();
   ensurePortalSt_();
+  applyHero_();
   document.getElementById('navLogout').onclick = doLogout;
   document.getElementById('navStudentView').onclick = openStudentPreview;
   wireBottomNav_();
@@ -3348,6 +3355,32 @@ function miniRing_(pct, color, label) {
     '<circle cx="29" cy="29" r="' + r + '" fill="none" stroke="' + color + '" stroke-width="7" stroke-linecap="round" stroke-dasharray="' + d.toFixed(1) + ' ' + c.toFixed(1) + '" transform="rotate(-90 29 29)"/>' +
     '<text x="29" y="33" text-anchor="middle" font-size="11.5" font-weight="800" fill="#14231F">' + escapeHtml(label) + '</text></svg>';
 }
+
+// ---------- 과목별 머리 이미지 ----------
+// assets/hero/<과목>.webp (또는 .jpg)가 있으면 그 이미지를, 없으면 기본(login-bg)을 써요. 과목은 «설정 → 교사 정보».
+const HERO_SUBJECTS = ['체육', '국어', '영어', '수학', '과학', '사회', '역사', '도덕', '음악', '미술', '기술·가정', '정보', '한문', '진로', '보건', '특수'];
+const HERO_KEY = 'hyewon_hero_v1';
+function heroBase_() { return new URL('../assets/', location.href).href; }
+function heroFind_(subject) {
+  subject = String(subject || '').trim();
+  if (!subject) return Promise.resolve('');
+  let memo = {}; try { memo = JSON.parse(localStorage.getItem(HERO_KEY) || '{}') || {}; } catch (e) {}
+  const hit = memo[subject];
+  if (hit && Date.now() - hit.at < 6 * 3600000) return Promise.resolve(hit.url);
+  const name = encodeURIComponent(subject.replace(/[\/\\]/g, ''));
+  const tryOne = function (ext) { return new Promise(function (res) { const im = new Image(); im.onload = function () { res(im.src); }; im.onerror = function () { res(''); }; im.src = heroBase_() + 'hero/' + name + '.' + ext; }); };
+  return tryOne('webp').then(function (u) { return u || tryOne('jpg'); }).then(function (u) {
+    try { memo[subject] = { url: u, at: Date.now() }; localStorage.setItem(HERO_KEY, JSON.stringify(memo)); } catch (e) {}
+    return u;
+  });
+}
+function applyHero_(subject) {
+  if (subject === undefined) subject = (teacherInfo_() || {}).subject;
+  heroFind_(subject).then(function (u) {
+    if (u) document.documentElement.style.setProperty('--hero', 'url("' + u + '")'); else document.documentElement.style.removeProperty('--hero');
+  });
+}
+
 // ---------- 🗳 투표 · 추천 (관리자) ----------
 const VT_LABEL = { recommend: '친구 추천', election: '후보 선거', options: '선택지 투표' };
 const VT_DESC = {
@@ -5160,6 +5193,8 @@ async function renderSettings(notice) {
           '<div class="field" style="flex:1;min-width:160px;margin:0;"><label for="tpName">이름</label><input id="tpName" type="text" maxlength="20" placeholder="예: 김진호" value="' + escapeHtml((st.teacher && st.teacher.name) || '') + '"></div>' +
           '<div class="field" style="flex:1;min-width:140px;margin:0;"><label for="tpSubj">과목</label><input id="tpSubj" type="text" maxlength="20" placeholder="예: 체육" value="' + escapeHtml((st.teacher && st.teacher.subject) || '') + '"></div>' +
           '<button class="btn" id="tpSave" type="button">저장</button></div>' +
+        '<div class="subj-pick" id="tpSubjPick">' + HERO_SUBJECTS.map(function (x) { return '<button type="button" data-subj="' + escapeHtml(x) + '" class="' + (((st.teacher && st.teacher.subject) || '') === x ? 'on' : '') + '">' + escapeHtml(x) + '</button>'; }).join('') + '</div>' +
+        '<div class="subj-hero"><div class="sh-img" id="tpHero"></div><div class="hint" id="tpHeroMsg">과목을 고르면 그 과목 머리 이미지가 보여요.</div></div>' +
         '<p class="hint" id="tpMsg" style="margin:8px 0 0;"></p>' +
       '</div>' +
       '<div class="card wide" style="margin-bottom:16px;">' +
@@ -5236,12 +5271,28 @@ async function renderSettings(notice) {
   loadIconBox_();
   wireMigration_();
   document.getElementById('tpAv').onclick = function () { toggleAvatarPanel_(); };
+  const showHero = function (subj) {
+    const box = document.getElementById('tpHero'), m = document.getElementById('tpHeroMsg'); if (!box) return;
+    heroFind_(subj).then(function (u) {
+      box.style.backgroundImage = 'url("' + (u || heroBase_() + 'login-bg.webp') + '")';
+      m.innerHTML = !subj ? '과목을 고르면 그 과목 머리 이미지가 보여요.' : u ? '«' + escapeHtml(subj) + '» 이미지를 써요. 저장하면 관리자·학생 화면 머리가 바뀌어요.'
+        : '«' + escapeHtml(subj) + '» 이미지가 아직 없어서 기본 이미지를 써요. <b>assets/hero/' + escapeHtml(subj) + '.webp</b> (1600×900)를 올리면 바로 바뀌어요.';
+    });
+  };
+  showHero(document.getElementById('tpSubj').value.trim());
+  document.querySelectorAll('#tpSubjPick [data-subj]').forEach(function (b) { b.onclick = function () {
+    document.getElementById('tpSubj').value = b.getAttribute('data-subj');
+    document.querySelectorAll('#tpSubjPick [data-subj]').forEach(function (x) { x.classList.toggle('on', x === b); });
+    showHero(b.getAttribute('data-subj'));
+  }; });
+  document.getElementById('tpSubj').addEventListener('change', function () { showHero(this.value.trim()); });
   document.getElementById('tpSave').onclick = async function () {
     const msg = document.getElementById('tpMsg'); msg.textContent = '저장 중…';
     let r;
     try { r = await api('setTeacherProfile', { name: document.getElementById('tpName').value, subject: document.getElementById('tpSubj').value, avatar: teacherInfo_().avatar || null }); } catch (e) { msg.textContent = '서버에 연결하지 못했어요.'; return; }
     if (!r || r.success !== true) { msg.textContent = (r && r.message) || '저장하지 못했어요. 서버(Code.gs)가 버전 39 이상인지 확인해주세요.'; return; }
     msg.textContent = '저장했어요. 학생 화면에 «출제: ' + (r.teacher.name || '') + ' 선생님' + (r.teacher.subject ? ' · ' + r.teacher.subject : '') + '»로 보여요.';
+    applyHero_(r.teacher.subject || '');
   };
   document.getElementById('fsChk').onclick = async function () {
     const out = document.getElementById('fsOut');
