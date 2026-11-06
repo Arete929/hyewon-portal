@@ -94,6 +94,10 @@
   .fpk { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
   .fpk:empty { display: none; }
   .fpk-i { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
+  .fpk-th { flex: none; width: 34px; height: 34px; border-radius: 6px; object-fit: cover; display: block; }
+  .paste-tip { margin-top: 6px; font-size: 12px; color: var(--text2); }
+  .paste-hint { height: 0; overflow: hidden; opacity: 0; font-size: 13px; font-weight: 700; color: var(--hyewon-emerald); transition: opacity .25s, height .25s; }
+  .paste-hint.on { height: 22px; opacity: 1; margin-top: 4px; }
   .fpk-n { flex: 1; min-width: 0; font-size: 13.5px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .fpk-s { font-size: 12px; color: var(--text2); flex: none; }
   .fpk-x { flex: none; width: 28px; height: 28px; border-radius: 50%; border: 0; background: #F1EFEA; color: #6B6A66; font-size: 13px; cursor: pointer; }
@@ -1063,6 +1067,7 @@ function renderInquiry_(tabName) {
         '<select id="inqTab" class="inq-sel">' + opts + '</select>' +
         '<textarea id="inqText" class="ta-exp" rows="5" maxlength="3000" placeholder="궁금한 점이나 문제를 적어 주세요. 화면을 찍은 사진을 함께 보내면 더 빨리 도와줄 수 있어요.">' + escapeHtml(state.inq.text) + '</textarea>' +
         '<div class="ta-foot"><span class="charcount" id="inqCc">' + state.inq.text.length + '자</span></div>' +
+        '<div class="paste-tip">📋 화면을 캡처해서 글 칸에 붙여넣으면 사진이 바로 들어가요</div><div class="paste-hint" id="inqPasteHint"></div>' +
         '<label class="inq-add">📎 사진·파일 추가<input type="file" id="inqFile" multiple hidden></label>' +
         '<div id="inqFiles" class="fpk"></div>' +
         '<p class="hint" style="margin:6px 0 12px;">사진·파일은 10개까지, 하나에 15MB까지 보낼 수 있어요. 문의는 선생님만 봐요.</p>' +
@@ -1075,11 +1080,17 @@ function renderInquiry_(tabName) {
   const ta = document.getElementById('inqText'), cc = document.getElementById('inqCc');
   ta.addEventListener('input', function () { state.inq.text = ta.value; cc.textContent = ta.value.length + '자'; autoGrow_(ta); });
   autoGrow_(ta);
+  wireImagePaste_(ta, function (imgs) {
+    let n = 0;
+    imgs.forEach(function (f) { if (state.inq.files.length < 10 && !state.inq.files.some(function (x) { return x.name === f.name && x.size === f.size; })) { state.inq.files.push(f); n++; } });
+    paintFiles();
+    flashHint_(document.getElementById('inqPasteHint'), n ? '🖼 사진 ' + n + '장을 붙였어요' : (state.inq.files.length >= 10 ? '사진·파일은 10개까지예요.' : '이미 넣은 사진이에요.'));
+  });
   document.getElementById('inqTab').onchange = function () { state.inq.tab = this.value; };
   function paintFiles() {
     const box = document.getElementById('inqFiles');
     box.innerHTML = state.inq.files.map(function (f, i) {
-      return '<div class="fpk-i"><span class="fpk-n">' + (/^image\//.test(f.type) ? '🖼 ' : '📎 ') + escapeHtml(f.name) + '</span><span class="fpk-s">' + fileSizeLabel(f.size) + '</span><button type="button" class="fpk-x" data-rmi="' + i + '" aria-label="빼기">✕</button></div>';
+      return '<div class="fpk-i">' + thumbHtml_(f) + '<span class="fpk-n">' + escapeHtml(f.name) + '</span><span class="fpk-s">' + fileSizeLabel(f.size) + '</span><button type="button" class="fpk-x" data-rmi="' + i + '" aria-label="빼기">✕</button></div>';
     }).join('');
     box.querySelectorAll('[data-rmi]').forEach(function (b) { b.onclick = function () { state.inq.files.splice(Number(b.getAttribute('data-rmi')), 1); paintFiles(); }; });
   }
@@ -1144,7 +1155,9 @@ function noteCardHtml_(tab) {
     '<textarea id="noteIn" class="ta-exp" rows="4" maxlength="20000" placeholder="과제 내용을 적어 주세요. (파일만 낼 때는 비워 둬도 돼요)">' + escapeHtml(v) + '</textarea>' +
     '<div class="ta-foot">' + (ap ? '<span class="badge-anti">복사-붙여넣기 제한 · 한 번에 ' + ap + '자 이상 입력되면 기록돼요</span>' : '<span></span>') +
       '<span class="ta-r"><span class="charcount" id="noteCc">' + v.length + '자</span>' +
-      '<button type="button" class="ta-x" data-tx="noteIn">' + ic_('chev', 13, 'currentColor', 2.6) + '<span>펼치기</span></button></span></div></div>';
+      '<button type="button" class="ta-x" data-tx="noteIn">' + ic_('chev', 13, 'currentColor', 2.6) + '<span>펼치기</span></button></span></div>' +
+    ((tab.fields || []).some(function (f) { return f.type === 'file'; }) ? '<div class="paste-tip">📋 화면을 캡처해서 이 칸에 붙여넣으면 사진이 첨부 파일로 들어가요</div>' : '') +
+    '<div class="paste-hint" id="notePasteHint"></div></div>';
 }
 document.addEventListener('click', function (e) {
   const b = e.target.closest && e.target.closest('[data-tx]'); if (!b) return;
@@ -1158,11 +1171,53 @@ function autoGrow_(ta) {
   if (!ta) return;
   if (ta.scrollHeight > ta.clientHeight + 1) ta.style.height = (ta.scrollHeight + 2) + 'px';
 }
+// ---------- 사진 붙여넣기·끌어다 놓기 (학생 글 칸) ----------
+// 붙여넣은·끌어다 놓은 사진을 첨부 파일로 더해요. 글자는 평소처럼(복사 제한 과제는 그 규칙대로) 처리돼요.
+function pastedImages_(e, isDrop) {
+  const dt = isDrop ? e.dataTransfer : (e.clipboardData || window.clipboardData);
+  if (!dt) return [];
+  if (!isDrop && (dt.getData('text') || '').trim()) return [];   // 글이 함께 있으면 글 붙여넣기로 봐요
+  const out = [];
+  Array.prototype.forEach.call(dt.files || [], function (f) { if (/^image\//.test(f.type)) out.push(f); });
+  if (!out.length && dt.items) Array.prototype.forEach.call(dt.items, function (it) { if (it.kind === 'file' && /^image\//.test(it.type)) { const f = it.getAsFile(); if (f) out.push(f); } });
+  const stamp = new Date(), pad = function (n) { return String(n).padStart(2, '0'); };
+  const base = '사진_' + pad(stamp.getMonth() + 1) + pad(stamp.getDate()) + '-' + pad(stamp.getHours()) + pad(stamp.getMinutes()) + pad(stamp.getSeconds());
+  return out.map(function (f, i) {
+    if (f.name && !/^image\.(png|jpe?g|gif|webp)$/i.test(f.name)) return f;   // 이름 있는 사진 파일은 그대로
+    const ext = (f.type.split('/')[1] || 'png').replace('jpeg', 'jpg');
+    try { return new File([f], base + (out.length > 1 ? '_' + (i + 1) : '') + '.' + ext, { type: f.type, lastModified: Date.now() + i }); } catch (err) { return f; }
+  });
+}
+function wireImagePaste_(ta, onImages) {
+  ['paste', 'drop'].forEach(function (ev) {
+    ta.addEventListener(ev, function (e) {
+      const imgs = pastedImages_(e, ev === 'drop');
+      if (!imgs.length) return;
+      e.preventDefault(); e.stopImmediatePropagation();
+      onImages(imgs);
+    });
+  });
+  ta.addEventListener('dragover', function (e) { if (e.dataTransfer && Array.prototype.some.call(e.dataTransfer.items || [], function (it) { return it.kind === 'file'; })) e.preventDefault(); });
+}
+function thumbHtml_(f) {
+  if (!/^image\//.test(f.type)) return '📎 ';
+  try { f._u = f._u || URL.createObjectURL(f); } catch (e) { return '🖼 '; }
+  return '<img class="fpk-th" src="' + f._u + '" alt="">';
+}
+function flashHint_(el, text) { if (!el) return; el.textContent = text; el.classList.add('on'); clearTimeout(el._t); el._t = setTimeout(function () { el.classList.remove('on'); }, 2600); }
+
 function wireNote_(tab) {
   const ta = document.getElementById('noteIn'); if (!ta) return;
   const cc = document.getElementById('noteCc');
   ta.addEventListener('input', function () { cc.textContent = ta.value.length + '자'; state.noteDraft[tab.sheetName] = ta.value; autoGrow_(ta); });
   autoGrow_(ta);
+  wireImagePaste_(ta, function (imgs) {
+    const ff = (tab.fields || []).filter(function (f) { return f.type === 'file'; })[0];
+    const hint = document.getElementById('notePasteHint');
+    if (!ff || !state.addPicks || !state.addPicks[tab.sheetName + '|' + ff.name]) { flashHint_(hint, '이 과제는 파일 칸이 없어서 사진을 붙일 수 없어요.'); return; }
+    const n = state.addPicks[tab.sheetName + '|' + ff.name](imgs);
+    flashHint_(hint, n ? '🖼 사진 ' + n + '장을 «' + ff.name + '»에 넣었어요' : '이미 넣은 사진이에요.');
+  });
   wireAntiPaste_(tab, ta);
 }
 
@@ -2159,7 +2214,7 @@ function wireFieldEvents(tab, inputs) {
       const list = state.picks[key] || [];
       ttl.textContent = list.length ? '＋ ' + f.name + ' 더 추가' : f.name;
       box.innerHTML = list.map(function (x, j) {
-        return '<div class="fpk-i"><span class="fpk-n">📎 ' + escapeHtml(x.name) + '</span><span class="fpk-s">' + fileSizeLabel(x.size) + '</span>' +
+        return '<div class="fpk-i">' + thumbHtml_(x) + '<span class="fpk-n">' + escapeHtml(x.name) + '</span><span class="fpk-s">' + fileSizeLabel(x.size) + '</span>' +
           '<button type="button" class="fpk-x" data-rm="' + j + '" aria-label="빼기">✕</button></div>';
       }).join('') + (list.length ? '<div class="fpk-sum">' + list.length + '개 고름</div>' : '');
       box.querySelectorAll('[data-rm]').forEach(function (b) {
@@ -2176,6 +2231,16 @@ function wireFieldEvents(tab, inputs) {
       inp.value = '';
       paint();
     });
+    // 글 칸에 붙여넣은 사진을 이 칸에 더해요 — 더한 개수를 돌려줘요
+    state.addPicks = state.addPicks || {};
+    state.addPicks[key] = function (files) {
+      if (!multiFiles_()) state.picks[key] = [];
+      const list = state.picks[key] = state.picks[key] || [];
+      let n = 0;
+      files.forEach(function (file) { if (list.length < 20 && !list.some(function (x) { return x.name === file.name && x.size === file.size; })) { list.push(file); n++; } });
+      paint();
+      return n;
+    };
     paint();
   });
   if (!state.antiPaste.startedAt) state.antiPaste.startedAt = Date.now();
