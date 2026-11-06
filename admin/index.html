@@ -74,6 +74,89 @@
   .hello .av { width: 42px; height: 42px; border-radius: 50%; background: var(--accent); color: #fff; display: grid; place-items: center; font-weight: 700; flex: none; }
   .hello h1 { font-size: 17px; margin: 0; line-height: 1.25; flex: 1; }
   .hello small { display: block; font-size: 11px; color: var(--text2); font-weight: 400; }
+  /* 🗳 투표 */
+  .vrounds { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
+  .vrd { display: flex; gap: 12px; align-items: center; cursor: pointer; margin: 0; } .vrd:hover { border-color: #CDBFFF; }
+  .vrd .t { flex: 1; min-width: 0; } .vrd b { display: block; font-size: 14.5px; } .vrd small { display: block; font-size: 12px; color: #5F6F6B; margin-top: 2px; line-height: 1.55; }
+  .vst { display: inline-block; font-size: 11px; font-weight: 800; padding: 2px 9px; border-radius: 999px; margin-bottom: 4px; }
+  .vst.o { background: #EDE7FF; color: #6C4BD8; } .vst.c { background: #EEF2EF; color: #8A9894; } .vst.w { background: #FFF1D6; color: #B26A00; } .vst.d { background: #F1F3F2; color: #5F6F6B; }
+  .vnew { display: grid; place-items: center; border: 1.5px dashed #CDBFFF; color: #6C4BD8; font-weight: 900; font-size: 14px; background: #FBFAFF; cursor: pointer; min-height: 92px; margin: 0; font-family: inherit; }
+  .vhead { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+  .vtabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+  .vtabs button { padding: 8px 16px; border-radius: 999px; background: #fff; border: 1px solid #DCE6E0; font: inherit; font-size: 13px; font-weight: 800; color: #3B4A46; cursor: pointer; }
+  .vtabs button.on { background: #6C4BD8; border-color: #6C4BD8; color: #fff; } .vtabs button:disabled { opacity: .4; cursor: default; }
+  .vg { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(300px, 1fr); gap: 16px; align-items: start; }
+  .vg2 { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+  .vside { position: sticky; top: 16px; }
+  .vcard { margin-bottom: 14px; }
+  .vstep { display: flex; align-items: center; gap: 10px; font-weight: 900; font-size: 15px; margin-bottom: 12px; }
+  .vstep i { font-style: normal; width: 26px; height: 26px; border-radius: 50%; background: #6C4BD8; color: #fff; display: grid; place-items: center; font-size: 13px; flex: none; }
+  .vstep small { margin-left: auto; font-size: 12px; color: #8A9894; font-weight: 600; }
+  .vtypes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-bottom: 6px; }
+  .vty { text-align: left; border: 1.5px solid #E3EBE6; border-radius: 14px; padding: 12px; background: #fff; font: inherit; color: inherit; cursor: pointer; }
+  .vty span { font-size: 22px; } .vty b { display: block; font-size: 14.5px; margin: 4px 0 2px; } .vty small { font-size: 12px; color: #5F6F6B; line-height: 1.5; display: block; }
+  .vty.on { border-color: #6C4BD8; background: #F7F4FF; box-shadow: 0 0 0 3px rgba(108,75,216,.12); }
+  .vf { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 12px; align-items: center; padding: 9px 0; border-top: 1px solid #F1F5F3; }
+  .vf.vf-top { align-items: start; } .vf > label { font-size: 13px; font-weight: 800; color: #3B4A46; padding-top: 2px; }
+  .vf input[type=text], .vf textarea, .vf input[type=datetime-local], .vper input { border: 1.5px solid #DCE6E0; border-radius: 10px; padding: 9px 12px; font: inherit; font-size: 14px; width: 100%; background: #FBFCFB; box-sizing: border-box; }
+  .vf input[type=datetime-local] { width: auto; }
+  .vf-v { font-size: 14px; } .vf-v .hint { font-size: 12px; margin-left: 6px; }
+  .vseg { display: inline-flex; flex-wrap: wrap; gap: 6px; }
+  .vseg button { padding: 7px 13px; border-radius: 999px; border: 1px solid #DCE6E0; font: inherit; font-size: 12.5px; font-weight: 800; background: #fff; color: #3B4A46; cursor: pointer; }
+  .vseg button.on { background: #F1ECFF; border-color: #A78BFA; color: #6C4BD8; } .vseg button small { font-weight: 700; color: #2E9E6B; }
+  .vrow { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .vstp { display: inline-flex; align-items: center; border: 1.5px solid #DCE6E0; border-radius: 12px; overflow: hidden; background: #fff; }
+  .vstp b { min-width: 50px; text-align: center; font-size: 18px; font-weight: 900; color: #6C4BD8; }
+  .vstp button { width: 38px; height: 38px; border: 0; font-size: 20px; font-weight: 900; color: #3B4A46; background: #F5F7F6; cursor: pointer; }
+  .vtog { display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 700; padding: 4px 0; cursor: pointer; }
+  .vtog input { display: none; } .vtog small { color: #8A9894; font-weight: 600; }
+  .vsw { width: 38px; height: 22px; border-radius: 999px; background: #D5DEDA; position: relative; flex: none; transition: background .15s; }
+  .vsw::after { content: ''; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: left .15s; }
+  .vtog input:checked + .vsw { background: #6C4BD8; } .vtog input:checked + .vsw::after { left: 19px; }
+  .vtogs { display: flex; flex-wrap: wrap; gap: 4px 16px; }
+  .vsub { font-size: 12px; font-weight: 800; color: #8A9894; margin: 10px 0 6px; } .vsub small { font-weight: 600; }
+  .vchips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .vchips button { font: inherit; font-size: 12.5px; padding: 5px 11px; border-radius: 999px; background: #fff; border: 1px solid #DCE6E0; font-weight: 800; cursor: pointer; color: #3B4A46; }
+  .vchips button.on { background: #F1ECFF; border-color: #A78BFA; color: #5B3FC4; } .vchips small { font-weight: 600; color: #8A9894; }
+  .vopt { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .vopt span { width: 26px; height: 26px; border-radius: 8px; background: #F1ECFF; color: #6C4BD8; font-weight: 900; font-size: 12px; display: grid; place-items: center; flex: none; white-space: nowrap; }
+  .vopt input { flex: 1; } .vopt button { border: 0; background: none; color: #8A9894; font-size: 15px; cursor: pointer; }
+  .vper { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; } .vper b { width: 90px; font-size: 13px; } .vper input { width: auto; }
+  .vg .card, .vg2 .card, .vrounds .card { max-width: none; }
+  .card.vsum { background: linear-gradient(135deg, #6C4BD8, #8E44AD); color: #fff; border: 0; }
+  .vsum h3 { margin: 0 0 8px; font-size: 15px; } .vsum p { margin: 0; font-size: 14.5px; line-height: 1.8; }
+  .vsum p b { background: rgba(255,255,255,.18); padding: 1px 7px; border-radius: 7px; }
+  .vflow { display: flex; align-items: center; gap: 6px; margin-top: 14px; font-size: 11.5px; font-weight: 800; }
+  .vflow div { flex: 1; background: rgba(255,255,255,.14); border-radius: 12px; padding: 10px 4px; text-align: center; } .vflow big { display: block; font-size: 19px; font-weight: 900; }
+  .vchk { font-size: 13px; line-height: 1.9; margin: 0; padding: 0; list-style: none; }
+  .vchk li::before { content: '✓'; color: #2E9E6B; font-weight: 900; margin-right: 6px; } .vchk li.w { color: #B26A00; } .vchk li.w::before { content: '!'; color: #B26A00; }
+  .vbtns { display: flex; gap: 8px; flex-wrap: wrap; } .vside .vbtns > * { flex: 1; }
+  .vkinds { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 6px; }
+  .vkinds button { text-align: left; border: 1.5px solid #E3EBE6; border-radius: 12px; padding: 10px; background: #fff; font: inherit; color: #5F6F6B; cursor: pointer; font-size: 12px; }
+  .vkinds button b { display: block; font-size: 13.5px; color: #14231F; margin-bottom: 2px; } .vkinds button.on { border-color: #6C4BD8; background: #F7F4FF; }
+  .vprev { background: #B2C7DA; border-radius: 16px; padding: 16px; }
+  .vprev-who { font-size: 12px; font-weight: 800; color: #3B4A46; margin: 0 0 4px 4px; }
+  .vbub { display: block; width: 100%; box-sizing: border-box; background: #fff; border: 0; border-radius: 4px 16px 16px 16px; padding: 12px 14px; font: inherit; font-size: 13.5px; line-height: 1.7; white-space: pre-wrap; box-shadow: 0 1px 2px rgba(0,0,0,.08); color: #14231F; }
+  textarea.vbub { resize: vertical; min-height: 300px; outline: 2px solid #A78BFA; }
+  .vprev-m { display: flex; justify-content: space-between; font-size: 11.5px; color: #3B4A46; margin-top: 8px; }
+  .vqr { display: flex; gap: 14px; align-items: center; } .vqr-c { width: 110px; flex: none; background: #fff; border-radius: 10px; padding: 6px; border: 1px solid #E3EBE6; } .vqr-c svg { width: 100%; height: auto; display: block; }
+  .vlink { font-size: 14px; font-weight: 800; color: #6C4BD8; word-break: break-all; margin-bottom: 4px; }
+  .vtbl { width: 100%; border-collapse: collapse; font-size: 13.5px; margin-top: 10px; }
+  .vtbl th { font-size: 11.5px; color: #8A9894; text-align: left; padding: 8px; border-bottom: 1px solid #EDF2EF; } .vtbl td { padding: 9px 8px; border-bottom: 1px solid #F1F5F3; vertical-align: middle; }
+  .vtbl tr.win td { background: #FBFAFF; }
+  .vcb { width: 18px; height: 18px; accent-color: #6C4BD8; cursor: pointer; }
+  .vrk { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-weight: 900; font-size: 12px; background: #EEF2EF; }
+  .vrk.r1 { background: #FFD84A; } .vrk.r2 { background: #E3E7EA; } .vrk.r3 { background: #F3C9A3; }
+  .vwb { font-size: 11px; font-weight: 900; color: #6C4BD8; background: #EDE7FF; padding: 2px 8px; border-radius: 999px; margin-left: 6px; }
+  .vtie { font-size: 11px; font-weight: 900; color: #B26A00; background: #FFF1D6; padding: 2px 8px; border-radius: 999px; margin-left: 6px; }
+  .vbar { display: block; height: 10px; border-radius: 999px; background: #EEEAFB; overflow: hidden; width: 100%; } .vbar i { display: block; height: 100%; background: #8B6CF0; border-radius: 999px; }
+  .vbar.g { background: #E8EFEA; } .vbar.g i { background: #2E9E6B; }
+  .vsave { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+  .vpr { display: grid; grid-template-columns: 86px minmax(0, 1fr) 54px auto; gap: 10px; align-items: center; padding: 6px 0; font-size: 13px; font-weight: 700; }
+  .vmiss { display: flex; flex-wrap: wrap; gap: 5px; margin: 0 0 8px; } .vmiss span { font-size: 12px; padding: 3px 9px; border-radius: 999px; background: #F3F5F4; color: #8A9894; border: 1px solid #E6EBE8; }
+  .vmiss span.ok { background: #E6F6EE; color: #12805B; border-color: #BFE4D3; } .vmiss em { font-style: normal; font-size: 11px; font-weight: 800; color: #B26A00; }
+  .vrecent div { display: flex; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid #F1F5F3; font-size: 13px; } .vrecent span { color: #8A9894; }
+  @media (max-width: 900px) { .vg, .vg2 { grid-template-columns: 1fr; } .vside { position: static; } .vtypes, .vkinds { grid-template-columns: 1fr; } .vf { grid-template-columns: 1fr; gap: 6px; } }
   /* 학생 알림 현황 */
   .ps-top { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-bottom: 14px; }
   .ps-top .dk2 { background: #fff; border: 1px solid #E3EBE6; border-radius: 18px; padding: 14px 16px; display: flex; flex-direction: column; gap: 4px; }
@@ -806,13 +889,13 @@ function bottomNavHtml_() {
     ['roster', '명단', '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 3-6 6.5-6s6.5 2.4 6.5 6"/><path d="M17 5.5a3 3 0 0 1 0 5.5M18.5 14.2c2 .7 3 2.5 3 5.8"/>'],
     ['more', '더보기', '<circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/>']
   ];
-  const moreOn = state.nav === 'notice' || state.nav === 'settings' || state.nav === 'inquiry' || state.nav === 'pushstat';
+  const moreOn = state.nav === 'notice' || state.nav === 'settings' || state.nav === 'inquiry' || state.nav === 'pushstat' || state.nav === 'votes';
   return '<nav class="bnav">' + it.map(function (x) {
     const on = x[0] === 'more' ? moreOn : state.nav === x[0];
     return '<button data-bn="' + x[0] + '"' + (on ? ' class="on"' : '') + '>' + svg(x[2]) + x[1] + '</button>';
   }).join('') + '</nav>' +
   '<div class="sheetbg" id="sheetBg"></div><div class="sheet" id="moreSheet">' +
-    '<button data-bn="inquiry">💬 학생 문의<b class="inq-badge" data-inqb></b></button><button data-bn="notice">공지 보내기</button><button data-bn="pushstat">🔔 학생 알림 현황</button><button data-bn="settings">설정</button>' +
+    '<button data-bn="inquiry">💬 학생 문의<b class="inq-badge" data-inqb></b></button><button data-bn="votes">🗳 투표 · 추천</button><button data-bn="notice">공지 보내기</button><button data-bn="pushstat">🔔 학생 알림 현황</button><button data-bn="settings">설정</button>' +
     '<button class="installBtn" type="button" style="display:none;">📲 관리자 앱으로 설치</button>' +
     '<a href="../report/" id="sheetStu" target="_blank" rel="noopener">학생 화면 보기</a><button id="sheetOut">로그아웃</button></div>';
 }
@@ -827,7 +910,7 @@ function wireBottomNav_() {
       if (k === 'more') { sheet.classList.toggle('open'); bg.classList.toggle('open'); return; }
       close();
       if (k === 'home') renderPortal(); else if (k === 'tasks') renderDashboard();
-      else if (k === 'roster') renderRosterImport(); else if (k === 'notice') renderNotice(); else if (k === 'inquiry') renderInquiries(); else if (k === 'pushstat') renderPushStatus(); else renderSettings();
+      else if (k === 'roster') renderRosterImport(); else if (k === 'notice') renderNotice(); else if (k === 'inquiry') renderInquiries(); else if (k === 'pushstat') renderPushStatus(); else if (k === 'votes') renderVotes(); else renderSettings();
     };
   });
   document.getElementById('sheetStu').onclick = function (e) { close(); openStudentPreview(e); };
@@ -840,10 +923,11 @@ function render(inner) {
     return;
   }
   // 메뉴 아이콘 칸 색 = 로고 조각 색 (현황 청록 · 과제 노랑 · 명단 파랑 · 공지 빨강 · 설정 회색)
-  const tint = { pushstat: ['rgba(52,211,153,.2)', '#6EE7B7'], inquiry: ['rgba(167,139,250,.22)', '#C4B5FD'], home: ['#35D3C8', '#0B2C27'], tasks: ['rgba(255,216,74,.18)', '#FFD84A'], roster: ['rgba(61,139,242,.22)', '#6FA9FF'], notice: ['rgba(255,107,107,.2)', '#FF8A8A'], settings: ['rgba(255,255,255,.08)', '#CFE3DC'] };
+  const tint = { votes: ['rgba(167,139,250,.24)', '#C4B5FD'], pushstat: ['rgba(52,211,153,.2)', '#6EE7B7'], inquiry: ['rgba(167,139,250,.22)', '#C4B5FD'], home: ['#35D3C8', '#0B2C27'], tasks: ['rgba(255,216,74,.18)', '#FFD84A'], roster: ['rgba(61,139,242,.22)', '#6FA9FF'], notice: ['rgba(255,107,107,.2)', '#FF8A8A'], settings: ['rgba(255,255,255,.08)', '#CFE3DC'] };
   const items = [
     ['home', '현황', '<path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/>'],
     ['tasks', '과제', '<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 9h8M8 13h8M8 17h5"/>'],
+    ['votes', '투표', '<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V5h8v6"/><path d="M10.5 8l1.2 1.2 2.3-2.4"/><path d="M8 15h8"/>'],
     ['roster', '명단', '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 3-6 6.5-6s6.5 2.4 6.5 6"/><path d="M17 5.5a3 3 0 0 1 0 5.5M18.5 14.2c2 .7 3 2.5 3 5.8"/>'],
     ['notice', '공지', '<path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>'],
     ['inquiry', '문의', '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 9h8M8 13h5"/>'],
@@ -874,7 +958,7 @@ function render(inner) {
     b.onclick = function () {
       const k = b.getAttribute('data-nav');
       if (k === 'home') renderPortal(); else if (k === 'tasks') renderDashboard();
-      else if (k === 'roster') renderRosterImport(); else if (k === 'notice') renderNotice(); else if (k === 'inquiry') renderInquiries(); else if (k === 'pushstat') renderPushStatus(); else renderSettings();
+      else if (k === 'roster') renderRosterImport(); else if (k === 'notice') renderNotice(); else if (k === 'inquiry') renderInquiries(); else if (k === 'pushstat') renderPushStatus(); else if (k === 'votes') renderVotes(); else renderSettings();
     };
   });
   paintInqBadge_();
@@ -3189,7 +3273,7 @@ function portalStatsHtml_(st) {
     '</div>';
 }
 // 웹 화면이 기대하는 서버 버전 — 서버 배포(GitHub Actions)가 실패해 서버가 뒤처지면 현황 맨 위에 알려요
-const WEB_EXPECTS_SERVER = 75;
+const WEB_EXPECTS_SERVER = 76;
 function serverBehindHtml_(v) {
   v = Number(v) || 0;
   if (!v || v >= WEB_EXPECTS_SERVER) return '';
@@ -3264,6 +3348,545 @@ function miniRing_(pct, color, label) {
     '<circle cx="29" cy="29" r="' + r + '" fill="none" stroke="' + color + '" stroke-width="7" stroke-linecap="round" stroke-dasharray="' + d.toFixed(1) + ' ' + c.toFixed(1) + '" transform="rotate(-90 29 29)"/>' +
     '<text x="29" y="33" text-anchor="middle" font-size="11.5" font-weight="800" fill="#14231F">' + escapeHtml(label) + '</text></svg>';
 }
+// ---------- 🗳 투표 · 추천 (관리자) ----------
+const VT_LABEL = { recommend: '친구 추천', election: '후보 선거', options: '선택지 투표' };
+const VT_DESC = {
+  recommend: '후보를 따로 정하지 않고 같은 반(또는 학년) 친구 중에서 골라요. 예) 체육부장·도우미 추천',
+  election: '선생님이 정한 후보 중에서 골라요. 후보마다 소개 글을 붙일 수 있어요. 예) 학급 반장 선거',
+  options: '사람이 아니라 보기 중에서 골라요. 예) 체육대회 종목, 현장체험 장소'
+};
+const VST = { draft: ['만드는 중', 'd'], wait: ['예약', 'w'], open: ['진행 중', 'o'], closed: ['마감', 'c'] };
+function vNum_(n) { const e = ['0️⃣', '1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟']; return n >= 0 && n <= 10 ? e[n] : String(n); }
+function vWhen_(iso) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/.exec(iso || ''); if (!m) return '';
+  const d = new Date(m[0] + ':00+09:00'), days = ['일', '월', '화', '수', '목', '금', '토'];
+  return Number(m[2]) + '/' + Number(m[3]) + '(' + days[new Date(Date.UTC(+m[1], +m[2] - 1, +m[3])).getUTCDay()] + ') ' + m[4] + ':' + m[5];
+}
+function vLink_(v) { return v && v.shortCode ? new URL('../', location.href).href + '?' + v.shortCode : ''; }
+function vMatch_(targets, sid) {
+  if (!targets || !targets.length) return true;
+  sid = String(sid); const g = sid.charAt(0), c = sid.charAt(1);
+  return targets.some(function (t) { t = String(t); if (t.length === 4) return t === sid; const p = t.split('-'); return p[0] === g && (p.length === 1 || p[1] === c); });
+}
+function vClsKey_(sid) { sid = String(sid); return sid.charAt(0) + '-' + sid.charAt(1); }
+function vClsLabel_(k) { return k === 'all' ? '전체' : /^\d$/.test(k) ? k + '학년' : k.replace('-', '학년 ') + '반'; }
+
+async function renderVotes() {
+  state.nav = 'votes';
+  render('<div class="wrap wide"><h1 class="serif">🗳 투표 · 추천</h1><p class="lead">반 친구 추천·후보 선거·선택지 투표를 열고, 결과로 선정자를 정해요. 학생은 혜원포털 학생코드로 로그인해서 참여해요.</p><div id="vList">' + (state.votes ? '' : '<div class="loading">불러오는 중…</div>') + '</div></div>');
+  if (state.votes) paintVoteList_();
+  let r; try { r = await api('listVotes'); } catch (e) { r = null; }
+  if (state.nav !== 'votes' || !document.getElementById('vList')) return;
+  if (!r || !r.success) { if (!state.votes) document.getElementById('vList').innerHTML = '<div class="msg error">' + escapeHtml(r && r.error === 'unknown_action' ? '서버가 예전 버전이에요(투표는 v76부터). 서버 배포 후 다시 열어 주세요.' : ((r && r.message) || '불러오지 못했어요.')) + '</div>'; return; }
+  state.votes = r.votes || [];
+  paintVoteList_();
+}
+function paintVoteList_() {
+  const box = document.getElementById('vList'); if (!box) return;
+  const ring = function (p, col) { const c = 2 * Math.PI * 22, d = Math.max(0, Math.min(1, p)) * c; return '<svg width="56" height="56" viewBox="0 0 58 58" style="flex:none"><circle cx="29" cy="29" r="22" fill="none" stroke="#EEEAFB" stroke-width="7"/><circle cx="29" cy="29" r="22" fill="none" stroke="' + col + '" stroke-width="7" stroke-linecap="round" stroke-dasharray="' + d.toFixed(1) + ' ' + c.toFixed(1) + '" transform="rotate(-90 29 29)"/><text x="29" y="33" text-anchor="middle" font-size="12" font-weight="800" fill="#14231F">' + Math.round(p * 100) + '%</text></svg>'; };
+  box.innerHTML = '<div class="vrounds">' + state.votes.map(function (v) {
+    const st = VST[v.state] || VST.draft, p = v.total ? v.voted / v.total : 0;
+    return '<div class="card vrd" data-vid="' + escapeHtml(v.id) + '">' + ring(p, v.state === 'open' ? '#6C4BD8' : '#9AA8A4') +
+      '<div class="t"><span class="vst ' + st[1] + '">' + (v.state === 'open' ? '● ' : '') + st[0] + (v.winnersSel && v.winnersSel.ids && v.winnersSel.ids.length ? ' · 선정 ' + v.winnersSel.ids.length + '명' : '') + '</span>' +
+      '<b>' + escapeHtml(v.title) + '</b><small>' + escapeHtml(VT_LABEL[v.type] || '') + ' · ' + escapeHtml(v.targetsLabel || '') + ' · ' + (v.pickExact ? '꼭 ' : '최대 ') + v.pick + (v.type === 'options' ? '개' : '명') +
+      (v.closeAt ? ' · ' + escapeHtml(vWhen_(v.closeAt)) + ' 마감' : '') + '<br>참여 ' + v.voted + ' / ' + v.total + '명</small></div></div>';
+  }).join('') + '<button type="button" class="card vnew" id="vNew">＋ 새 투표 만들기</button></div>' +
+  (state.votes.length ? '' : '<p class="hint" style="margin-top:10px;">아직 만든 투표가 없어요. «＋ 새 투표 만들기»로 시작해요.</p>');
+  box.querySelectorAll('[data-vid]').forEach(function (el) { el.onclick = function () { const x = state.votes.find(function (y) { return y.id === el.getAttribute('data-vid'); }); renderVoteDetail(el.getAttribute('data-vid'), x && x.state === 'draft' ? 'settings' : x && x.voted ? 'result' : 'notice'); }; });
+  document.getElementById('vNew').onclick = function () { renderVoteDetail(null, 'settings'); };
+}
+function vBlank_() {
+  return { title: '', desc: '', type: 'recommend', targets: [], candScope: 'class', candidates: [], candInfo: {}, options: [{ id: 'o1', label: '' }, { id: 'o2', label: '' }],
+    allowSelf: true, excludePrevVotes: [], excludeIds: [], pick: 1, pickExact: false, ranked: false, winners: 1, winnersScope: 'class', winnerMode: 'auto', tie: 'teacher',
+    openAt: '', closeAt: '', closeMode: 'same', perClass: {}, anonymous: true, showCounts: false, notifyOpen: true, notifyRemind: true, notices: {} };
+}
+async function renderVoteDetail(id, tab) {
+  state.nav = 'votes';
+  if (!state.votes) { try { const r = await api('listVotes'); if (r && r.success) state.votes = r.votes || []; } catch (e) {} }
+  const v = id ? (state.votes || []).find(function (x) { return x.id === id; }) : null;
+  if (id && !v) return renderVotes();
+  state.vEdit = v ? Object.assign(vBlank_(), JSON.parse(JSON.stringify(v))) : vBlank_();
+  state.vTab = tab || state.vTab || (v ? 'result' : 'settings');
+  if (!v) state.vTab = 'settings';
+  const st = v ? (VST[v.state] || VST.draft) : VST.draft;
+  const tabs = [['settings', '⚙️ 설정'], ['notice', '📢 안내문·링크'], ['result', '📊 결과·선정'], ['part', '👥 참여 현황'], ['image', '🖼 안내 이미지']];
+  render('<div class="wrap wide"><a href="#" class="hint" id="vBack">← 투표 목록</a>' +
+    '<div class="vhead"><h1 class="serif" style="margin:6px 0 0;">🗳 ' + escapeHtml(v ? v.title : '새 투표 만들기') + '</h1>' + (v ? '<span class="vst ' + st[1] + '">' + st[0] + '</span>' : '') +
+      (v ? '<span style="flex:1"></span>' + (v.status !== 'live' ? '<button type="button" class="btn btn-sm" data-vs="live" style="background:#6C4BD8;">▶ 시작(예약)하기</button>' : '') +
+        (v.status === 'live' ? '<button type="button" class="btn-outline btn-sm" data-vs="closed">■ 지금 마감</button>' : '') +
+        (v.status === 'closed' ? '<button type="button" class="btn-outline btn-sm" data-vs="live">↺ 다시 열기</button>' : '') +
+        '<button type="button" class="btn-outline btn-sm" id="vDel" style="color:#C22B2B;">🗑 삭제</button>' : '') + '</div>' +
+    '<div class="vtabs">' + tabs.map(function (t) { return '<button type="button" class="' + (state.vTab === t[0] ? 'on' : '') + '" data-vt2="' + t[0] + '"' + (!v && t[0] !== 'settings' ? ' disabled' : '') + '>' + t[1] + '</button>'; }).join('') + '</div>' +
+    '<div id="vBody"></div></div>');
+  document.getElementById('vBack').onclick = function (e) { e.preventDefault(); renderVotes(); };
+  document.querySelectorAll('[data-vt2]').forEach(function (b) { b.onclick = function () { state.vTab = b.getAttribute('data-vt2'); renderVoteDetail(id, state.vTab); }; });
+  document.querySelectorAll('[data-vs]').forEach(function (b) {
+    b.onclick = async function () {
+      const to = b.getAttribute('data-vs');
+      if (to === 'closed' && !confirm('지금 마감할까요? 학생은 더 낼 수 없어요.')) return;
+      let r; try { r = await api('setVoteStatus', { id: id, status: to }); } catch (e) { r = null; }
+      if (!r || !r.success) return alert((r && r.message) || '바꾸지 못했어요.');
+      vReplace_(r.vote); renderVoteDetail(id, state.vTab);
+    };
+  });
+  const del = document.getElementById('vDel');
+  if (del) del.onclick = async function () {
+    if (!confirm('«' + v.title + '» 투표를 지울까요? 학생들이 낸 기록도 함께 지워져요.')) return;
+    let r; try { r = await api('deleteVote', { id: id }); } catch (e) { r = null; }
+    if (!r || !r.success) return alert((r && r.message) || '지우지 못했어요.');
+    state.votes = (state.votes || []).filter(function (x) { return x.id !== id; }); renderVotes();
+  };
+  const body = document.getElementById('vBody');
+  if (state.vTab === 'settings') return vSettings_(body, v);
+  if (state.vTab === 'notice') return vNotice_(body, v);
+  if (state.vTab === 'result') return vResult_(body, v, 'result');
+  if (state.vTab === 'part') return vResult_(body, v, 'part');
+  if (state.vTab === 'image') return vResult_(body, v, 'image');
+}
+function vReplace_(nv) {
+  if (!nv) return;
+  state.votes = state.votes || [];
+  const i = state.votes.findIndex(function (x) { return x.id === nv.id; });
+  const old = i >= 0 ? state.votes[i] : {};
+  nv.total = old.total || 0; nv.voted = old.voted || 0;
+  if (i >= 0) state.votes[i] = nv; else state.votes.unshift(nv);
+}
+
+// ---- ⚙️ 설정 ----
+async function vSettings_(body, v) {
+  const d = state.vEdit;
+  const students = await loadSourceStudents_();
+  if (!document.getElementById('vBody')) return;
+  const seg = function (key, opts) { return '<div class="vseg" data-seg="' + key + '">' + opts.map(function (o) { return '<button type="button" data-val="' + o[0] + '" class="' + (String(d[key]) === String(o[0]) ? 'on' : '') + '">' + o[1] + '</button>'; }).join('') + '</div>'; };
+  const tog = function (key, label, sub) { return '<label class="vtog"><input type="checkbox" data-tog="' + key + '"' + (d[key] ? ' checked' : '') + '><span class="vsw"></span>' + label + (sub ? ' <small>' + sub + '</small>' : '') + '</label>'; };
+  const stp = function (key, lo, hi) { return '<span class="vstp" data-stp="' + key + '" data-lo="' + lo + '" data-hi="' + hi + '"><button type="button" data-d="-1">−</button><b>' + d[key] + '</b><button type="button" data-d="1">＋</button></span>'; };
+  const prevVotes = (state.votes || []).filter(function (x) { return (!v || x.id !== v.id) && x.winnersSel && x.winnersSel.ids && x.winnersSel.ids.length; });
+  const isStu = d.type !== 'options';
+  body.innerHTML = '<div class="vg"><div>' +
+    '<div class="card vcard"><div class="vstep"><i>1</i>어떤 투표인가요?</div><div class="vtypes">' +
+      ['recommend', 'election', 'options'].map(function (t) { return '<button type="button" class="vty' + (d.type === t ? ' on' : '') + '" data-vtype="' + t + '"><span>' + { recommend: '🙋', election: '🗳', options: '📝' }[t] + '</span><b>' + VT_LABEL[t] + '</b><small>' + VT_DESC[t] + '</small></button>'; }).join('') + '</div>' +
+      '<div class="vf"><label>투표 이름</label><input id="vfTitle" type="text" value="' + escapeHtml(d.title) + '" placeholder="예) 2학기 체육부장 추천 (1차)"></div>' +
+      '<div class="vf"><label>설명</label><textarea id="vfDesc" rows="2" placeholder="학생 화면 맨 위에 보여요 (안 써도 돼요)">' + escapeHtml(d.desc) + '</textarea></div></div>' +
+    '<div class="card vcard"><div class="vstep"><i>2</i>누가 투표하나요?<small>투표하는 학생 = 대상</small></div><div id="vfTargets"></div><div class="vf"><label>대상 인원</label><div id="vfTCount" class="vf-v"></div></div></div>' +
+    '<div class="card vcard"><div class="vstep"><i>3</i>' + (d.type === 'options' ? '어떤 보기가 있나요?' : '누구를 뽑을 수 있나요?') + '<small>후보</small></div>' +
+      (d.type === 'recommend' ? '<div class="vf"><label>후보 범위</label>' + seg('candScope', [['class', '같은 반 친구'], ['grade', '같은 학년'], ['all', '대상 전체']]) + '</div><div class="vf"><label>후보 인원</label><div id="vfCCount" class="vf-v"></div></div>' : '') +
+      (d.type === 'election' ? '<div class="vf vf-top"><label>후보</label><div><div id="vfCands"></div><div id="vfCandInfo"></div></div></div>' : '') +
+      (d.type === 'options' ? '<div class="vf vf-top"><label>보기</label><div id="vfOpts">' + d.options.map(function (o, i) { return '<div class="vopt"><span>' + (i + 1) + '</span><input type="text" data-opt="' + i + '" value="' + escapeHtml(o.label) + '" placeholder="보기 ' + (i + 1) + '"><button type="button" data-optdel="' + i + '" aria-label="빼기">✕</button></div>'; }).join('') + '<button type="button" class="btn-outline btn-sm" id="vOptAdd">＋ 보기 더하기</button></div></div>' : '') +
+      (isStu ? '<div class="vf vf-top"><label>빼기</label><div>' +
+        (d.type === 'recommend' ? tog('allowSelf', '본인도 고를 수 있어요') : '') +
+        (prevVotes.length ? '<div class="vsub">이전 선정자 빼기</div><div class="vchips">' + prevVotes.map(function (x) { const on = d.excludePrevVotes.indexOf(x.id) >= 0; return '<button type="button" class="' + (on ? 'on' : '') + '" data-prev="' + escapeHtml(x.id) + '">' + (on ? '✓ ' : '') + escapeHtml(x.title) + ' <small>선정 ' + x.winnersSel.ids.length + '명</small></button>'; }).join('') + '</div>' : '<div class="hint">선정자를 저장한 이전 투표가 생기면 여기서 «이전 선정자 빼기»를 고를 수 있어요.</div>') +
+        '<div class="vsub">후보에서 뺄 학생 <small>' + (d.excludeIds.length ? d.excludeIds.length + '명' : '없음') + '</small> <button type="button" class="btn-outline btn-sm" id="vExTog" style="margin-left:6px;">' + (state.vExOpen ? '접기' : '고르기') + '</button></div>' +
+        (state.vExOpen ? '<div id="vfEx"></div>' : '') + '</div></div>' : '') + '</div>' +
+    '<div class="card vcard"><div class="vstep"><i>4</i>한 명이 몇 ' + (d.type === 'options' ? '개' : '명') + '을 고르나요?</div>' +
+      '<div class="vf"><label>고르는 수</label><div class="vrow">' + stp('pick', 1, 30) + seg('pickExact', [['false', '최대 ' + d.pick + (d.type === 'options' ? '개' : '명') + '까지'], ['true', '꼭 ' + d.pick + (d.type === 'options' ? '개' : '명')]]) + '</div></div>' +
+      '<div class="vf"><label>순위</label>' + seg('ranked', [['false', '순위 없이 (하나 = 1표)'], ['true', '순위대로 (1순위가 점수 더 많이)']]) + '</div></div>' +
+    '<div class="card vcard"><div class="vstep"><i>5</i>몇 ' + (d.type === 'options' ? '개를 뽑나요?' : '명을 선발하나요?') + '</div>' +
+      '<div class="vf"><label>선발 인원</label><div class="vrow">' + stp('winners', 0, 200) + seg('winnersScope', [['class', '반마다'], ['grade', '학년마다'], ['all', '대상 전체에서']]) + '</div></div>' +
+      '<div class="vf"><label>선발 방법</label>' + seg('winnerMode', [['auto', '득표 순 자동 체크 → 선생님 확정'], ['manual', '선생님이 직접 고르기']]) + '</div>' +
+      '<div class="vf"><label>동점일 때</label>' + seg('tie', [['teacher', '함께 표시하고 선생님이 고르기'], ['all', '모두 선발']]) + '</div></div>' +
+    '<div class="card vcard"><div class="vstep"><i>6</i>언제, 어떻게 진행하나요?</div>' +
+      '<div class="vf"><label>시작</label><div class="vrow"><div class="vseg" data-seg2="start"><button type="button" data-val="now" class="' + (!d.openAt ? 'on' : '') + '">시작 누를 때 바로</button><button type="button" data-val="at" class="' + (d.openAt ? 'on' : '') + '">예약</button></div>' +
+        '<input type="datetime-local" id="vfOpen" value="' + escapeHtml(d.openAt) + '"' + (d.openAt ? '' : ' hidden') + '></div></div>' +
+      '<div class="vf"><label>마감</label><div class="vrow">' + seg('closeMode', [['same', '모든 반 같이'], ['perClass', '반마다 다르게'], ['manual', '선생님이 닫을 때까지']]) +
+        (d.closeMode === 'same' ? '<input type="datetime-local" id="vfClose" value="' + escapeHtml(d.closeAt) + '">' : '') + '</div></div>' +
+      (d.closeMode === 'perClass' ? '<div class="vf vf-top"><label>반별 마감</label><div id="vfPer"></div></div>' : '') +
+      '<div class="vf vf-top"><label>공개</label><div>' + tog('anonymous', '누가 누구를 골랐는지는 선생님만 보기', '(학생끼리는 비밀)') + tog('showCounts', '결과 발표 안내문에 득표수 넣기') + '</div></div>' +
+      '<div class="vf vf-top"><label>알림</label><div>' + tog('notifyOpen', '열릴 때 대상 학생에게 폰 알림') + tog('notifyRemind', '마감 1시간 전, 안 한 학생에게 다시 알림') + '</div></div></div>' +
+    '</div><div class="vside"><div class="card vsum" id="vSum"></div><div class="card" id="vChk"></div>' +
+      '<div class="vbtns">' + (v ? '<button type="button" class="btn" id="vSave" style="background:#6C4BD8;">저장</button>' : '<button type="button" class="btn-outline" id="vSaveDraft">미리 저장</button><button type="button" class="btn" id="vSaveLive" style="background:#6C4BD8;">시작(예약)하기</button>') + '</div><div class="hint" id="vSaveMsg" style="margin-top:8px;"></div></div></div>';
+  // 연결
+  const rerender = function () { const y = window.scrollY; vSettings_(body, v).then(function () { window.scrollTo(0, y); }); };
+  body.querySelectorAll('[data-vtype]').forEach(function (b) { b.onclick = function () { d.type = b.getAttribute('data-vtype'); rerender(); }; });
+  document.getElementById('vfTitle').oninput = function () { d.title = this.value; vSummary_(students); };
+  document.getElementById('vfDesc').oninput = function () { d.desc = this.value; };
+  body.querySelectorAll('[data-seg]').forEach(function (g) {
+    g.querySelectorAll('button').forEach(function (b) { b.onclick = function () {
+      const k = g.getAttribute('data-seg'), val = b.getAttribute('data-val');
+      d[k] = val === 'true' ? true : val === 'false' ? false : val;
+      if (k === 'closeMode') return rerender();
+      g.querySelectorAll('button').forEach(function (x) { x.classList.toggle('on', x === b); }); vSummary_(students);
+    }; });
+  });
+  const sg = body.querySelector('[data-seg2="start"]');
+  sg.querySelectorAll('button').forEach(function (b) { b.onclick = function () {
+    const at = b.getAttribute('data-val') === 'at'; sg.querySelectorAll('button').forEach(function (x) { x.classList.toggle('on', x === b); });
+    const inp = document.getElementById('vfOpen'); inp.hidden = !at; if (!at) { d.openAt = ''; inp.value = ''; } else inp.focus(); vSummary_(students);
+  }; });
+  document.getElementById('vfOpen').onchange = function () { d.openAt = this.value.slice(0, 16); vSummary_(students); };
+  const vc = document.getElementById('vfClose'); if (vc) vc.onchange = function () { d.closeAt = this.value.slice(0, 16); vSummary_(students); };
+  body.querySelectorAll('[data-tog]').forEach(function (c) { c.onchange = function () { d[c.getAttribute('data-tog')] = c.checked; vSummary_(students); }; });
+  body.querySelectorAll('[data-stp]').forEach(function (s2) {
+    s2.querySelectorAll('button').forEach(function (b) { b.onclick = function () {
+      const k = s2.getAttribute('data-stp'), lo = +s2.getAttribute('data-lo'), hi = +s2.getAttribute('data-hi');
+      d[k] = Math.max(lo, Math.min(hi, (+d[k] || 0) + (+b.getAttribute('data-d'))));
+      if (k === 'pick') return rerender();
+      s2.querySelector('b').textContent = d[k]; vSummary_(students);
+    }; });
+  });
+  body.querySelectorAll('[data-prev]').forEach(function (b) { b.onclick = function () {
+    const id2 = b.getAttribute('data-prev'), i = d.excludePrevVotes.indexOf(id2); if (i >= 0) d.excludePrevVotes.splice(i, 1); else d.excludePrevVotes.push(id2); rerender();
+  }; });
+  const ex = document.getElementById('vExTog'); if (ex) ex.onclick = function () { state.vExOpen = !state.vExOpen; rerender(); };
+  if (document.getElementById('vfEx')) mountTargetPicker_('vfEx', d.excludeIds, function (t) { d.excludeIds = (t || []).filter(function (x) { return String(x).length === 4; }); vSummary_(students); }, { noGroups: true });
+  mountTargetPicker_('vfTargets', d.targets, function (t) { d.targets = t || []; vSummary_(students); });
+  if (d.type === 'election') {
+    const paintInfo = function () {
+      const box = document.getElementById('vfCandInfo'); if (!box) return;
+      const nm = {}; students.forEach(function (x) { nm[x.studentId] = x.name; });
+      box.innerHTML = d.candidates.length ? '<div class="vsub">후보 소개 <small>(안 써도 돼요 · 학생 화면 후보 칸 아래에 보여요)</small></div>' + d.candidates.map(function (id2) {
+        return '<div class="vopt"><span style="width:auto;padding:0 8px;">' + escapeHtml(id2 + ' ' + (nm[id2] || '')) + '</span><input type="text" data-cinfo="' + escapeHtml(id2) + '" value="' + escapeHtml(d.candInfo[id2] || '') + '" placeholder="예) 공약 한 줄"></div>';
+      }).join('') : '<div class="hint">위에서 «개별»로 후보 학생을 골라 주세요.</div>';
+      box.querySelectorAll('[data-cinfo]').forEach(function (i2) { i2.oninput = function () { d.candInfo[i2.getAttribute('data-cinfo')] = i2.value; }; });
+    };
+    mountTargetPicker_('vfCands', d.candidates, function (t) { d.candidates = (t || []).filter(function (x) { return String(x).length === 4; }); paintInfo(); vSummary_(students); }, { noGroups: true }).then(paintInfo);
+  }
+  if (d.type === 'options') {
+    body.querySelectorAll('[data-opt]').forEach(function (i2) { i2.oninput = function () { d.options[+i2.getAttribute('data-opt')].label = i2.value; vSummary_(students); }; });
+    body.querySelectorAll('[data-optdel]').forEach(function (b) { b.onclick = function () { d.options.splice(+b.getAttribute('data-optdel'), 1); rerender(); }; });
+    document.getElementById('vOptAdd').onclick = function () { d.options.push({ id: 'o' + Date.now().toString(36), label: '' }); rerender(); };
+  }
+  if (d.closeMode === 'perClass') {
+    const per = document.getElementById('vfPer');
+    const cls = {}; students.filter(function (x) { return vMatch_(d.targets, x.studentId); }).forEach(function (x) { cls[vClsKey_(x.studentId)] = 1; });
+    per.innerHTML = Object.keys(cls).sort().map(function (k) { return '<div class="vper"><b>' + escapeHtml(vClsLabel_(k)) + '</b><input type="datetime-local" data-per="' + k + '" value="' + escapeHtml((d.perClass[k] || {}).closeAt || '') + '"></div>'; }).join('') || '<span class="hint">대상을 먼저 골라 주세요.</span>';
+    per.querySelectorAll('[data-per]').forEach(function (i2) { i2.onchange = function () { const k = i2.getAttribute('data-per'); d.perClass[k] = d.perClass[k] || {}; d.perClass[k].closeAt = i2.value.slice(0, 16); vSummary_(students); }; });
+  }
+  const save = async function (status) {
+    const msg = document.getElementById('vSaveMsg');
+    const err = vValidate_(d); if (err) { msg.textContent = '⚠️ ' + err; msg.style.color = '#C22B2B'; return; }
+    msg.style.color = ''; msg.textContent = '저장 중…';
+    const payload = JSON.parse(JSON.stringify(d)); if (status) payload.status = status;
+    if (d.type === 'options') payload.options = d.options.filter(function (o) { return o.label.trim(); });
+    let r; try { r = await api('saveVote', { vote: payload }); } catch (e) { r = null; }
+    if (!r || !r.success) { msg.textContent = (r && r.message) || (r && r.error === 'unknown_action' ? '서버가 예전 버전이에요(v76부터).' : '저장하지 못했어요.'); return; }
+    vReplace_(r.vote);
+    renderVoteDetail(r.vote.id, status === 'live' ? 'notice' : 'settings');
+  };
+  const sv = document.getElementById('vSave'); if (sv) sv.onclick = function () { save(''); };
+  const sd = document.getElementById('vSaveDraft'); if (sd) sd.onclick = function () { save('draft'); };
+  const sl = document.getElementById('vSaveLive'); if (sl) sl.onclick = function () { save('live'); };
+  vSummary_(students);
+}
+function vValidate_(d) {
+  if (!String(d.title || '').trim()) return '투표 이름을 적어 주세요.';
+  if (d.type === 'election' && !d.candidates.length) return '후보를 한 명 이상 골라 주세요.';
+  if (d.type === 'options' && d.options.filter(function (o) { return o.label.trim(); }).length < 2) return '보기를 두 개 이상 적어 주세요.';
+  if (d.closeMode === 'same' && d.closeAt && d.openAt && d.closeAt <= d.openAt) return '마감이 시작보다 빨라요.';
+  return '';
+}
+function vCalc_(d, students) {
+  const voters = students.filter(function (x) { return vMatch_(d.targets, x.studentId); });
+  const byCls = {}; voters.forEach(function (x) { const k = vClsKey_(x.studentId); byCls[k] = (byCls[k] || 0) + 1; });
+  const grades = {}; voters.forEach(function (x) { grades[String(x.studentId).charAt(0)] = 1; });
+  const classSizes = {}; students.forEach(function (x) { const k = vClsKey_(x.studentId); classSizes[k] = (classSizes[k] || 0) + 1; });
+  let candTxt = '', candN = '';
+  if (d.type === 'recommend') {
+    if (d.candScope === 'class') { const ns = Object.keys(byCls).map(function (k) { return classSizes[k] || 0; }); candN = ns.length ? (Math.min.apply(null, ns) === Math.max.apply(null, ns) ? String(ns[0]) : Math.min.apply(null, ns) + '~' + Math.max.apply(null, ns)) : '0'; candTxt = '반마다 ' + candN + '명 (자기 반 친구만 보여요)'; }
+    else if (d.candScope === 'grade') { candN = String(students.filter(function (x) { return grades[String(x.studentId).charAt(0)]; }).length); candTxt = '학년 ' + candN + '명'; }
+    else { candN = String(voters.length); candTxt = '대상 ' + candN + '명'; }
+  } else if (d.type === 'election') { candN = String(d.candidates.length); candTxt = candN + '명'; }
+  else { candN = String(d.options.filter(function (o) { return o.label.trim(); }).length); candTxt = candN + '개'; }
+  const groups = d.winnersScope === 'class' ? Object.keys(byCls).length : d.winnersScope === 'grade' ? Object.keys(grades).length : 1;
+  return { voters: voters, byCls: byCls, candN: candN, candTxt: candTxt, groups: groups, winTotal: d.winners * groups };
+}
+function vSummary_(students) {
+  const d = state.vEdit, c = vCalc_(d, students), noun = d.type === 'options' ? '개' : '명';
+  const tc = document.getElementById('vfTCount'); if (tc) tc.innerHTML = '<b>' + c.voters.length + '명</b> <span class="hint">' + Object.keys(c.byCls).sort().map(function (k) { return k + ' ' + c.byCls[k]; }).join(' · ') + '</span>';
+  const cc = document.getElementById('vfCCount'); if (cc) cc.innerHTML = '<b>' + escapeHtml(c.candTxt) + '</b>';
+  const who = d.targets.length ? targetsLabel_(d.targets) : '전체 학생';
+  const pool = d.type === 'recommend' ? ({ class: '같은 반 친구', grade: '같은 학년', all: '대상 전체' }[d.candScope]) : d.type === 'election' ? '후보 ' + c.candN + '명' : '보기 ' + c.candN + '개';
+  const scope = { class: '반마다', grade: '학년마다', all: '대상 전체에서' }[d.winnersScope];
+  const sum = document.getElementById('vSum');
+  if (sum) sum.innerHTML = '<h3>📋 이렇게 진행돼요</h3><p><b>' + escapeHtml(who) + ' ' + c.voters.length + '명</b>이 <b>' + escapeHtml(pool) + '</b> 중에서 <b>' + (d.pickExact ? '꼭 ' : '최대 ') + d.pick + noun + '</b>을 ' + (d.ranked ? '순위대로 ' : '') + (d.type === 'recommend' ? '추천' : '골라') + '하고, ' +
+    (d.winners ? (d.winnerMode === 'auto' ? '득표 순으로 ' : '선생님이 ') + '<b>' + scope + ' ' + d.winners + noun + '</b>' + (c.groups > 1 ? '(모두 ' + c.winTotal + noun + ')' : '') + '을 ' + (d.type === 'options' ? '정해요.' : '선발해요.') : '선발 없이 결과만 봐요.') + '</p>' +
+    '<div class="vflow"><div><big>' + c.voters.length + '</big>투표하는 학생</div>›<div><big>' + escapeHtml(c.candN || '-') + '</big>' + (d.type === 'options' ? '보기' : '후보') + '</div>›<div><big>' + d.pick + '</big>한 명이 고름</div>›<div><big>' + c.winTotal + '</big>선발</div></div>';
+  const chk = document.getElementById('vChk'); if (!chk) return;
+  const items = [];
+  if (d.excludePrevVotes.length) items.push(['', '이전 투표 ' + d.excludePrevVotes.length + '개의 선정자는 후보에서 빠져요']);
+  if (d.excludeIds.length) items.push(['', '직접 뺀 학생 ' + d.excludeIds.length + '명은 후보에서 빠져요']);
+  items.push(['', d.openAt ? vWhen_(d.openAt) + '에 열려요' : '«시작하기»를 누르면 바로 열려요']);
+  items.push([d.closeMode === 'same' && !d.closeAt ? 'w' : '', d.closeMode === 'manual' ? '선생님이 «지금 마감»을 누를 때까지 열려 있어요' : d.closeMode === 'perClass' ? '반마다 따로 마감해요' : d.closeAt ? vWhen_(d.closeAt) + ' 마감' : '마감 시각을 정해 주세요 (안 정하면 닫을 때까지 열려요)']);
+  if (d.notifyOpen) items.push(['', '열릴 때 학생 폰에 알림이 가요']);
+  if (d.notifyRemind && d.closeMode !== 'manual') items.push(['', '마감 1시간 전 안 한 학생에게 다시 알림']);
+  if (d.type === 'recommend' && !d.allowSelf) items.push(['', '본인은 고를 수 없어요']);
+  if (d.pickExact) items.push(['', '꼭 ' + d.pick + noun + '을 다 골라야 낼 수 있어요']);
+  if (d.type === 'election' && d.candidates.length && d.candidates.length < d.pick) items.push(['w', '후보(' + d.candidates.length + '명)가 고르는 수(' + d.pick + '명)보다 적어요']);
+  const err = vValidate_(d); if (err) items.unshift(['w', err]);
+  chk.innerHTML = '<div class="vstep" style="font-size:14px;margin-bottom:8px;">✅ 확인</div><ul class="vchk">' + items.map(function (x) { return '<li class="' + x[0] + '">' + escapeHtml(x[1]) + '</li>'; }).join('') + '</ul>';
+}
+
+// ---- 📢 안내문·링크 ----
+function vNoticeText_(v, kind, cls, opt, res) {
+  const noun = v.type === 'options' ? '개' : '명', tag = cls === 'all' ? '' : '[' + cls + '] ';
+  const link = vLink_(v), L = [];
+  const roster = res ? res.roster.filter(function (x) { return cls === 'all' || x.cls === cls || x.cls.charAt(0) === cls; }) : [];
+  const done = {}; if (res) res.responses.forEach(function (r) { done[r.sid] = 1; });
+  if (kind === 'start') {
+    L.push('📣 ' + tag + v.title);
+    if (opt.desc && v.desc) L.push('📝 내용: ' + v.desc);
+    L.push('👥 대상: ' + (cls === 'all' ? v.targetsLabel : vClsLabel_(cls)) + ' 전원');
+    L.push('☑️ 방법: ' + (v.type === 'recommend' ? ({ class: '반 친구', grade: '학년 친구', all: '대상 학생' }[v.candScope || 'class']) + ' 중 ' : v.type === 'election' ? '후보 중 ' : '보기 중 ') + (v.pickExact ? '꼭 ' : '최대 ') + vNum_(v.pick) + noun + ' ' + (v.type === 'recommend' ? '추천' : '선택') + (v.ranked ? ' (순위대로)' : '') + (v.type === 'recommend' && v.allowSelf ? ' (본인 가능)' : ''));
+    const ca = cls !== 'all' && v.closeMode === 'perClass' && v.perClass && v.perClass[cls] && v.perClass[cls].closeAt;
+    const close = ca || v.closeAt;
+    if (v.openAt || close) {
+      const sameDay = v.openAt && close && v.openAt.slice(0, 10) === close.slice(0, 10);
+      L.push('📅 기간: ' + (v.openAt ? vWhen_(v.openAt) : '지금') + ' ~ ' + (close ? (sameDay ? close.slice(11, 16) : vWhen_(close)) : '선생님이 닫을 때까지'));
+    }
+    if (v.winners) L.push('🏅 선발: ' + ({ class: '반별', grade: '학년별', all: '전체' }[v.winnersScope || 'class']) + ' ' + vNum_(v.winners) + noun);
+    if (opt.link && link) L.push('🔗 참여: ' + link);
+    if (opt.how) L.push('🔑 학번·학생코드로 로그인');
+    L.push('✏️ 마감 전 수정 가능');
+    if (v.anonymous !== false) L.push('🔒 ' + (v.type === 'recommend' ? '추천' : '투표') + ' 내용 비공개');
+  } else if (kind === 'remind') {
+    const close = (cls !== 'all' && v.closeMode === 'perClass' && v.perClass && v.perClass[cls] && v.perClass[cls].closeAt) || v.closeAt;
+    L.push('⏰ ' + tag + v.title + ' 마감 ' + (close ? '1시간 전' : '안내'));
+    const miss = roster.filter(function (x) { return !done[x.id]; });
+    const one = /^\d-\d$/.test(cls);
+    L.push('🙋 미참여 ' + vNum_(miss.length) + '명' + (opt.names && miss.length ? ': ' + miss.map(function (x) { return String(x.id).slice(one ? 2 : 0) + ' ' + x.name; }).join(', ') : ''));
+    if (close) L.push('📅 마감: ' + vWhen_(close));
+    if (opt.link && link) L.push('🔗 참여: ' + link);
+  } else if (kind === 'result') {
+    L.push('🏆 ' + tag + v.title + ' 결과');
+    const votedN = roster.filter(function (x) { return done[x.id]; }).length;
+    L.push('👥 참여: ' + roster.length + '명 중 ' + votedN + '명');
+    const sel = (v.winnersSel && v.winnersSel.ids) || [];
+    const t = res ? vTally_(v, res) : {};
+    const nm = res ? res.names : {};
+    const inScope = sel.filter(function (id) { if (cls === 'all') return true; const c2 = (res.roster.find(function (x) { return x.id === id; }) || {}).cls || vClsKey_(id); return v.type === 'options' ? true : (c2 === cls || c2.charAt(0) === cls); });
+    const medal = ['🥇', '🥈', '🥉'];
+    if (!inScope.length) L.push('📌 선정자를 아직 저장하지 않았어요');
+    const label = function (id) { return (nm[id] || id) + (v.showCounts && t[id] ? '(' + t[id].votes + '표)' : ''); };
+    if (cls === 'all' && v.type !== 'options' && (v.winnersScope || 'class') !== 'all') {
+      // 전체로 보낼 때는 반(학년)마다 한 줄씩
+      const by = {}; inScope.forEach(function (id) { const k = (v.winnersScope === 'grade') ? String(id).charAt(0) : vClsKey_(id); (by[k] = by[k] || []).push(id); });
+      Object.keys(by).sort().forEach(function (k) { L.push('🏅 ' + (v.winnersScope === 'grade' ? k + '학년' : k) + ': ' + by[k].map(label).join(', ')); });
+    } else inScope.forEach(function (id, i) { L.push((medal[i] || '🏅') + ' ' + label(id)); });
+  }
+  if (opt.help && kind !== 'result') L.push('📱 링크 안 열림: ⋮ → 다른 브라우저로 열기');
+  const out = L.join('\n\n');
+  return opt.line ? vLineSym_(out) : out;
+}
+// «선 기호»: 색 이모지를 흑백 선 기호로(카톡·밴드에서도 글자처럼 보여요)
+function vLineSym_(t) {
+  const circ = ['⓪', '①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨', '⑩'];
+  t = t.replace(/🔟/g, '⑩').replace(/([0-9])\uFE0F\u20E3/g, function (m, d) { return circ[+d]; });
+  const map = { '📣': '▶', '👥': '◎', '☑️': '☑︎', '📅': '◷', '🏅': '☆', '🔗': '↗', '🔑': '◇', '✏️': '✎', '🔒': '⊘', '⏰': '◔', '🙋': '○', '🏆': '★', '🥇': '①', '🥈': '②', '🥉': '③', '📱': '※', '📝': '✎', '📌': '▸' };
+  Object.keys(map).forEach(function (k) { t = t.split(k).join(map[k]); });
+  return t;
+}
+function vTally_(v, res) {
+  const t = {};
+  res.responses.forEach(function (r) { r.picks.forEach(function (id, i) { t[id] = t[id] || { votes: 0, points: 0, firsts: 0 }; t[id].votes++; t[id].points += v.ranked ? (v.pick - i) : 1; if (i === 0) t[id].firsts++; }); });
+  return t;
+}
+async function vLoadResult_(v, force) {
+  state.vRes = state.vRes || {};
+  if (!force && state.vRes[v.id] && Date.now() - state.vRes[v.id].at < 20000) return state.vRes[v.id].r;
+  let r; try { r = await api('getVoteResult', { id: v.id }); } catch (e) { r = null; }
+  if (r && r.success) { state.vRes[v.id] = { r: r, at: Date.now() }; if (r.vote) { v.winnersSel = r.vote.winnersSel; } }
+  return r;
+}
+async function vNotice_(body, v) {
+  body.innerHTML = '<div class="loading">불러오는 중…</div>';
+  const res = await vLoadResult_(v);
+  if (!document.getElementById('vBody')) return;
+  const classes = res && res.success ? Array.from(new Set(res.roster.map(function (x) { return x.cls; }))).sort() : [];
+  const o = state.vNoteOpt = state.vNoteOpt || { kind: 'start', cls: 'all', link: true, how: true, desc: false, names: true, help: false };
+  if (o.cls !== 'all' && classes.indexOf(o.cls) < 0) o.cls = 'all';
+  const custom = (v.notices || {})[o.kind];
+  const auto = vNoticeText_(v, o.kind, o.cls, o, res && res.success ? res : null);
+  const text = state.vNoteEdit ? (state.vNoteDraft != null ? state.vNoteDraft : (custom || auto)) : auto;
+  const link = vLink_(v);
+  const kinds = [['start', '📣 시작 안내', '투표가 열렸어요'], ['remind', '⏰ 마감 임박', '안 한 학생 다시 알림'], ['result', '🏆 결과 발표', '선정자 발표']];
+  const tg = function (k, label) { return '<label class="vtog"><input type="checkbox" data-nopt="' + k + '"' + (o[k] ? ' checked' : '') + '><span class="vsw"></span>' + label + '</label>'; };
+  body.innerHTML = '<div class="vg2"><div>' +
+    '<div class="card vcard"><div class="vstep" style="font-size:15px;">📢 안내문 만들기<small>단톡방·밴드·알림장에 붙여넣기</small></div>' +
+      '<div class="vkinds">' + kinds.map(function (k) { return '<button type="button" class="' + (o.kind === k[0] ? 'on' : '') + '" data-nk="' + k[0] + '"><b>' + k[1] + '</b><small>' + k[2] + '</small></button>'; }).join('') + '</div>' +
+      '<div class="vsub">어느 반에 보낼까요?</div><div class="vseg" id="vnCls"><button type="button" data-val="all" class="' + (o.cls === 'all' ? 'on' : '') + '">전체</button>' + classes.map(function (c) { return '<button type="button" data-val="' + c + '" class="' + (o.cls === c ? 'on' : '') + '">' + c + '</button>'; }).join('') + '</div>' +
+      '<div class="vsub">넣을 내용</div><div class="vtogs">' + tg('link', '참여 링크') + tg('how', '로그인 방법') + tg('desc', '설명') + (o.kind === 'remind' ? tg('names', '안 한 학생 이름') : '') + tg('help', '링크 안 열릴 때') + tg('line', '선 기호로 (흑백)') + '</div>' +
+      '<div class="vbtns" style="margin-top:12px;"><button type="button" class="btn" id="vnCopy" style="background:#6C4BD8;">📋 안내문 복사</button><button type="button" class="btn-outline" id="vnLink">🔗 링크만 복사</button><button type="button" class="btn-outline" id="vnEdit">' + (state.vNoteEdit ? '↺ 자동 문구로' : '✏️ 직접 고치기') + '</button></div><div class="hint" id="vnMsg" style="margin-top:6px;"></div></div>' +
+    '<div class="card vcard"><div class="vstep" style="font-size:15px;">🔗 참여 링크 · QR<small>학생이 누르면 로그인 후 바로 투표 화면</small></div>' +
+      (link ? '<div class="vqr"><div id="vQr" class="vqr-c"></div><div><div class="vlink">' + escapeHtml(link.replace(/^https?:\/\//, '')) + '</div><div class="hint">짧은 코드 <b>' + escapeHtml(v.shortCode) + '</b> · 반마다 같은 링크예요(로그인하면 자기 반 투표가 보여요)</div>' +
+        '<div class="vbtns" style="margin-top:8px;"><button type="button" class="btn-outline btn-sm" id="vQrBig">📱 QR 크게</button><button type="button" class="btn-outline btn-sm" id="vQrSave">⬇ QR 이미지 저장</button></div></div></div>' : '<p class="hint">저장하면 링크가 생겨요.</p>') + '</div>' +
+    '</div><div><div class="card vcard"><div class="vstep" style="font-size:15px;">👀 미리보기<small>복사하면 이 글 그대로</small></div>' +
+      '<div class="vprev"><div class="vprev-who">' + escapeHtml((teacherInfo_().name || '선생님') + ' 선생님') + '</div>' +
+      (state.vNoteEdit ? '<textarea id="vnText" class="vbub" rows="16">' + escapeHtml(text) + '</textarea><div class="vbtns" style="margin-top:8px;"><button type="button" class="btn-outline btn-sm" id="vnSaveTpl">이 문구 저장(다음에도)</button></div>' : '<div class="vbub">' + escapeHtml(text) + '</div>') +
+      '<div class="vprev-m"><span>글자 수 ' + text.length + '</span></div></div></div></div></div>';
+  const re = function () { vNotice_(body, v); };
+  body.querySelectorAll('[data-nk]').forEach(function (b) { b.onclick = function () { o.kind = b.getAttribute('data-nk'); state.vNoteEdit = false; state.vNoteDraft = null; re(); }; });
+  document.querySelectorAll('#vnCls button').forEach(function (b) { b.onclick = function () { o.cls = b.getAttribute('data-val'); state.vNoteDraft = null; re(); }; });
+  body.querySelectorAll('[data-nopt]').forEach(function (c) { c.onchange = function () { o[c.getAttribute('data-nopt')] = c.checked; state.vNoteDraft = null; re(); }; });
+  const copy = async function (txt, btn, label) { try { await navigator.clipboard.writeText(txt); btn.textContent = '✅ 복사했어요'; } catch (e) { prompt('복사해서 쓰세요', txt); } setTimeout(function () { btn.textContent = label; }, 1600); };
+  document.getElementById('vnCopy').onclick = function () { const t2 = state.vNoteEdit ? document.getElementById('vnText').value : text; copy(t2, this, '📋 안내문 복사'); };
+  document.getElementById('vnLink').onclick = function () { copy(link, this, '🔗 링크만 복사'); };
+  document.getElementById('vnEdit').onclick = function () { state.vNoteEdit = !state.vNoteEdit; state.vNoteDraft = null; re(); };
+  const ta = document.getElementById('vnText'); if (ta) ta.oninput = function () { state.vNoteDraft = ta.value; };
+  const st = document.getElementById('vnSaveTpl');
+  if (st) st.onclick = async function () {
+    const nv = JSON.parse(JSON.stringify(v)); nv.notices = nv.notices || {}; nv.notices[o.kind] = document.getElementById('vnText').value;
+    let r; try { r = await api('saveVote', { vote: nv }); } catch (e) { r = null; }
+    document.getElementById('vnMsg').textContent = r && r.success ? '저장했어요. 다음에 «✏️ 직접 고치기»를 누르면 이 문구가 나와요.' : '저장하지 못했어요.';
+    if (r && r.success) vReplace_(r.vote);
+  };
+  if (link) {
+    loadQrLib_().then(function () {
+      const q = qrcode(0, 'M'); q.addData(link); q.make();
+      const box = document.getElementById('vQr'); if (box) box.innerHTML = q.createSvgTag({ cellSize: 4, margin: 1, scalable: true });
+      const big = document.getElementById('vQrBig'); if (big) big.onclick = function () { showBigQr_(v.title, link); };
+      const sv = document.getElementById('vQrSave'); if (sv) sv.onclick = function () { const a = document.createElement('a'); a.href = q.createDataURL(10, 4); a.download = 'QR_' + v.title.replace(/[\\/:*?"<>|]/g, '') + '.gif'; document.body.appendChild(a); a.click(); a.remove(); };
+    }).catch(function () {});
+  }
+}
+
+// ---- 📊 결과·선정 / 👥 참여 현황 / 🖼 안내 이미지 ----
+async function vResult_(body, v, mode) {
+  if (!state.vRes || !state.vRes[v.id]) body.innerHTML = '<div class="loading">불러오는 중…</div>';
+  const res = await vLoadResult_(v, mode !== 'image');
+  if (!document.getElementById('vBody')) return;
+  if (!res || !res.success) { body.innerHTML = '<div class="msg error">' + escapeHtml((res && res.message) || '불러오지 못했어요.') + '</div>'; return; }
+  if (mode === 'part') return vPart_(body, v, res);
+  if (mode === 'image') return vImage_(body, v, res);
+  const t = vTally_(v, res), nm = res.names, prev = {}; (res.prevWinners || []).forEach(function (k) { prev[k] = 1; });
+  // 무리(반·학년·전체)별 순위 — 학생 후보는 후보의 반, 보기는 투표한 학생의 반 기준
+  const groupOf = function (candId, voterCls) {
+    const sc = v.winnersScope || 'class';
+    if (sc === 'all') return 'all';
+    const base = v.type === 'options' ? voterCls : vClsKey_(candId);
+    return sc === 'grade' ? base.charAt(0) : base;
+  };
+  const groups = {};
+  res.responses.forEach(function (r) { r.picks.forEach(function (id, i) {
+    const g = groupOf(id, r.cls); groups[g] = groups[g] || {}; const x = groups[g][id] = groups[g][id] || { id: id, votes: 0, points: 0 };
+    x.votes++; x.points += v.ranked ? (v.pick - i) : 1;
+  }); });
+  const gk = Object.keys(groups).sort();
+  const selSaved = (v.winnersSel && v.winnersSel.ids) || null;
+  const sel = state.vSel && state.vSel.id === v.id ? state.vSel.ids : (selSaved ? selSaved.slice() : null);
+  const ranked = {};
+  gk.forEach(function (g) { ranked[g] = Object.keys(groups[g]).map(function (k) { return groups[g][k]; }).sort(function (a, b) { return b.points - a.points || b.votes - a.votes; }); });
+  // 자동 체크: 선정자를 아직 저장하지 않았으면 무리마다 위에서 N명(동점은 '모두 선발'이면 함께)
+  let ids = sel;
+  if (!ids) {
+    ids = [];
+    if (v.winnerMode !== 'manual') gk.forEach(function (g) { const L = ranked[g]; if (!L.length || !v.winners) return; const cut = L[Math.min(v.winners, L.length) - 1].points;
+      L.forEach(function (x, i) { if (i < v.winners || (v.tie === 'all' && x.points === cut)) ids.push(x.id); }); });
+  }
+  state.vSel = { id: v.id, ids: ids };
+  const f = state.vResF = state.vResF && state.vResF.id === v.id ? state.vResF : { id: v.id, g: gk[0] || 'all' };
+  if (gk.indexOf(f.g) < 0) f.g = gk[0] || 'all';
+  const L = ranked[f.g] || [];
+  const cut = L.length && v.winners ? (L[Math.min(v.winners, L.length) - 1] || {}).points : null;
+  const max = L.length ? L[0].points : 1;
+  const winCount = ids.length;
+  body.innerHTML = '<div class="vg2"><div class="card vcard"><div class="vstep" style="font-size:15px;">📊 ' + (gk.length > 1 ? '무리별' : '') + ' 득표 순위<small>체크한 ' + (v.type === 'options' ? '보기' : '학생') + '가 선정 · ' + ({ class: '반마다', grade: '학년마다', all: '전체에서' }[v.winnersScope || 'class']) + ' ' + v.winners + (v.type === 'options' ? '개' : '명') + '</small></div>' +
+    (gk.length > 1 ? '<div class="vseg" id="vrG">' + gk.map(function (g) { const n = ids.filter(function (id) { return groups[g][id]; }).length; return '<button type="button" data-val="' + g + '" class="' + (f.g === g ? 'on' : '') + '">' + escapeHtml(vClsLabel_(g)) + (n ? ' <small>✓' + n + '</small>' : '') + '</button>'; }).join('') + '</div>' : '') +
+    (L.length ? '<table class="vtbl"><tr><th style="width:44px">선정</th><th style="width:48px">순위</th><th>' + (v.type === 'options' ? '보기' : '학생') + '</th><th style="width:38%">' + (v.ranked ? '점수' : '득표') + '</th><th style="width:70px"></th></tr>' +
+      L.map(function (x, i) { const on = ids.indexOf(x.id) >= 0, tie = cut != null && x.points === cut && L.filter(function (y) { return y.points === cut; }).length > 1;
+        return '<tr class="' + (on ? 'win' : '') + '"><td><input type="checkbox" class="vcb" data-win="' + escapeHtml(x.id) + '"' + (on ? ' checked' : '') + '></td><td><span class="vrk r' + (i + 1) + '">' + (i + 1) + '</span></td>' +
+          '<td><b>' + escapeHtml((v.type === 'options' ? '' : x.id + ' ') + (nm[x.id] || x.id)) + '</b>' + (on ? '<span class="vwb">선정</span>' : '') + (tie ? '<span class="vtie">동점</span>' : '') + (prev[x.id] ? '<span class="vtie">이전 선정</span>' : '') + '</td>' +
+          '<td><div class="vbar"><i style="width:' + Math.round(x.points / max * 100) + '%"></i></div></td><td><b>' + (v.ranked ? x.points + '점' : x.votes + '표') + '</b>' + (v.ranked ? '<small class="hint"> ' + x.votes + '표</small>' : '') + '</td></tr>';
+      }).join('') + '</table>' : '<p class="hint">아직 낸 학생이 없어요.</p>') +
+    '<div class="vsave"><button type="button" class="btn" id="vWinSave" style="background:#6C4BD8;">선정 저장 (' + winCount + (v.type === 'options' ? '개' : '명') + ')</button><span class="hint">' + (v.winnersSel && v.winnersSel.savedAt ? '마지막 저장 · ' + escapeHtml(v.winnersSel.savedAt) : '아직 저장 전 · 득표 순으로 미리 체크했어요') + '</span><span id="vWinMsg" class="hint"></span></div></div>' +
+    '<div>' + vPartCardHtml_(v, res, true) + '</div></div>';
+  document.querySelectorAll('#vrG button').forEach(function (b) { b.onclick = function () { f.g = b.getAttribute('data-val'); vResult_(body, v, 'result'); }; });
+  body.querySelectorAll('[data-win]').forEach(function (c) { c.onchange = function () { const id = c.getAttribute('data-win'), i = state.vSel.ids.indexOf(id); if (c.checked && i < 0) state.vSel.ids.push(id); if (!c.checked && i >= 0) state.vSel.ids.splice(i, 1); vResult_(body, v, 'result'); }; });
+  document.getElementById('vWinSave').onclick = async function () {
+    const m = document.getElementById('vWinMsg'); m.textContent = '저장 중…';
+    let r; try { r = await api('saveVoteWinners', { id: v.id, ids: state.vSel.ids }); } catch (e) { r = null; }
+    if (!r || !r.success) { m.textContent = (r && r.message) || '저장하지 못했어요.'; return; }
+    v.winnersSel = r.winnersSel; const lv = (state.votes || []).find(function (x) { return x.id === v.id; }); if (lv) lv.winnersSel = r.winnersSel;
+    vResult_(body, v, 'result');
+  };
+  wirePartCard_(body, v, res);
+}
+function vPartData_(res) {
+  const done = {}; res.responses.forEach(function (r) { done[r.sid] = r.at; });
+  const by = {}; res.roster.forEach(function (x) { (by[x.cls] = by[x.cls] || []).push(x); });
+  return { done: done, by: by, classes: Object.keys(by).sort() };
+}
+function vPartCardHtml_(v, res, compact) {
+  const p = vPartData_(res), tot = res.roster.length, voted = res.roster.filter(function (x) { return p.done[x.id]; }).length;
+  return '<div class="card vcard"><div class="vstep" style="font-size:15px;">👥 반별 참여<small>' + voted + ' / ' + tot + '명</small></div>' +
+    p.classes.map(function (c) { const L = p.by[c], n = L.filter(function (x) { return p.done[x.id]; }).length, cs = res.classStates && res.classStates[c];
+      return '<div class="vpr"><span>' + escapeHtml(vClsLabel_(c)) + '</span><span class="vbar g"><i style="width:' + Math.round(n / L.length * 100) + '%"></i></span><span>' + n + '/' + L.length + '</span>' +
+        (compact ? '' : '<button type="button" class="btn-outline btn-sm" data-remind="' + c + '"' + (n === L.length ? ' disabled' : '') + '>🔔 알림</button>') + '</div>' +
+        (compact ? '' : '<div class="vmiss">' + (L.filter(function (x) { return !p.done[x.id]; }).map(function (x) { return '<span>' + escapeHtml(String(x.id).slice(2) + ' ' + x.name) + '</span>'; }).join('') || '<span class="ok">모두 참여 🎉</span>') + (cs && cs.state !== 'open' ? '<em>' + escapeHtml((VST[cs.state] || ['', ''])[0]) + '</em>' : '') + '</div>');
+    }).join('') +
+    '<div class="vbtns" style="margin-top:10px;"><button type="button" class="btn-outline btn-sm" data-remind="">🔔 안 한 학생 모두에게 알림</button><button type="button" class="btn-outline btn-sm" id="vMissCopy">📋 미참여 명단 복사</button></div><div class="hint" id="vPartMsg" style="margin-top:6px;"></div></div>';
+}
+function wirePartCard_(body, v, res) {
+  body.querySelectorAll('[data-remind]').forEach(function (b) { b.onclick = async function () {
+    const cls = b.getAttribute('data-remind'), m = document.getElementById('vPartMsg');
+    if (!confirm((cls ? vClsLabel_(cls) + ' ' : '') + '아직 안 한 학생에게 알림을 보낼까요?')) return;
+    m.textContent = '보내는 중…';
+    let r; try { r = await api('notifyVote', { id: v.id, kind: 'remind', cls: cls }); } catch (e) { r = null; }
+    m.textContent = r && r.success ? (r.message || '보냈어요.') + (r.students != null ? ' (대상 ' + r.students + '명 · 알림 켠 기기에만 가요)' : '') : ((r && r.message) || '보내지 못했어요.');
+  }; });
+  const mc = document.getElementById('vMissCopy');
+  if (mc) mc.onclick = async function () {
+    const p = vPartData_(res);
+    const txt = p.classes.map(function (c) { const miss = p.by[c].filter(function (x) { return !p.done[x.id]; }); return miss.length ? '[' + c + '] ' + miss.map(function (x) { return String(x.id).slice(2) + ' ' + x.name; }).join(', ') : ''; }).filter(Boolean).join('\n');
+    try { await navigator.clipboard.writeText(txt || '모두 참여했어요'); this.textContent = '✅ 복사했어요'; } catch (e) { prompt('복사해서 쓰세요', txt); }
+  };
+}
+function vPart_(body, v, res) {
+  const p = vPartData_(res);
+  body.innerHTML = '<div class="vg2"><div>' + vPartCardHtml_(v, res, false) + '</div><div class="card vcard"><div class="vstep" style="font-size:15px;">🕒 최근 참여</div><div class="vrecent">' +
+    (res.responses.slice().sort(function (a, b) { return a.at < b.at ? 1 : -1; }).slice(0, 30).map(function (r) { return '<div><b>' + escapeHtml(r.sid + ' ' + r.name) + '</b><span>' + escapeHtml(r.at.slice(5)) + '</span></div>'; }).join('') || '<p class="hint">아직 없어요.</p>') +
+    '</div>' + (v.anonymous !== false ? '<p class="hint" style="margin-top:10px;">누가 누구를 골랐는지는 결과·선정 탭의 합계로만 보여요.</p>' : '') + '</div></div>';
+  wirePartCard_(body, v, res);
+}
+// 🖼 안내 이미지 — 선정자 발표 · 참여 현황 카드(1080×1350)를 만들어 저장·복사
+function vImage_(body, v, res) {
+  const o = state.vImgOpt = state.vImgOpt && state.vImgOpt.id === v.id ? state.vImgOpt : { id: v.id, kind: 'winners', cls: 'all' };
+  const p = vPartData_(res);
+  body.innerHTML = '<div class="vg2"><div class="card vcard"><div class="vstep" style="font-size:15px;">🖼 안내 이미지<small>단톡방·밴드·교실 TV용</small></div>' +
+    '<div class="vseg" id="viK"><button type="button" data-val="winners" class="' + (o.kind === 'winners' ? 'on' : '') + '">🏆 선정자 발표</button><button type="button" data-val="part" class="' + (o.kind === 'part' ? 'on' : '') + '">👥 참여 현황</button></div>' +
+    '<div class="vsub">반</div><div class="vseg" id="viC"><button type="button" data-val="all" class="' + (o.cls === 'all' ? 'on' : '') + '">전체</button>' + p.classes.map(function (c) { return '<button type="button" data-val="' + c + '" class="' + (o.cls === c ? 'on' : '') + '">' + c + '</button>'; }).join('') + '</div>' +
+    '<div class="vbtns" style="margin-top:12px;"><button type="button" class="btn" id="viSave" style="background:#6C4BD8;">⬇ 이미지 저장</button><button type="button" class="btn-outline" id="viCopy">📋 이미지 복사</button></div><div class="hint" id="viMsg" style="margin-top:6px;"></div></div>' +
+    '<div class="card vcard"><canvas id="viCv" width="1080" height="1350" style="width:100%;max-width:420px;border-radius:14px;display:block;margin:auto;box-shadow:0 6px 20px rgba(0,0,0,.12);"></canvas></div></div>';
+  document.querySelectorAll('#viK button').forEach(function (b) { b.onclick = function () { o.kind = b.getAttribute('data-val'); vImage_(body, v, res); }; });
+  document.querySelectorAll('#viC button').forEach(function (b) { b.onclick = function () { o.cls = b.getAttribute('data-val'); vImage_(body, v, res); }; });
+  const cv = document.getElementById('viCv'), g = cv.getContext('2d'), W = 1080, H = 1350;
+  const grd = g.createLinearGradient(0, 0, W, H); grd.addColorStop(0, '#6C4BD8'); grd.addColorStop(1, '#8E44AD');
+  g.fillStyle = grd; g.fillRect(0, 0, W, H);
+  g.fillStyle = 'rgba(255,255,255,.08)'; g.beginPath(); g.arc(W - 80, 120, 260, 0, 7); g.fill(); g.beginPath(); g.arc(60, H - 80, 200, 0, 7); g.fill();
+  const font = function (w, s) { return w + ' ' + s + 'px "Pretendard","Noto Sans KR",system-ui,sans-serif'; };
+  g.fillStyle = 'rgba(255,255,255,.85)'; g.font = font(800, 34); g.fillText((o.kind === 'winners' ? '🏆 결과 발표' : '👥 참여 현황') + (o.cls === 'all' ? '' : ' · ' + vClsLabel_(o.cls)), 80, 140);
+  g.fillStyle = '#fff'; g.font = font(900, 64);
+  const wrap = function (txt, x, y, mw, lh) { const words = String(txt).split(''); let line = '', yy = y; words.forEach(function (ch) { if (g.measureText(line + ch).width > mw) { g.fillText(line, x, yy); line = ch; yy += lh; } else line += ch; }); g.fillText(line, x, yy); return yy; };
+  let y = wrap(v.title, 80, 240, W - 160, 80) + 40;
+  g.fillStyle = '#fff'; g.beginPath(); g.roundRect ? g.roundRect(60, y, W - 120, H - y - 120, 40) : g.rect(60, y, W - 120, H - y - 120); g.fill();
+  y += 90;
+  if (o.kind === 'winners') {
+    const sel = (v.winnersSel && v.winnersSel.ids) || [];
+    const list = sel.filter(function (id) { if (o.cls === 'all' || v.type === 'options') return true; const c2 = (res.roster.find(function (x) { return x.id === id; }) || {}).cls || vClsKey_(id); return c2 === o.cls; });
+    const medal = ['🥇', '🥈', '🥉'];
+    if (!list.length) { g.fillStyle = '#8A9894'; g.font = font(700, 40); g.fillText('선정자를 먼저 저장해 주세요', 120, y + 40); }
+    list.slice(0, 10).forEach(function (id, i) {
+      g.fillStyle = '#F5F1FF'; g.beginPath(); g.roundRect ? g.roundRect(110, y - 62, W - 220, 96, 28) : g.rect(110, y - 62, W - 220, 96); g.fill();
+      g.font = font(900, 50); g.fillStyle = '#14231F'; g.fillText((medal[i] || '🏅') + '  ' + (res.names[id] || id), 150, y + 2);
+      if (v.type !== 'options') { g.font = font(700, 32); g.fillStyle = '#6C4BD8'; g.textAlign = 'right'; g.fillText(vClsLabel_(vClsKey_(id)), W - 150, y); g.textAlign = 'left'; }
+      y += 118;
+    });
+  } else {
+    const cls = o.cls === 'all' ? p.classes : [o.cls];
+    cls.slice(0, 8).forEach(function (c) {
+      const L = p.by[c] || [], n = L.filter(function (x) { return p.done[x.id]; }).length;
+      g.font = font(800, 40); g.fillStyle = '#14231F'; g.fillText(vClsLabel_(c), 120, y);
+      g.textAlign = 'right'; g.fillStyle = '#6C4BD8'; g.fillText(n + ' / ' + L.length, W - 120, y); g.textAlign = 'left';
+      g.fillStyle = '#EEEAFB'; g.fillRect(120, y + 22, W - 240, 22); g.fillStyle = '#6C4BD8'; g.fillRect(120, y + 22, (W - 240) * (L.length ? n / L.length : 0), 22);
+      y += 112;
+    });
+  }
+  g.fillStyle = 'rgba(255,255,255,.8)'; g.font = font(700, 28); g.fillText('혜원포털 · ' + (teacherInfo_().name ? teacherInfo_().name + ' 선생님' : ''), 80, H - 60);
+  document.getElementById('viSave').onclick = function () { const a = document.createElement('a'); a.href = cv.toDataURL('image/png'); a.download = v.title.replace(/[\\/:*?"<>|]/g, '') + (o.kind === 'winners' ? '_결과' : '_참여') + '.png'; document.body.appendChild(a); a.click(); a.remove(); };
+  document.getElementById('viCopy').onclick = function () {
+    const m = document.getElementById('viMsg');
+    cv.toBlob(async function (b) { try { await navigator.clipboard.write([new ClipboardItem({ 'image/png': b })]); m.textContent = '✅ 복사했어요. 단톡방에 붙여넣기 하세요.'; } catch (e) { m.textContent = '이 브라우저에서는 이미지 복사가 안 돼요. «이미지 저장»을 써 주세요.'; } });
+  };
+}
+
 // ---------- 🔔 학생 알림 현황: 학생마다 «알림 받기»를 켰는지 ----------
 async function renderPushStatus() {
   state.nav = 'pushstat';

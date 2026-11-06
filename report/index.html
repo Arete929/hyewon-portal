@@ -156,6 +156,67 @@
   .extras button.on { background: var(--hyewon-mint); color: var(--hyewon-emerald); border-color: transparent; }
   .extras .hint { text-align: center; }
   .extras:empty { display: none; }
+  /* 🗳 투표 */
+  #voteArea { padding: 4px 20px 0; display: flex; flex-direction: column; gap: 10px; }
+  #voteArea:empty { display: none; }
+  .vote-card { position: relative; overflow: hidden; border-radius: 18px; padding: 16px; color: #fff; background: linear-gradient(135deg, #6C4BD8, #8E44AD); cursor: pointer; box-shadow: 0 8px 20px rgba(108,75,216,.25); }
+  .vote-card.done { background: linear-gradient(135deg, #5B47A8, #7B5FB8); }
+  .vote-card.wait { background: linear-gradient(135deg, #8F84B8, #A08DC0); cursor: default; }
+  .vote-card h3 { margin: 4px 0 4px; font-size: 17px; line-height: 1.35; padding-right: 40px; }
+  .vote-card p { margin: 0; font-size: 12.5px; opacity: .92; }
+  .vc-k { font-size: 11.5px; font-weight: 800; opacity: .88; }
+  .vc-tm { position: absolute; right: 12px; top: 12px; font-size: 11.5px; font-weight: 800; background: rgba(255,255,255,.2); padding: 4px 10px; border-radius: 999px; }
+  .vc-bal { position: absolute; right: -4px; bottom: -14px; font-size: 70px; opacity: .2; }
+  .vc-go { display: inline-block; margin-top: 12px; background: #fff; color: #6C4BD8; font-weight: 900; border-radius: 999px; padding: 8px 16px; font-size: 13.5px; }
+  .vote-past { display: flex; flex-wrap: wrap; gap: 6px; }
+  .vp { border: 1px solid var(--border); background: var(--surface); border-radius: 999px; padding: 6px 12px; font: inherit; font-size: 12.5px; font-weight: 700; color: var(--text); cursor: pointer; }
+  .vp span { color: var(--text2); font-weight: 600; margin-left: 4px; }
+  .v-head { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+  .v-type { font-size: 12px; font-weight: 900; color: #fff; background: #6C4BD8; padding: 3px 10px; border-radius: 999px; }
+  .v-rule { font-size: 12px; font-weight: 800; color: #6C4BD8; background: #F1ECFF; padding: 3px 10px; border-radius: 999px; }
+  .v-close { margin-left: auto; font-size: 12px; font-weight: 800; color: var(--text2); }
+  .v-memo { background: #F7F4FF; border: 1px solid #E6DEFF; border-radius: 14px; padding: 12px 14px; font-size: 13.5px; line-height: 1.65; color: #3B3550; white-space: pre-wrap; }
+  .v-prev { background: #FFF8E6; border: 1px solid #F5DDA0; border-radius: 12px; padding: 9px 12px; font-size: 12.5px; color: #7A5200; margin-top: 10px; }
+  .v-tray { position: sticky; top: 6px; z-index: 5; background: var(--surface); border: 1.5px solid #CDBFFF; border-radius: 16px; padding: 10px 12px; margin: 12px 0; box-shadow: 0 6px 16px rgba(108,75,216,.14); }
+  .vt-t { display: flex; align-items: center; font-size: 13px; font-weight: 800; gap: 2px; }
+  .vt-t b { color: #6C4BD8; font-size: 17px; margin: 0 1px 0 4px; }
+  .vt-dots { margin-left: auto; display: flex; gap: 4px; } .vt-dots i { width: 9px; height: 9px; border-radius: 50%; background: #E6DEFF; } .vt-dots i.on { background: #6C4BD8; }
+  .vt-p { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+  .vpk { display: inline-flex; align-items: center; gap: 6px; background: #6C4BD8; color: #fff; border: 0; border-radius: 999px; padding: 4px 6px 4px 4px; font: inherit; font-size: 12.5px; font-weight: 800; cursor: pointer; }
+  .vpk em { font-style: normal; width: 20px; height: 20px; border-radius: 50%; background: #FFD84A; color: #3B2B00; display: grid; place-items: center; font-size: 11px; }
+  .vpk-av { width: 24px; height: 24px; border-radius: 50%; background: #fff; color: #6C4BD8; display: grid; place-items: center; font-size: 10px; overflow: hidden; }
+  .vpk-av img, .v-av img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .vpk .x { width: 20px; height: 20px; border-radius: 50%; background: rgba(255,255,255,.25); display: grid; place-items: center; font-size: 11px; }
+  .vpk.empty { background: transparent; color: #9C8BE0; border: 1.5px dashed #CDBFFF; padding: 4px 12px; cursor: default; }
+  .v-lbl { font-size: 12px; color: var(--text2); font-weight: 800; margin: 14px 2px 8px; }
+  .v-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .v-st { position: relative; background: var(--surface); border: 1.5px solid var(--border); border-radius: 14px; padding: 10px 4px 8px; text-align: center; font: inherit; color: var(--text); cursor: pointer; transition: transform .12s, border-color .12s; }
+  .v-st:active { transform: scale(.97); }
+  .v-av { width: 42px; height: 42px; border-radius: 50%; margin: 0 auto 4px; background: #DDF5EB; color: #12805B; display: grid; place-items: center; font-weight: 900; font-size: 13px; overflow: hidden; }
+  .v-st b { display: block; font-size: 13px; } .v-st small { font-size: 11px; color: var(--text2); }
+  .v-st.on { border-color: #6C4BD8; background: #F5F1FF; } .v-st.on .v-av { background: #6C4BD8; color: #fff; }
+  .v-ck { position: absolute; top: 6px; right: 6px; width: 20px; height: 20px; border-radius: 50%; background: #6C4BD8; color: #fff; font-size: 11px; font-weight: 900; display: grid; place-items: center; }
+  .v-st.off { opacity: .42; cursor: not-allowed; } .v-st.off small { color: #B26A00; font-weight: 800; }
+  .v-st.me { border-style: dashed; }
+  .v-info { display: block; font-size: 10.5px; color: var(--text2); margin-top: 4px; line-height: 1.4; }
+  .v-opts { display: flex; flex-direction: column; gap: 8px; }
+  .v-opt { display: flex; align-items: center; gap: 12px; text-align: left; background: var(--surface); border: 1.5px solid var(--border); border-radius: 14px; padding: 14px; font: inherit; font-size: 15px; font-weight: 700; color: var(--text); cursor: pointer; }
+  .v-opt.on { border-color: #6C4BD8; background: #F5F1FF; }
+  .vo-c { width: 26px; height: 26px; border-radius: 50%; border: 2px solid #CDBFFF; display: grid; place-items: center; font-size: 12px; font-weight: 900; color: #fff; flex: none; }
+  .v-opt.on .vo-c { background: #6C4BD8; border-color: #6C4BD8; }
+  .v-submit { margin-top: 14px; background: #6C4BD8 !important; box-shadow: 0 8px 18px rgba(108,75,216,.3); }
+  .v-submit:disabled { background: #B9AEE0 !important; box-shadow: none; }
+  .v-msg { height: 0; overflow: hidden; opacity: 0; transition: all .2s; font-size: 13px; font-weight: 700; color: #C22B2B; text-align: center; }
+  .v-msg.on { height: auto; opacity: 1; margin-top: 10px; }
+  .v-done { text-align: center; padding: 28px 18px; }
+  .v-done h2 { margin: 4px 0 6px; font-size: 21px; } .v-done p { margin: 0; color: var(--text2); font-size: 13.5px; line-height: 1.6; }
+  .vd-ok { width: 88px; height: 88px; border-radius: 50%; margin: 0 auto 10px; background: #F1ECFF; display: grid; place-items: center; }
+  .v-done.on .lo-c { animation: loDraw .5s ease-out forwards; } .v-done.on .lo-k { animation: loDraw .3s .42s ease-out forwards; }
+  .vd-picks { display: flex; justify-content: center; flex-wrap: wrap; gap: 6px; margin-top: 14px; } .vd-picks .vpk { cursor: default; padding: 5px 12px; }
+  html[data-theme="dark"] .v-memo { background: rgba(108,75,216,.14); border-color: rgba(167,139,250,.3); color: #E4DDFB; }
+  html[data-theme="dark"] .v-st.on, html[data-theme="dark"] .v-opt.on { background: rgba(108,75,216,.22); }
+  html[data-theme="dark"] .v-prev { background: rgba(242,169,59,.12); border-color: rgba(242,169,59,.35); color: #F5D59A; }
+  html[data-theme="dark"] .vd-ok { background: rgba(108,75,216,.2); }
   .noti-card { display: flex; align-items: center; gap: 12px; background: linear-gradient(135deg, #E6F7F0, #FFF8DC); border: 1px solid #CDEBDD; border-radius: 16px; padding: 12px 14px; }
   .noti-ic { font-size: 26px; }
   .noti-tx { flex: 1; display: flex; flex-direction: column; min-width: 0; }
@@ -624,8 +685,10 @@ async function boot() {
   if (short && !state.tab) {
     const code = short[1].toLowerCase();
     const hit = (state.config.tabs || []).find(function (t) { return t.meta && t.meta.shortCode === code; });
-    if (!hit) return renderError('주소가 올바르지 않거나 없어진 과제예요. 선생님께 받은 주소를 다시 확인해 주세요.');
-    state.tab = hit.sheetName;
+    const voteId = state.config.voteCodes && state.config.voteCodes[code];
+    if (!hit && voteId) { state.openVoteId = voteId; }   // 투표 주소 → 로그인한 뒤 그 투표로
+    else if (!hit) return renderError('주소가 올바르지 않거나 없어진 과제예요. 선생님께 받은 주소를 다시 확인해 주세요.');
+    else state.tab = hit.sheetName;
   }
 
   // 과제·학년을 특정하는 값이 전혀 없는 "맨 주소"(허브에서 들어오는 기본 진입점)는
@@ -1648,6 +1711,7 @@ function renderToday() {
 
   render(
     homeHeroHtml_() +
+    '<div id="voteArea"></div>' +
     '<div id="noticeArea" style="padding-top:4px;"></div>' +
     '<div class="extras" id="extras"></div>' +
     stepperHtml_() +
@@ -1669,6 +1733,142 @@ function renderToday() {
   loadNotices_();
   paintExtras_();
   notiRefresh_();
+  loadMyVotes_();
+  if (state.openVoteId && state.login && state.login.code) { const vid = state.openVoteId; state.openVoteId = ''; renderVote_(vid); }
+}
+
+// ---------- 🗳 투표 · 추천 ----------
+const VOTE_TYPE_LABEL = { recommend: '친구 추천', election: '후보 선거', options: '선택지 투표' };
+function voteWhen_(ms) {
+  if (!ms) return '';
+  // 기기 시간대와 상관없이 한국 시각으로
+  const k = function (t) { const x = new Date(t + 9 * 3600000); return { y: x.getUTCFullYear(), m: x.getUTCMonth(), d: x.getUTCDate(), w: x.getUTCDay(), h: x.getUTCHours(), mi: x.getUTCMinutes() }; };
+  const d = k(ms), now = k(Date.now()), days = ['일', '월', '화', '수', '목', '금', '토'], pad = function (n) { return String(n).padStart(2, '0'); };
+  const same = d.y === now.y && d.m === now.m && d.d === now.d;
+  return (same ? '오늘 ' : (d.m + 1) + '/' + d.d + '(' + days[d.w] + ') ') + pad(d.h) + ':' + pad(d.mi);
+}
+function canVote_() { return !!(state.login && state.login.code && Number(state.config && state.config.serverVersion) >= 76); }
+async function loadMyVotes_(force) {
+  const box = document.getElementById('voteArea'); if (!box || !canVote_()) return;
+  if (state.myVotes && !force) paintMyVotes_(box, state.myVotes);
+  let r; try { r = await api('getMyVotes', { studentId: state.login.studentId, code: state.login.code }); } catch (e) { r = null; }
+  if (!r || !r.success) return;
+  state.myVotes = r.votes || [];
+  const b2 = document.getElementById('voteArea'); if (b2) paintMyVotes_(b2, state.myVotes);
+}
+function paintMyVotes_(box, votes) {
+  const live = votes.filter(function (v) { return v.state === 'open' || v.state === 'wait'; });
+  const past = votes.filter(function (v) { return v.state === 'closed'; });
+  box.innerHTML = live.map(function (v) {
+    const wait = v.state === 'wait';
+    return '<div class="vote-card' + (v.done ? ' done' : '') + (wait ? ' wait' : '') + '" data-vote="' + escapeHtml(v.id) + '"><span class="vc-bal" aria-hidden="true">🗳</span>' +
+      '<span class="vc-tm">' + (wait ? '⏳ ' + escapeHtml(voteWhen_(v.openAt)) + ' 시작' : v.closeAt ? '⏰ ' + escapeHtml(voteWhen_(v.closeAt)) + ' 마감' : '진행 중') + '</span>' +
+      '<div class="vc-k">' + (v.done ? '✅ 참여했어요' : wait ? '🗳 곧 열리는 투표' : '🗳 진행 중인 투표') + ' · ' + escapeHtml(VOTE_TYPE_LABEL[v.type] || '투표') + '</div>' +
+      '<h3>' + escapeHtml(v.title) + '</h3>' +
+      '<p>' + (v.type === 'options' ? '보기 중 ' : v.type === 'election' ? '후보 중 ' : '친구 중 ') + (v.pickExact ? '꼭 ' : '최대 ') + v.pick + (v.type === 'options' ? '개' : '명') + ' 고르기' + (v.ranked ? ' · 순위대로' : '') + '</p>' +
+      (wait ? '' : '<span class="vc-go">' + (v.done ? '고치기 ›' : (v.type === 'recommend' ? '추천하러 가기 ›' : '투표하러 가기 ›')) + '</span>') + '</div>';
+  }).join('') + (past.length ? '<div class="vote-past">' + past.map(function (v) {
+    return '<button type="button" class="vp" data-vote="' + escapeHtml(v.id) + '">🗳 ' + escapeHtml(v.title) + ' <span>' + (v.done ? '참여함 · ' : '') + '마감</span></button>';
+  }).join('') + '</div>' : '');
+  box.querySelectorAll('[data-vote]').forEach(function (el) {
+    el.onclick = function () { const v = votes.find(function (x) { return x.id === el.getAttribute('data-vote'); }); if (v && v.state === 'wait') return; renderVote_(el.getAttribute('data-vote')); };
+  });
+}
+async function renderVote_(voteId) {
+  render(appbarHtml_('투표', true) + '<div class="main" style="padding-top:16px;"><div class="loading">불러오는 중…</div></div>' + footerHtml_() + bottombarHtml_('home'));
+  const back = wireChrome_(); if (back) back.onclick = function (e) { e.preventDefault(); renderToday(); };
+  let r; try { r = await api('getVoteBallot', { studentId: state.login.studentId, code: state.login.code, voteId: voteId }); } catch (e) { r = null; }
+  if (!r || !r.success) {
+    render(appbarHtml_('투표', true) + '<div class="main" style="padding-top:16px;"><div class="msg error">' + escapeHtml((r && r.message) || '투표를 불러오지 못했어요.') + '</div></div>' + footerHtml_() + bottombarHtml_('home'));
+    const b2 = wireChrome_(); if (b2) b2.onclick = function (e) { e.preventDefault(); renderToday(); }; return;
+  }
+  const v = r.vote;
+  state.vote = { v: v, picks: (v.myPicks || []).slice() };
+  paintVote_();
+}
+function voteNoun_(v) { return v.type === 'options' ? '개' : '명'; }
+function paintVote_() {
+  const v = state.vote.v, picks = state.vote.picks, n = v.pick, closed = v.state !== 'open', peek = isPeek_();
+  const byId = {}; (v.candidates || []).forEach(function (c) { byId[c.id] = c; });
+  const av = v.avatars || {};
+  const avHtml = function (c, cls) { return av[c.id] ? '<span class="' + cls + '"><img src="' + escapeHtml(av[c.id]) + '" alt=""></span>' : '<span class="' + cls + '">' + escapeHtml(String(c.name || '?').slice(-2)) + '</span>'; };
+  const tray = '<div class="v-tray"><div class="vt-t">' + (v.type === 'recommend' ? '추천한 학생' : '고른 ' + (v.type === 'options' ? '보기' : '후보')) + ' <b>' + picks.length + '</b>/' + n + voteNoun_(v) +
+      '<span class="vt-dots">' + Array.from({ length: Math.min(n, 12) }, function (_, i) { return '<i' + (i < picks.length ? ' class="on"' : '') + '></i>'; }).join('') + '</span></div>' +
+    '<div class="vt-p">' + picks.map(function (id, i) { const c = byId[id] || { id: id, name: id };
+      return '<button type="button" class="vpk" data-unpick="' + escapeHtml(id) + '">' + (v.ranked ? '<em>' + (i + 1) + '</em>' : '') + (c.opt ? '' : avHtml(c, 'vpk-av')) + escapeHtml(c.name) + '<span class="x">✕</span></button>'; }).join('') +
+      (picks.length < n && !closed ? '<span class="vpk empty">+ ' + (n - picks.length) + voteNoun_(v) + ' 더</span>' : '') + '</div></div>';
+  let list;
+  if (v.type === 'options') {
+    list = '<div class="v-opts">' + v.candidates.map(function (c) { const i = picks.indexOf(c.id);
+      return '<button type="button" class="v-opt' + (i >= 0 ? ' on' : '') + '" data-pick="' + escapeHtml(c.id) + '"' + (closed ? ' disabled' : '') + '><span class="vo-c">' + (i >= 0 ? (v.ranked ? i + 1 : '✓') : '') + '</span>' + escapeHtml(c.name) + '</button>'; }).join('') + '</div>';
+  } else {
+    const groups = {};
+    v.candidates.forEach(function (c) { (groups[c.cls] = groups[c.cls] || []).push(c); });
+    list = Object.keys(groups).sort().map(function (k) {
+      return '<div class="v-lbl">' + escapeHtml(k.replace('-', '학년 ') + '반') + ' · ' + groups[k].length + '명</div><div class="v-grid">' + groups[k].map(function (c) {
+        const i = picks.indexOf(c.id), me = c.id === v.me.id;
+        return '<button type="button" class="v-st' + (i >= 0 ? ' on' : '') + (c.off ? ' off' : '') + (me ? ' me' : '') + '" data-pick="' + escapeHtml(c.id) + '"' + (c.off || closed ? ' disabled' : '') + '>' +
+          (i >= 0 ? '<span class="v-ck">' + (v.ranked ? i + 1 : '✓') + '</span>' : '') + avHtml(c, 'v-av') + '<b>' + escapeHtml(c.name) + '</b><small>' + (c.off ? escapeHtml(c.off) : escapeHtml(String(c.id).slice(2)) + '번' + (me ? ' · 나' : '')) + '</small>' +
+          (v.candInfo && v.candInfo[c.id] ? '<span class="v-info">' + escapeHtml(v.candInfo[c.id]) + '</span>' : '') + '</button>';
+      }).join('') + '</div>';
+    }).join('');
+  }
+  const okCount = v.pickExact ? picks.length === n : picks.length >= 1;
+  render(
+    appbarHtml_(v.title, true) +
+    '<div class="main v-main" style="padding-top:14px;">' +
+      '<div class="v-head"><span class="v-type">' + escapeHtml(VOTE_TYPE_LABEL[v.type] || '투표') + '</span><span class="v-rule">' + (v.pickExact ? '꼭 ' : '최대 ') + n + voteNoun_(v) + (v.ranked ? ' · 순위대로' : '') + '</span>' +
+        '<span class="v-close">' + (closed ? '마감됐어요' : v.closeAt ? '⏰ ' + escapeHtml(voteWhen_(v.closeAt)) + ' 마감' : '') + '</span></div>' +
+      (v.desc ? '<div class="v-memo">' + escapeHtml(v.desc) + '</div>' : '') +
+      (v.prevWinners && v.prevWinners.length ? '<div class="v-prev">📌 이전 선정자 <b>' + escapeHtml(v.prevWinners.join(', ')) + '</b>는 이번에 빠져요.</div>' : '') +
+      (v.doneAt && !closed ? '<div class="v-prev" style="background:#F1ECFF;border-color:#DCD1FF;color:#4B3A9A;">✏️ ' + escapeHtml(v.doneAt.slice(5)) + '에 낸 내용이에요. 고쳐서 다시 낼 수 있어요.</div>' : '') +
+      tray + list +
+      '<div class="v-msg" id="vMsg"></div>' +
+      (closed ? '<div class="msg" style="margin-top:12px;">마감된 투표예요. 결과는 선생님이 알려 주세요.</div>'
+        : '<button type="button" class="btn v-submit" id="vSubmit"' + (okCount && !peek ? '' : ' disabled') + '>' + (peek ? '마스터코드로는 볼 수만 있어요' : v.pickExact && picks.length !== n ? n + voteNoun_(v) + '을 다 골라 주세요 (' + picks.length + '/' + n + ')' : (v.doneAt ? '다시 제출하기' : (v.type === 'recommend' ? '추천 제출하기' : '투표하기')) + ' (' + picks.length + voteNoun_(v) + ')') + '</button>') +
+      (v.anonymous ? '<p class="hint" style="text-align:center;margin:12px 0 0;">🔒 누가 누구를 골랐는지는 선생님만 봐요.</p>' : '') +
+    '</div>' + footerHtml_() + bottombarHtml_('home')
+  );
+  const back = wireChrome_(); if (back) back.onclick = function (e) { e.preventDefault(); renderToday(); };
+  document.querySelectorAll('[data-pick]').forEach(function (b) {
+    b.onclick = function () {
+      const id = b.getAttribute('data-pick'), i = picks.indexOf(id);
+      if (i >= 0) picks.splice(i, 1);
+      else if (picks.length >= n) { const m = document.getElementById('vMsg'); m.textContent = n + voteNoun_(v) + '까지 고를 수 있어요. 바꾸려면 위에서 ✕로 빼 주세요.'; m.classList.add('on'); setTimeout(function () { m.classList.remove('on'); }, 2200); return; }
+      else picks.push(id);
+      const y = window.scrollY; paintVote_(); window.scrollTo(0, y);
+    };
+  });
+  document.querySelectorAll('[data-unpick]').forEach(function (b) {
+    b.onclick = function () { const i = picks.indexOf(b.getAttribute('data-unpick')); if (i >= 0) picks.splice(i, 1); const y = window.scrollY; paintVote_(); window.scrollTo(0, y); };
+  });
+  const sb = document.getElementById('vSubmit');
+  if (sb) sb.onclick = async function () {
+    sb.disabled = true; sb.innerHTML = '<span class="lspin"></span> 내는 중…';
+    let r; try { r = await api('submitVote', { studentId: state.login.studentId, code: state.login.code, voteId: v.id, picks: picks }); } catch (e) { r = null; }
+    if (!r || !r.success) { sb.disabled = false; sb.textContent = '다시 내기'; const m = document.getElementById('vMsg'); m.textContent = (r && r.message) || '내지 못했어요. 잠시 뒤 다시 해 주세요.'; m.classList.add('on'); return; }
+    v.doneAt = r.at; v.myPicks = picks.slice();
+    if (state.myVotes) state.myVotes.forEach(function (x) { if (x.id === v.id) { x.done = true; x.doneAt = r.at; } });
+    renderVoteDone_(v);
+  };
+}
+function renderVoteDone_(v) {
+  const byId = {}; (v.candidates || []).forEach(function (c) { byId[c.id] = c; });
+  render(
+    appbarHtml_(v.title, true) +
+    '<div class="main" style="padding-top:16px;"><div class="card v-done">' +
+      '<div class="vd-ok"><svg viewBox="0 0 64 64" width="64" height="64"><circle class="lo-c" cx="32" cy="32" r="27" style="stroke:#6C4BD8"/><path class="lo-k" d="M20 33 l8 8 l16 -18" style="stroke:#6C4BD8"/></svg></div>' +
+      '<h2>' + (v.type === 'recommend' ? '추천했어요!' : '투표했어요!') + '</h2>' +
+      '<p>' + escapeHtml(v.me.name) + ' 학생, 참여해 줘서 고마워요.' + (v.closeAt ? '<br>' + escapeHtml(voteWhen_(v.closeAt)) + ' 마감 전까지 다시 들어와 고칠 수 있어요.' : '') + '</p>' +
+      '<div class="vd-picks">' + v.myPicks.map(function (id, i) { const c = byId[id] || { name: id }; return '<span class="vpk">' + (v.ranked ? '<em>' + (i + 1) + '</em>' : '') + escapeHtml(c.name) + '</span>'; }).join('') + '</div>' +
+      '<button type="button" class="btn-outline" id="vEdit" style="margin-top:14px;">고치기</button>' +
+      '<button type="button" class="btn" id="vHome" style="margin-top:10px;">오늘의 과제로</button>' +
+    '</div></div>' + footerHtml_() + bottombarHtml_('home')
+  );
+  requestAnimationFrame(function () { const ok = document.querySelector('.v-done'); if (ok) ok.classList.add('on'); });
+  const back = wireChrome_(); if (back) back.onclick = function (e) { e.preventDefault(); renderToday(); };
+  document.getElementById('vEdit').onclick = function () { renderVote_(v.id); };
+  document.getElementById('vHome').onclick = function () { renderToday(); };
 }
 
 function openAssignment(entry) {
