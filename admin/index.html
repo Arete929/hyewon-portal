@@ -1185,8 +1185,10 @@ function teacherLine_() {
 }
 function rememberTeacher_(t) {
   t = { name: (t && t.name) || '', subject: (t && t.subject) || '', avatar: (t && t.avatar) || null, avatarData: (t && t.avatarData) || '' };
+  const prevSubj = state.teacher ? state.teacher.subject : undefined;
   state.teacher = t;
   try { localStorage.setItem(TEACHER_KEY, JSON.stringify(t)); } catch (e) {}
+  if (prevSubj !== t.subject && typeof applyHero_ === 'function') applyHero_(t.subject);   // 서버에서 과목을 받아 오면 머리 이미지도 맞춰요
   document.querySelectorAll('.tline').forEach(function (el) { el.innerHTML = tlineHtml_(); });
   document.querySelectorAll('.tp-av').forEach(function (el) { el.innerHTML = avatarHtml_(40, true); });
   document.querySelectorAll('.dt-meta').forEach(function (el) { el.innerHTML = taskMetaHtml_(); });
@@ -3360,15 +3362,15 @@ function miniRing_(pct, color, label) {
 
 // ---------- 과목별 머리 이미지 ----------
 // assets/hero/<과목>.webp (또는 .jpg)가 있으면 그 이미지를, 없으면 기본(login-bg)을 써요. 과목은 «설정 → 교사 정보».
-const HERO_SUBJECTS = ['체육', '국어', '영어', '수학', '과학', '사회', '역사', '도덕', '음악', '미술', '기술·가정', '정보', '한문', '진로', '보건', '특수'];
-const HERO_KEY = 'hyewon_hero_v1';
+const HERO_SUBJECTS = ['체육', '국어', '영어', '수학', '과학', '사회', '역사', '도덕', '음악', '미술', '기술', '가정', '정보', '한문', '진로', '보건', '독서', '상담', '특수'];
+const HERO_KEY = 'hyewon_hero_v2';
 function heroBase_() { return new URL('../assets/', location.href).href; }
 function heroFind_(subject) {
   subject = String(subject || '').trim();
   if (!subject) return Promise.resolve('');
   let memo = {}; try { memo = JSON.parse(localStorage.getItem(HERO_KEY) || '{}') || {}; } catch (e) {}
   const hit = memo[subject];
-  if (hit && Date.now() - hit.at < 6 * 3600000) return Promise.resolve(hit.url);
+  if (hit && Date.now() - hit.at < (hit.url ? 6 * 3600000 : 600000)) return Promise.resolve(hit.url);
   const name = encodeURIComponent(subject.replace(/[\/\\]/g, ''));
   const tryOne = function (ext) { return new Promise(function (res) { const im = new Image(); im.onload = function () { res(im.src); }; im.onerror = function () { res(''); }; im.src = heroBase_() + 'hero/' + name + '.' + ext; }); };
   return tryOne('webp').then(function (u) { return u || tryOne('jpg'); }).then(function (u) {
@@ -5354,8 +5356,9 @@ async function renderSettings(notice) {
     document.getElementById('tpSubj').value = b.getAttribute('data-subj');
     document.querySelectorAll('#tpSubjPick [data-subj]').forEach(function (x) { x.classList.toggle('on', x === b); });
     showHero(b.getAttribute('data-subj'));
+    applyHero_(b.getAttribute('data-subj'));   // 저장 전에도 머리 이미지를 바로 바꿔 보여요
   }; });
-  document.getElementById('tpSubj').addEventListener('change', function () { showHero(this.value.trim()); });
+  document.getElementById('tpSubj').addEventListener('change', function () { showHero(this.value.trim()); applyHero_(this.value.trim()); });
   document.getElementById('tpSave').onclick = async function () {
     const msg = document.getElementById('tpMsg'); msg.textContent = '저장 중…';
     let r;
