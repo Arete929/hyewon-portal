@@ -2989,7 +2989,7 @@ function serverBehindHtml_(v) {
   v = Number(v) || 0;
   if (!v || v >= WEB_EXPECTS_SERVER) return '';
   return '<div class="msg warn" style="margin:0 0 14px;line-height:1.7;">⚠️ <b>서버가 v' + v + '에 멈춰 있어요</b> (화면은 v' + WEB_EXPECTS_SERVER + ' 기준). 최근 기능 일부가 아직 꺼져 있어요.<br>' +
-    '<span style="font-size:12.5px;">서버 자동 배포가 실패했을 수 있어요 — 학교 계정으로 <code>clasp login</code> → GitHub 비밀값 <code>CLASPRC_JSON</code> 바꾸기 → ' +
+    '<span style="font-size:12.5px;">서버 자동 배포가 실패했을 수 있어요 — PC의 cmd에서 <code>npx @google/clasp@2.4.2 login</code>(학교 계정 · 권한 «모두 선택») → GitHub 비밀값 <code>CLASPRC_JSON</code> 바꾸기 → ' +
     '<a href="https://github.com/Arete929/hyewon-portal-gas/actions" target="_blank" rel="noopener">Actions «Deploy Apps Script» 다시 실행</a></span></div>';
 }
 function dashHead_(st) {
