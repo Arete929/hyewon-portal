@@ -43,6 +43,12 @@
     font-display: swap;
     font-style: italic;
   }
+  @font-face {
+    font-family: 'GeekbleMalrangiche';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2302_01@1.0/GeekbleMalang2WOFF2.woff2') format('woff2');
+    font-weight: normal;
+    font-display: swap;
+  }
   /* 과제 제목 — 빗썸고딕 이탤릭 */
   .task-ttl { font-family: 'BithumbGothicOriginal', 'Noto Sans KR', sans-serif !important; font-style: italic; font-weight: 700 !important; letter-spacing: -0.01em; }
   .gugi { font-family: 'Gugi', sans-serif; font-weight: 400; letter-spacing: 0.01em; }
@@ -88,6 +94,7 @@
   .login-ok.on svg { animation: otpPop .35s .7s ease-out; }
   @keyframes loDraw { to { stroke-dashoffset: 0; } }
   @media (prefers-reduced-motion: reduce) { .otp input, .otp.shake, .otp input.pop { animation: none; } }
+  .otp input { font-family: 'GeekbleMalrangiche', 'Noto Sans KR', sans-serif; font-weight: 400; }   /* 학번·학생코드 칸 — 긱블말랑이체 */
   #otpCode { gap: 4px; }   /* 학생코드 9칸은 띄우지 않고 붙여서, 칸마다 가로를 넓게 */
   #otpCode input { max-width: 50px; aspect-ratio: 4 / 5; font-size: 18px; border-radius: 10px; }
   .login-photo { position: relative; height: 270px; margin-top: 0; overflow: hidden; flex-shrink: 0; }
