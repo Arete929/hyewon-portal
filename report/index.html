@@ -582,6 +582,9 @@ async function boot() {
   }
 
   loadFootVer_();
+  // «오늘의 과제»로 들어오는 로그인한 학생: 내 과제 목록을 설정과 동시에 물어봐요(차례로 기다리지 않게)
+  const savedPre = !state.tab && !/^\?[a-z0-9]{4}$/i.test(location.search || '') ? loadLogin() : null;
+  if (savedPre) { state.prefetchMine = { key: savedPre.studentId + '|' + savedPre.code, p: api('getMySubmissions', { studentId: savedPre.studentId, code: savedPre.code }) }; state.prefetchMine.p.catch(function () {}); }
   try {
     state.config = await api('getConfig', null, 'GET');
   } catch (e) {
@@ -671,8 +674,9 @@ async function tryAutoLogin(tab, saved) {
 async function tryGlobalAutoLogin(saved) {
   render('<div class="loading">불러오는 중…</div>');
   let res;
+  const pre = state.prefetchMine; state.prefetchMine = null;
   try {
-    res = await api('getMySubmissions', { studentId: saved.studentId, code: saved.code });
+    res = await (pre && pre.key === saved.studentId + '|' + saved.code ? pre.p : api('getMySubmissions', { studentId: saved.studentId, code: saved.code }));
   } catch (e) {
     return renderGlobalLogin();
   }
