@@ -279,7 +279,17 @@
   .file-chip b { display: block; font-size: 14px; }
   .feedback-box { background: var(--hyewon-mint); border-radius: 12px; padding: 12px 14px; }
   .feedback-box b { display: block; font-size: 13px; color: var(--accent); margin-bottom: 6px; }
-  .feedback-box p { margin: 0; font-size: 14px; line-height: 1.6; white-space: pre-wrap; }
+  .feedback-box p { margin: 0; font-size: 14px; line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; }
+  a.lk-in { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; word-break: break-all; }
+  a.lk { display: flex; align-items: center; gap: 12px; margin-top: 10px; padding: 8px; border-radius: 12px; background: var(--surface); border: 1px solid var(--border); color: var(--text); text-decoration: none; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+  a.lk:active { transform: scale(.99); }
+  .lk-th { flex: none; width: 96px; height: 60px; border-radius: 8px; overflow: hidden; display: grid; place-items: center; color: #fff; }
+  .lk-th img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .lk-th i { font-style: normal; font-size: 24px; font-weight: 800; }
+  .lk-t { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+  .feedback-box .lk-t b { display: block; margin: 0; color: var(--text); font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lk-t small { font-size: 12px; color: var(--text2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lk-go { flex: none; font-size: 18px; color: var(--text2); padding-right: 4px; }
   .submitted-file { display: flex; align-items: center; gap: 12px; background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 8px; text-decoration: none; color: inherit; }
   .submitted-file + .submitted-file { margin-top: 8px; }
   .submitted-file .thumb { width: 54px; height: 54px; border-radius: 10px; background: var(--hyewon-ink); flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
@@ -1223,7 +1233,7 @@ function histNoteHtml_(note) {
   note = note.replace(/\s*\[(\d+)일 초과\]\s*$/, function (m, d) { lateTag = '<span class="hn-late">⏰ ' + d + '일 초과</span>'; return ''; });
   return note.split(' | ').filter(function (x) { return x.trim(); }).map(function (seg) {
     const m = /^([^:]{1,40}): (.*)$/.exec(seg);
-    if (!m) return '<div class="hn-row">' + escapeHtml(seg) + '</div>';
+    if (!m) return '<div class="hn-row">' + linkifyHtml_(seg) + '</div>';
     const toks = m[2].split(' · ').map(function (t) {
       if (t.charAt(0) === '＋') return '<span class="hn-add">＋ ' + escapeHtml(t.slice(1)) + '</span>';
       if (t.charAt(0) === '－') return '<span class="hn-del">' + escapeHtml(t.slice(1)) + '</span>';
@@ -1745,7 +1755,7 @@ function renderSubmissionStatus(tab, entry) {
       (rejected ? '<div class="msg error" style="margin-bottom:12px;">선생님이 반려했어요. 아래 피드백을 보고 고쳐서 다시 제출해 주세요.</div>' : '') +
       (hasFeedback
         ? '<div class="detail-card"><div class="sec-head">' + ic_('chat', 17, 'var(--text2)') + '선생님 피드백</div>' +
-            '<div class="feedback-box"><p>' + escapeHtml(entry.feedback) + '</p></div></div>'
+            '<div class="feedback-box"><p>' + linkifyHtml_(entry.feedback) + '</p>' + linkCardsHtml_(entry.feedback) + '</div></div>'
         : '') +
       (done
         ? '<div class="msg" style="margin-bottom:12px;background:var(--hyewon-mint);color:var(--hyewon-emerald);">✅ 선생님 검토가 끝나서 회수·다시 제출은 잠겼어요.</div>'
@@ -1790,6 +1800,7 @@ function renderSubmissionStatus(tab, entry) {
     area.innerHTML = (r && r.success) ? historyHtml_(r.items) : '<span class="hint">기록을 불러오지 못했어요.</span>';
   })();
   loadSubmittedFile_(tab);
+  fillLinkCards_();
 }
 
 async function loadSubmittedFile_(tab) {
@@ -2451,6 +2462,62 @@ function otpValue(containerId) {
 }
 
 // ---------- 유틸 ----------
+
+// ---------- 피드백 속 링크: 눌러서 바로 열기 + 썸네일 카드 ----------
+const URL_RE_ = /https?:\/\/[^\s<>"'«»]+/g;
+function cleanUrl_(u) { return String(u).replace(/[).,!?;:」』”’]+$/, ''); }
+function linkifyHtml_(text) {
+  text = String(text || ''); let out = '', last = 0, m;
+  URL_RE_.lastIndex = 0;
+  while ((m = URL_RE_.exec(text))) {
+    const u = cleanUrl_(m[0]);
+    out += escapeHtml(text.slice(last, m.index)) + '<a class="lk-in" href="' + escapeHtml(u) + '" target="_blank" rel="noopener">' + escapeHtml(u.length > 60 ? u.slice(0, 57) + '…' : u) + '</a>';
+    last = m.index + u.length;
+  }
+  return out + escapeHtml(text.slice(last));
+}
+function linkKind_(u) {
+  let x; try { x = new URL(u); } catch (e) { return null; }
+  const h = x.hostname.replace(/^www\.|^m\./, ''), path = x.pathname;
+  let yt = '';
+  if (h === 'youtu.be') yt = path.slice(1).split('/')[0];
+  else if (h === 'youtube.com') yt = x.searchParams.get('v') || ((/^\/(shorts|embed|live)\/([\w-]{6,})/.exec(path) || [])[2] || '');
+  if (yt && /^[\w-]{6,}$/.test(yt)) return { icon: '▶', bg: '#E5484D', title: 'YouTube 영상', site: 'youtube.com', thumb: 'https://i.ytimg.com/vi/' + yt + '/hqdefault.jpg' };
+  if (h === 'claude.ai' && /artifact/.test(path)) return { icon: '✦', bg: 'linear-gradient(135deg,#D97757,#A3262E)', title: '발표·자료 페이지', site: 'claude.ai' };
+  if (h === 'docs.google.com') {
+    const k = (/^\/(presentation|document|spreadsheets|forms)\//.exec(path) || [])[1];
+    const M = { presentation: ['구글 슬라이드', '#F4B400', '▭'], document: ['구글 문서', '#4285F4', '≡'], spreadsheets: ['구글 시트', '#0F9D58', '▦'], forms: ['구글 설문', '#7248B9', '☑'] }[k];
+    if (M) return { icon: M[2], bg: M[1], title: M[0], site: 'docs.google.com' };
+  }
+  if (h === 'drive.google.com') return { icon: '▲', bg: '#1FA463', title: '구글 드라이브 파일', site: 'drive.google.com' };
+  return { icon: '🔗', bg: 'var(--hyewon-emerald, #087A55)', title: h, site: h };
+}
+function linkCardsHtml_(text) {
+  const seen = {}, urls = [];
+  (String(text || '').match(URL_RE_) || []).forEach(function (u) { u = cleanUrl_(u); if (!seen[u] && urls.length < 4) { seen[u] = 1; urls.push(u); } });
+  return urls.map(function (u) {
+    const k = linkKind_(u); if (!k) return '';
+    return '<a class="lk" href="' + escapeHtml(u) + '" target="_blank" rel="noopener" data-lk="' + escapeHtml(u) + '">' +
+      '<span class="lk-th" style="background:' + k.bg + ';">' + (k.thumb ? '<img src="' + escapeHtml(k.thumb) + '" alt="" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement(\'i\'),{textContent:\'' + k.icon + '\'}))">' : '<i>' + k.icon + '</i>') + '</span>' +
+      '<span class="lk-t"><b>' + escapeHtml(k.title) + '</b><small>' + escapeHtml(k.site) + ' · 눌러서 열기</small></span><span class="lk-go">↗</span></a>';
+  }).join('');
+}
+// 서버(v70~)가 그 페이지의 대표 사진·제목(og:image·og:title)을 알려 주면 카드에 채워요.
+state.linkPrev = {};
+function fillLinkCards_() {
+  if (Number(state.config && state.config.serverVersion) < 70) return;
+  document.querySelectorAll('a.lk[data-lk]').forEach(function (a) {
+    const u = a.getAttribute('data-lk');
+    const put = function (r) {
+      if (!r || !document.body.contains(a)) return;
+      if (r.title) a.querySelector('.lk-t b').textContent = r.title;
+      const th = a.querySelector('.lk-th');
+      if (r.image && !th.querySelector('img')) { const im = new Image(); im.alt = ''; im.referrerPolicy = 'no-referrer'; im.onload = function () { th.innerHTML = ''; th.appendChild(im); th.style.background = '#000'; }; im.src = r.image; }
+    };
+    if (state.linkPrev[u]) return put(state.linkPrev[u]);
+    apiOnce_('linkPreview', { url: u }).then(function (r) { if (r && r.success) { state.linkPrev[u] = r; put(r); } }).catch(function () {});
+  });
+}
 
 function escapeHtml(s) {
   return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
