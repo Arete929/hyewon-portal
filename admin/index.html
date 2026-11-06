@@ -59,6 +59,7 @@
   .verfoot b { color: var(--text2); font-weight: 600; }
   .main { flex: 1; min-width: 0; }
   .main .wrap { max-width: 1000px; }
+  .main .wrap.wide { max-width: 1320px; }
   .wrap { padding: 28px 28px 60px; }
   .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 18px; }
   .stat { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 16px 18px; }
@@ -73,6 +74,112 @@
   .hello .av { width: 42px; height: 42px; border-radius: 50%; background: var(--accent); color: #fff; display: grid; place-items: center; font-weight: 700; flex: none; }
   .hello h1 { font-size: 17px; margin: 0; line-height: 1.25; flex: 1; }
   .hello small { display: block; font-size: 11px; color: var(--text2); font-weight: 400; }
+  /* 현황 대시보드 v2 — 밝은 민트 카드 */
+  .d2 { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 16px; align-items: start; }
+  .d2-main, .d2-side { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+  .dkp2 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+  .dk2 { display: flex; flex-direction: column; gap: 4px; background: #fff; border: 1px solid #E3EBE6; border-radius: 18px; padding: 14px 14px 14px 16px; box-shadow: 0 1px 2px rgba(20,60,40,.04); min-width: 0; }
+  .dk2-t { min-width: 0; flex: 1; }
+  .dk2-l { font-size: 12.5px; font-weight: 700; color: #5F6F6B; white-space: nowrap; }
+  .dk2-m { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .dk2-t b { display: block; font-size: 26px; line-height: 1.2; color: #14231F; letter-spacing: -.5px; }
+  .dk2-t b small { font-size: 13px; font-weight: 700; margin-left: 2px; color: #5F6F6B; }
+  .dk2-t em { display: block; font-style: normal; font-size: 11px; color: #8A9894; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .dk2.warn .dk2-t b { color: #B26A00; } .dk2.info .dk2-t b { color: #2F5BD8; } .dk2.bad .dk2-t b { color: #C22B2B; }
+  .mr { flex: none; }
+  .d2 .dcard { background: #fff; border: 1px solid #E3EBE6; border-radius: 18px; padding: 16px 18px; box-shadow: 0 1px 2px rgba(20,60,40,.04); }
+  .d2 .dc-h { font-size: 14.5px; }
+  .perf { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 20px; align-items: stretch; }
+  .perf-r { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+  .sub-h { font-size: 12px; font-weight: 700; color: #5F6F6B; }
+  .bars { display: flex; align-items: flex-end; gap: 10px; height: 150px; padding: 6px 4px 0; border-bottom: 1px dashed #DCE6E0; }
+  .bc { flex: 1; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 4px; position: relative; }
+  .bc i { display: block; width: 100%; max-width: 30px; border-radius: 8px 8px 3px 3px; background: #CFEBDC; transition: height .4s; }
+  .bc.now i { background: #2E9E6B; }
+  .bn { font-size: 11px; font-weight: 800; color: #2E9E6B; min-height: 14px; }
+  .bl { position: absolute; bottom: -20px; font-size: 11px; color: #8A9894; font-weight: 600; }
+  .bc.now .bl { color: #2E9E6B; font-weight: 800; }
+  .bars-f { margin-top: 26px; font-size: 12px; color: #5F6F6B; }
+  .bars-f b { color: #14231F; }
+  .pr { display: grid; grid-template-columns: minmax(0, 1fr) 90px 40px; align-items: center; gap: 10px; cursor: pointer; padding: 4px 0; }
+  .pr-n { display: flex; align-items: center; gap: 6px; min-width: 0; font-size: 13px; font-weight: 700; }
+  .pr-n span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pr-b { display: block; height: 8px; border-radius: 999px; background: #E8EFEA; overflow: hidden; }
+  .pr-b i { display: block; height: 100%; border-radius: 999px; background: #2E9E6B; }
+  .pr-v { font-size: 12px; font-weight: 800; text-align: right; color: #14231F; }
+  .tt { display: flex; flex-direction: column; }
+  .tt-h, .tt-r { display: grid; grid-template-columns: minmax(0, 2.2fr) minmax(110px, 1.2fr) 70px 80px 90px; align-items: center; gap: 10px; }
+  .tt-h { font-size: 11.5px; font-weight: 700; color: #8A9894; padding: 0 8px 8px; border-bottom: 1px solid #EDF2EF; }
+  .tt-r { padding: 11px 8px; border-bottom: 1px solid #F1F5F3; cursor: pointer; border-radius: 10px; font-size: 13px; }
+  .tt-r:hover { background: #F4FAF6; }
+  .tt-r:last-child { border-bottom: 0; }
+  .tt-n { display: flex; align-items: center; gap: 8px; min-width: 0; font-weight: 700; }
+  .tt-n span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .tt-p { display: flex; align-items: center; gap: 8px; } .tt-p .pr-b { flex: 1; } .tt-p small { font-size: 11.5px; color: #5F6F6B; font-weight: 700; white-space: nowrap; }
+  .chip { display: inline-grid; place-items: center; min-width: 26px; height: 22px; padding: 0 7px; border-radius: 999px; font-size: 11.5px; background: #EEF3F0; color: #8A9894; }
+  .chip.info { background: #E3ECFF; color: #2F5BD8; } .chip.bad { background: #FDE3E1; color: #C22B2B; }
+  .d2 .due { margin: 0; font-size: 11.5px; font-weight: 800; padding: 3px 9px; border-radius: 999px; background: #EAF6EF; color: #2E9E6B; }
+  .d2 .due.soon { background: #FFF1D6; color: #B26A00; } .d2 .due.over { background: #FDE3E1; color: #C22B2B; } .d2 .due.none { background: #F1F4F2; color: #9AA8A4; }
+  .fc2 { display: flex; align-items: center; gap: 12px; background: linear-gradient(135deg, #1F7A55, #2E9E6B); color: #fff; border-radius: 18px; padding: 16px 16px 16px 18px; cursor: pointer; box-shadow: 0 6px 18px rgba(31,122,85,.25); }
+  .fc2-t { flex: 1; min-width: 0; }
+  .fc2-t small { font-size: 11px; opacity: .8; } .fc2-t h3 { margin: 2px 0 4px; font-size: 15px; line-height: 1.35; } .fc2-t p { margin: 0 0 8px; font-size: 12px; opacity: .9; }
+  .fc2 .due { background: rgba(255,255,255,.18) !important; color: #fff !important; }
+  .fc2 .ring { flex: none; }
+  .cal-leg { font-size: 11px; font-weight: 600; color: #8A9894; display: flex; align-items: center; gap: 4px; }
+  .cal-leg i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-left: 6px; } .cal-leg i.l-due { background: #E5484D; } .cal-leg i.l-open { background: #2E9E6B; }
+  .cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center; font-size: 12px; }
+  .cal .cw { font-size: 11px; font-weight: 700; color: #8A9894; padding-bottom: 2px; }
+  .cal .sun { color: #E5484D; }
+  .cal .cd { height: 30px; display: grid; place-items: center; border-radius: 9px; font-weight: 600; color: #3B4A46; position: relative; }
+  .cal .cd.today { background: #2E9E6B; color: #fff; font-weight: 800; }
+  .cal .cd.c-due::after, .cal .cd.c-open::after { content: ''; position: absolute; bottom: 3px; width: 5px; height: 5px; border-radius: 50%; background: #E5484D; }
+  .cal .cd.c-open::after { background: #2E9E6B; }
+  .cal .cd.today::after { background: #fff; }
+  .cal .cd.c-due:not(.today) { background: #FDEDEC; } .cal .cd.c-open:not(.today) { background: #EAF6EF; }
+  .upc { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; padding-top: 12px; border-top: 1px solid #EDF2EF; }
+  .upi { display: flex; align-items: center; gap: 8px; font-size: 12.5px; cursor: pointer; }
+  .upd { flex: none; font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 6px; } .upd.u-due { background: #FDE3E1; color: #C22B2B; } .upd.u-open { background: #DDF5EB; color: #12805B; }
+  .upn { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; } .upt { flex: none; color: #8A9894; font-weight: 700; }
+  @media (max-width: 1100px) { .d2 { grid-template-columns: 1fr; } .dkp2 { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 640px) {
+    .perf { grid-template-columns: 1fr; } .dk2 { padding: 12px; } .dk2-t b { font-size: 22px; } .mr { width: 48px; height: 48px; }
+    .tt-h { display: none; } .tt-r { grid-template-columns: minmax(0, 1fr) auto; row-gap: 8px; }
+    .tt-r > span:nth-child(2) { grid-column: 1 / -1; order: 3; } .tt-r > span:nth-child(3), .tt-r > span:nth-child(4) { display: none; }
+  }
+  /* 현황 대시보드 */
+  .dkpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 14px; }
+  .dk { display: flex; align-items: center; gap: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 14px 16px; min-width: 0; }
+  .dk-ic { flex: none; width: 42px; height: 42px; border-radius: 14px; display: grid; place-items: center; font-size: 20px; background: #EEF2F0; }
+  .dk span { display: block; font-size: 12px; color: var(--text2); font-weight: 600; }
+  .dk b { display: block; font-size: 26px; line-height: 1.15; }
+  .dk em { display: block; font-style: normal; font-size: 11px; color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .dk.warn .dk-ic { background: #FFF1D6; } .dk.warn b { color: #B26A00; }
+  .dk.info .dk-ic { background: #E3ECFF; } .dk.info b { color: #2F5BD8; }
+  .dk.bad .dk-ic { background: #FDE3E1; } .dk.bad b { color: #C22B2B; }
+  .dk.good .dk-ic { background: #DDF5EB; }
+  .dgrid { display: grid; grid-template-columns: minmax(0, 2fr) minmax(260px, 1fr); gap: 14px; align-items: start; }
+  .dmain, .dside { min-width: 0; }
+  .tgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+  .tgrid .tcard { margin-bottom: 0; border: 1px solid var(--border); }
+  .tc-n { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .tcard .item-name { min-width: 0; }
+  .due { display: inline-block; margin-left: 6px; font-size: 11px; font-weight: 700; color: var(--text2); }
+  .due.soon { color: #B26A00; } .due.over { color: #C22B2B; }
+  .focus .due { margin: 6px 0 0; color: rgba(255,255,255,.9); background: rgba(255,255,255,.14); padding: 3px 9px; border-radius: 999px; }
+  .fc-k { display: block; font-size: 11px; opacity: .7; margin-bottom: 2px; }
+  .fc-go { flex: none; font-size: 13px; font-weight: 700; background: rgba(255,255,255,.16); padding: 8px 12px; border-radius: 999px; }
+  .dcard { background: var(--surface); border: 1px solid var(--border); border-radius: 22px; padding: 16px; }
+  .dc-h { display: flex; justify-content: space-between; align-items: center; font-weight: 800; font-size: 15px; margin-bottom: 12px; }
+  .dc-h a { font-size: 12px; font-weight: 600; color: var(--text2); text-decoration: none; }
+  .ps-bar { display: flex; height: 10px; border-radius: 999px; overflow: hidden; background: #E6ECE9; }
+  .ps-bar i { display: block; height: 100%; } .ps-bar i.o, .ps-leg i.o { background: #2FBF8A; } .ps-bar i.w, .ps-leg i.w { background: #F2B544; } .ps-bar i.c, .ps-leg i.c { background: #B8C2BE; }
+  .ps-leg { display: flex; flex-wrap: wrap; gap: 10px; font-size: 12px; margin: 8px 0 12px; color: var(--text2); }
+  .ps-leg i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 4px; }
+  .ps-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-top: 1px solid var(--border); font-size: 13.5px; }
+  .ps-ic { width: 24px; text-align: center; } .ps-l { flex: 1; color: var(--text2); } .ps-v { font-weight: 800; }
+  .ps-v.ok { color: #12805B; } .ps-v.bad { color: #C22B2B; }
+  @media (max-width: 900px) { .dgrid { grid-template-columns: 1fr; } .dkpis { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 420px) { .dk { padding: 12px; gap: 10px; } .dk-ic { width: 36px; height: 36px; font-size: 17px; } .dk b { font-size: 22px; } .fc-go { display: none; } }
   .kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
   .kpi { background: #fff; border-radius: 22px; padding: 14px 16px; }
   .kpi span { font-size: 12px; color: var(--text2); }
@@ -2947,8 +3054,8 @@ async function renderPortal(notice) {
   const pSt = api('getPortalStatus'), pCfg = apiGet('getConfig'), pProg = api('getTaskProgress').catch(function () { return null; });
   pCfg.catch(function () {});
   const cache = readDashCache_();
-  render('<div class="wrap"><div id="srvWarn"></div><div id="homeDash">' + (cache ? dashHead_(state.portalSt) + cache.body + '<p class="hint dash-stale">새로 불러오는 중…</p>' : '') + '</div>' +
-    '<div id="portalStats">' + (cache && cache.stats ? cache.stats : '<h1 class="serif">현황</h1><p class="hint">불러오는 중…</p>') + '</div></div>');
+  render('<div class="wrap wide"><div id="srvWarn"></div><div id="homeDash">' + (cache ? dashHead_(state.portalSt) + cache.body + '<p class="hint dash-stale">새로 불러오는 중…</p>' : '<h1 class="serif">현황</h1><p class="hint">불러오는 중…</p>') + '</div>' +
+    '<div id="portalStats"></div></div>');
   wireDashGo_();
   let st;
   try { st = await pSt; } catch (e) { return; }
@@ -2965,26 +3072,22 @@ async function renderPortal(notice) {
     return;
   }
   state.portalSt = st;
-  const statsHtml =
-      '<h2 style="margin-top:8px;">포털 상태</h2>' +
-      '<div class="stats">' +
-        '<div class="stat"><span>과제</span><b>' + st.tabCount + '</b></div>' +
-        '<div class="stat"><span>보낸 공지</span><b>' + st.noticeCount + '</b></div>' +
-        '<div class="stat"><span>알림 켠 기기</span><b>' + st.tokenCount + '</b></div>' +
-        '<div class="stat"><span>푸시 알림 서버</span><b class="small" style="color:' + (st.pushReady ? 'var(--success-text)' : 'var(--text3)') + ';">' + (st.pushReady ? '설정됨' : '미설정') + '</b></div>' +
-        '<div class="stat"><span>서버 버전</span><b>' + st.serverVersion + '</b></div>' +
-      '</div>' +
-      '<p class="hint" id="verLine" style="margin:-4px 0 16px;"></p>' +
-      '<p class="hint" style="margin:0 0 16px;"><a href="#" id="goSet">마스터코드 · 학생 접속 주소 · 연결 시험은 «설정»으로 옮겼어요 →</a></p>';
-  document.getElementById('portalStats').innerHTML = statsHtml;
+  // 포털 상태(공지 수·알림 기기·푸시 서버)와 버전은 «설정 → 포털 상태 · 버전»에서 봐요 — 현황은 과제만
+  document.getElementById('portalStats').innerHTML = '';
   document.getElementById('srvWarn').innerHTML = serverBehindHtml_(st.serverVersion);
-  saveDashCache_('stats', statsHtml.replace(/<p class="hint" id="verLine"[^>]*><\/p>/, '').replace(/<p class="hint" style="margin:0 0 16px;"><a href="#" id="goSet">[\s\S]*$/, ''));
-  document.getElementById('goSet').onclick = function (e) { e.preventDefault(); renderSettings(); };
-  paintVer_();
   loadHomeDash_(st, pCfg, pProg);
 }
+function portalStatsHtml_(st) {
+  return '<div class="stats" style="margin-bottom:10px;">' +
+      '<div class="stat"><span>과제</span><b>' + st.tabCount + '</b></div>' +
+      '<div class="stat"><span>보낸 공지</span><b>' + st.noticeCount + '</b></div>' +
+      '<div class="stat"><span>알림 켠 기기</span><b>' + st.tokenCount + '</b></div>' +
+      '<div class="stat"><span>푸시 알림 서버</span><b class="small" style="color:' + (st.pushReady ? 'var(--success-text)' : 'var(--text3)') + ';">' + (st.pushReady ? '설정됨' : '미설정') + '</b></div>' +
+      '<div class="stat"><span>서버 버전</span><b>' + st.serverVersion + '</b></div>' +
+    '</div>';
+}
 // 웹 화면이 기대하는 서버 버전 — 서버 배포(GitHub Actions)가 실패해 서버가 뒤처지면 현황 맨 위에 알려요
-const WEB_EXPECTS_SERVER = 71;
+const WEB_EXPECTS_SERVER = 72;
 function serverBehindHtml_(v) {
   v = Number(v) || 0;
   if (!v || v >= WEB_EXPECTS_SERVER) return '';
@@ -3024,7 +3127,7 @@ async function loadHomeDash_(st, pCfg, pProg) {
   let stats;
   if (prog && prog.success && prog.tabs) {
     // 서버가 진행중 과제 전부를 한 번에 세어 줘요(명단 없는 과제도 과제 대상 수로)
-    stats = open.map(function (t) { const p = prog.tabs[t.sheetName] || {}; return { name: t.sheetName, total: p.total || 0, done: p.done || 0, flagged: p.flagged || 0, needFlag: p.flagged === undefined }; });
+    stats = open.map(function (t) { const p = prog.tabs[t.sheetName] || {}; return { name: t.sheetName, total: p.total || 0, done: p.done || 0, todo: p.todo || 0, flagged: p.flagged || 0, needFlag: p.flagged === undefined, deadline: (t.meta && t.meta.deadline) || '' }; });
   } else {
     // 아주 예전 서버: 과제마다 묻되, 한꺼번에
     stats = await Promise.all(open.slice(0, 6).map(async function (t) {
@@ -3040,6 +3143,7 @@ async function loadHomeDash_(st, pCfg, pProg) {
   }
   box = document.getElementById('homeDash');
   if (!box || state.nav !== 'home') return;
+  state.dashDaily = (prog && prog.daily) || null;
   paintHomeDash_(box, head, st, tabs, open, stats);
   // 서버가 복붙 의심 수를 아직 안 주면(v71 전) 뒤에서 따로 세어 채워요
   const need = stats.filter(function (x) { return x.needFlag; });
@@ -3051,27 +3155,123 @@ async function loadHomeDash_(st, pCfg, pProg) {
     }).catch(function () {});
   })).then(function () { const b = document.getElementById('homeDash'); if (b && state.nav === 'home') paintHomeDash_(b, head, st, tabs, open, stats); });
 }
+// ---------- 현황 대시보드 (밝은 민트 카드 스타일) ----------
+function miniRing_(pct, color, label) {
+  const r = 22, c = 2 * Math.PI * r, d = Math.max(0, Math.min(1, pct || 0)) * c;
+  return '<svg class="mr" width="58" height="58" viewBox="0 0 58 58"><circle cx="29" cy="29" r="' + r + '" fill="none" stroke="#E8EFEA" stroke-width="7"/>' +
+    '<circle cx="29" cy="29" r="' + r + '" fill="none" stroke="' + color + '" stroke-width="7" stroke-linecap="round" stroke-dasharray="' + d.toFixed(1) + ' ' + c.toFixed(1) + '" transform="rotate(-90 29 29)"/>' +
+    '<text x="29" y="33" text-anchor="middle" font-size="11.5" font-weight="800" fill="#14231F">' + escapeHtml(label) + '</text></svg>';
+}
+function dashCalendar_(tabs) {
+  const now = new Date(), y = now.getFullYear(), m = now.getMonth(), first = new Date(y, m, 1).getDay(), days = new Date(y, m + 1, 0).getDate();
+  const ev = {};   // 'd' → [{t, kind}]
+  const put = function (iso, name, kind) {
+    const mm = /^(\d{4})-(\d{2})-(\d{2})T/.exec(iso || ''); if (!mm || Number(mm[1]) !== y || Number(mm[2]) !== m + 1) return;
+    (ev[Number(mm[3])] = ev[Number(mm[3])] || []).push({ t: name, kind: kind });
+  };
+  tabs.forEach(function (t) { const me = t.meta || {}; put(me.deadline, t.sheetName, 'due'); put(me.openAt, t.sheetName, 'open'); });
+  let cells = '';
+  ['일', '월', '화', '수', '목', '금', '토'].forEach(function (d, i) { cells += '<span class="cw' + (i === 0 ? ' sun' : '') + '">' + d + '</span>'; });
+  for (let i = 0; i < first; i++) cells += '<span></span>';
+  for (let d = 1; d <= days; d++) {
+    const e = ev[d] || [], today = d === now.getDate();
+    const cls = (today ? ' today' : '') + (e.some(function (x) { return x.kind === 'due'; }) ? ' c-due' : e.length ? ' c-open' : '') + ((first + d - 1) % 7 === 0 ? ' sun' : '');
+    cells += '<span class="cd' + cls + '"' + (e.length ? ' title="' + escapeHtml(e.map(function (x) { return (x.kind === 'due' ? '⏰ 마감 · ' : '📢 공개 · ') + x.t; }).join('\n')) + '"' : '') + '>' + d + '</span>';
+  }
+  // 다가오는 일정(오늘부터)
+  const up = [];
+  tabs.forEach(function (t) {
+    const me = t.meta || {};
+    [['deadline', '마감', 'due'], ['openAt', '공개', 'open']].forEach(function (k) {
+      const mm = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/.exec(me[k[0]] || ''); if (!mm) return;
+      const at = new Date(mm[0] + ':00+09:00'); if (at.getTime() < Date.now() - 3600000) return;
+      up.push({ at: at, txt: Number(mm[2]) + '/' + Number(mm[3]) + ' ' + mm[4] + ':' + mm[5], name: t.sheetName, k: k[1], kind: k[2] });
+    });
+  });
+  up.sort(function (a, b) { return a.at - b.at; });
+  return '<div class="dcard"><div class="dc-h">📅 ' + (m + 1) + '월 일정<span class="cal-leg"><i class="l-due"></i>마감 <i class="l-open"></i>공개</span></div>' +
+    '<div class="cal">' + cells + '</div>' +
+    (up.length ? '<div class="upc">' + up.slice(0, 3).map(function (u) {
+      return '<div class="upi" data-go="' + escapeHtml(u.name) + '"><span class="upd u-' + u.kind + '">' + u.k + '</span><span class="upn">' + escapeHtml(u.name) + '</span><span class="upt">' + u.txt + '</span></div>';
+    }).join('') + '</div>' : '<p class="hint" style="margin:10px 0 0;">다가오는 마감·공개 일정이 없어요.</p>') + '</div>';
+}
 function paintHomeDash_(box, head, st, tabs, open, stats) {
-  const missing = stats.reduce(function (a, x) { return a + Math.max(0, x.total - x.done); }, 0);
-  const flaggedAll = stats.reduce(function (a, x) { return a + x.flagged; }, 0);
+  const sum = function (k) { return stats.reduce(function (a, x) { return a + (k === 'miss' ? Math.max(0, x.total - x.done) : (x[k] || 0)); }, 0); };
+  const totalAll = sum('total'), doneAll = stats.reduce(function (a, x) { return a + (x.total ? Math.min(x.done, x.total) : 0); }, 0);
+  const subsAll = sum('done'), missing = sum('miss'), todoAll = sum('todo'), flaggedAll = sum('flagged');
   const lead = stats.slice().sort(function (a, b) { return (b.total - b.done) - (a.total - a.done); })[0];
   const pct = function (x) { return x.total ? x.done / x.total : 0; };
   const go = function (n) { return 'data-go="' + escapeHtml(n) + '"'; };
+  const dueTxt = function (x) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/.exec(x.deadline || ''); if (!m) return '<span class="due none">기한 없음</span>';
+    const left = new Date(m[0] + ':00+09:00').getTime() - Date.now(), h = Math.floor(left / 3600000);
+    return left <= 0 ? '<span class="due over">기한 지남</span>' : '<span class="due' + (h < 24 ? ' soon' : '') + '">' + (h < 24 ? h + '시간 남음' : 'D-' + Math.ceil(h / 24)) + '</span>';
+  };
+  // ① 숫자 카드 4개 — 작은 동그라미 그래프와 함께
+  const kc = function (label, val, sub, ring, color, tone) {
+    return '<div class="dk2 ' + (tone || '') + '"><span class="dk2-l">' + label + '</span><div class="dk2-m"><div class="dk2-t"><b>' + val + '</b><em>' + sub + '</em></div>' + ring + '</div></div>';
+  };
+  const rate = totalAll ? doneAll / totalAll : 0;
+  const kpis = '<div class="dkp2">' +
+    kc('전체 제출률', Math.round(rate * 100) + '%', totalAll ? doneAll + ' / ' + totalAll + '명 제출' : '대상 학생 없음', miniRing_(rate, '#2E9E6B', Math.round(rate * 100) + '%'), '', '') +
+    kc('미제출 학생', missing + '<small>명</small>', open.length ? '진행 중 과제 ' + open.length + '개 합계' : '진행 중 과제 없음', miniRing_(totalAll ? missing / totalAll : 0, '#F2A93B', totalAll ? Math.round(missing / totalAll * 100) + '%' : '0%'), '', missing ? 'warn' : '') +
+    kc('검토 전', todoAll + '<small>건</small>', todoAll ? '검토할 제출이 있어요' : '모두 검토했어요', miniRing_(subsAll ? todoAll / subsAll : 0, '#4C7BE8', subsAll ? Math.round(todoAll / subsAll * 100) + '%' : '0%'), '', todoAll ? 'info' : '') +
+    kc('복붙 의심', flaggedAll + '<small>명</small>', flaggedAll ? '작성 기록을 확인해요' : '의심 없음', miniRing_(subsAll ? flaggedAll / subsAll : 0, '#E5484D', flaggedAll ? Math.round(flaggedAll / Math.max(1, subsAll) * 100) + '%' : '0'), '', flaggedAll ? 'bad' : '') +
+  '</div>';
+  // ② 최근 7일 제출 막대 + 과제별 제출률
+  const daily = state.dashDaily;
+  let chart = '';
+  if (daily && daily.length) {
+    const mx = Math.max(1, Math.max.apply(null, daily.map(function (d) { return d.n; })));
+    const wk = ['일', '월', '화', '수', '목', '금', '토'];
+    const tot7 = daily.reduce(function (a, d) { return a + d.n; }, 0);
+    chart = '<div class="bars">' + daily.map(function (d, i) {
+      const dt = new Date(d.d + 'T12:00:00+09:00'), last = i === daily.length - 1;
+      return '<div class="bc' + (last ? ' now' : '') + '"><span class="bn">' + (d.n || '') + '</span><i style="height:' + Math.max(4, d.n / mx * 100) + '%"></i><span class="bl">' + (last ? '오늘' : wk[dt.getDay()]) + '</span></div>';
+    }).join('') + '</div><div class="bars-f">최근 7일 <b>' + tot7 + '</b>건 제출 · 다시 제출 포함</div>';
+  }
+  const rows = stats.map(function (x) {
+    const p = Math.round(pct(x) * 100);
+    return '<div class="pr" ' + go(x.name) + '><span class="pr-n">' + taskIconHtml_(x.name, 20) + '<span>' + escapeHtml(x.name) + '</span></span>' +
+      '<span class="pr-b"><i style="width:' + (x.total ? p : (x.done ? 100 : 0)) + '%"></i></span><span class="pr-v">' + (x.total ? p + '%' : x.done + '건') + '</span></div>';
+  }).join('') || '<p class="hint" style="margin:0;">진행 중인 과제가 없어요.</p>';
+  const perf = '<div class="dcard"><div class="dc-h">📈 제출 흐름' + (daily ? '<span class="hint" style="font-weight:600;">지난 7일</span>' : '') + '</div>' +
+    '<div class="perf">' + (chart ? '<div class="perf-l">' + chart + '</div>' : '') + '<div class="perf-r"><div class="sub-h">과제별 제출률</div>' + rows + '</div></div></div>';
+  // ③ 진행 중 과제 표
+  const table = '<div class="dcard"><div class="dc-h">📋 진행 중 과제<span class="hint" style="font-weight:600;">눌러서 상세 보기</span></div>' +
+    (stats.length ? '<div class="tt"><div class="tt-h"><span>과제</span><span>제출</span><span>검토 전</span><span>복붙 의심</span><span>기한</span></div>' +
+      stats.map(function (x) {
+        const p = Math.round(pct(x) * 100);
+        return '<div class="tt-r" ' + go(x.name) + '><span class="tt-n">' + taskIconHtml_(x.name, 22) + '<span>' + escapeHtml(x.name) + '</span></span>' +
+          '<span class="tt-p"><span class="pr-b"><i style="width:' + (x.total ? p : (x.done ? 100 : 0)) + '%"></i></span><small>' + (x.total ? x.done + '/' + x.total : x.done + '건') + '</small></span>' +
+          '<span>' + (x.todo ? '<b class="chip info">' + x.todo + '</b>' : '<b class="chip">0</b>') + '</span>' +
+          '<span>' + (x.flagged ? '<b class="chip bad">' + x.flagged + '</b>' : '<b class="chip">0</b>') + '</span>' +
+          '<span>' + dueTxt(x) + '</span></div>';
+      }).join('') + '</div>' : '<p class="hint" style="margin:0;">진행 중인 과제가 없어요.</p>') + '</div>';
+  // ④ 오른쪽: 가장 많이 남은 과제 · 일정 · 포털 상태
+  const focus = lead ? '<div class="fc2" ' + go(lead.name) + '><div class="fc2-t"><small>가장 많이 남은 과제</small><h3>' + escapeHtml(lead.name) + '</h3>' +
+      '<p>' + (lead.total ? '미제출 <b>' + (lead.total - lead.done) + '명</b> · 제출 ' + lead.done + '/' + lead.total : '제출 ' + lead.done + '건 · QR') + '</p>' + dueTxt(lead) + '</div>' +
+      ringSvg_(lead.total ? pct(lead) : (lead.done ? 1 : 0), lead.total ? Math.round(pct(lead) * 100) + '%' : lead.done + '건') + '</div>' : '';
+  const cnt = { wait: 0, open: 0, closed: 0 };
+  tabs.forEach(function (t) { const s2 = effStatus_(t); cnt[s2] = (cnt[s2] || 0) + 1; });
+  const totalT = tabs.length || 1, sv = Number(st.serverVersion) || 0, behind = sv && sv < WEB_EXPECTS_SERVER;
+  const row = function (ic, label, val, tone) { return '<div class="ps-row"><span class="ps-ic">' + ic + '</span><span class="ps-l">' + label + '</span><span class="ps-v ' + (tone || '') + '">' + val + '</span></div>'; };
+  const portal = '<div class="dcard ps"><div class="dc-h">⚙️ 포털 상태<a href="#" data-goset>설정 →</a></div>' +
+    '<div class="ps-bar"><i class="o" style="width:' + (cnt.open / totalT * 100) + '%"></i><i class="w" style="width:' + (cnt.wait / totalT * 100) + '%"></i><i class="c" style="width:' + (cnt.closed / totalT * 100) + '%"></i></div>' +
+    '<div class="ps-leg"><span><i class="o"></i>진행 ' + cnt.open + '</span><span><i class="w"></i>대기 ' + cnt.wait + '</span><span><i class="c"></i>마감 ' + cnt.closed + '</span><span style="margin-left:auto;">과제 ' + tabs.length + '개</span></div>' +
+    row('🖥', '서버', 'v' + sv + (behind ? ' · 업데이트 필요' : ' · 최신'), behind ? 'bad' : 'ok') +
+    row('🔔', '푸시 알림', st.pushReady ? '켜짐' : '꺼짐', st.pushReady ? 'ok' : 'bad') +
+    (st.teacherTokenCount != null ? row('👩‍🏫', '선생님 기기', st.teacherTokenCount + '대', st.teacherTokenCount ? 'ok' : 'bad') : '') +
+    row('📱', '학생 기기', (st.tokenCount || 0) + '대') +
+    row('📢', '보낸 공지', (st.noticeCount || 0) + '건') +
+  '</div>';
   box.innerHTML = head +
-    '<div class="kpis"><div class="kpi"><span>진행 중 과제</span><b>' + open.length + '</b><em class="up">전체 ' + tabs.length + '개</em></div>' +
-    '<div class="kpi"><span>미제출 학생(합계)</span><b>' + missing + '</b>' + (flaggedAll ? '<em class="dn">복붙 의심 ' + flaggedAll + '</em>' : '<em class="up">의심 0</em>') + '</div></div>' +
-    (lead ? '<div class="focus" ' + go(lead.name) + '>' + ringSvg_(lead.total ? pct(lead) : (lead.done ? 1 : 0), lead.total ? Math.round(pct(lead) * 100) + '%' : lead.done + '건') +
-      '<div><h3>' + escapeHtml(lead.name) + '</h3><p>' + (lead.total
-        ? '제출 ' + lead.done + ' / ' + lead.total + '명<br>미제출 ' + (lead.total - lead.done) + '명 · 알림 켠 기기 ' + (st.tokenCount || 0) + '대'
-        : '제출 ' + lead.done + '건<br>명단 없는 과제(QR) · 누가 안 냈는지는 셀 수 없어요') + '</p></div></div>' : '') +
-    '<div class="hnav">진행 중 과제<span>눌러서 상세 보기</span></div>' +
-    (stats.map(function (x) {
-      const p = Math.round(pct(x) * 100);
-      return '<div class="tcard" ' + go(x.name) + '><div class="top"><span class="item-name">' + taskIconHtml_(x.name, 24) + escapeHtml(x.name) + '</span>' +
-        (x.total ? '<span class="tag ' + (p >= 80 ? 'ok' : p >= 40 ? 'wr' : 'no') + '">' + p + '%</span>' : '<span class="tag ok">' + x.done + '건</span>') + '</div>' +
-        '<div class="pbar"><i style="width:' + (x.total ? p : (x.done ? 100 : 0)) + '%"></i></div><div class="sub"><span>' + (x.total ? '제출 ' + x.done + ' / ' + x.total : '제출 ' + x.done + '건 · 명단 없는 과제(QR)') + '</span><span>' + (x.flagged ? '복붙 의심 ' + x.flagged + '명' : '') + '</span></div></div>';
-    }).join('') || '<p class="hint">진행 중인 과제가 없어요.</p>');
+    '<div class="d2">' +
+      '<div class="d2-main">' + kpis + perf + table + '</div>' +
+      '<div class="d2-side">' + focus + dashCalendar_(tabs) + portal + '</div>' +
+    '</div>';
   wireDashGo_();
+  const gs = box.querySelector('[data-goset]'); if (gs) gs.onclick = function (e) { e.preventDefault(); renderSettings(); };
   saveDashCache_('body', box.innerHTML.slice(head.length));
 }
 
@@ -4009,7 +4209,7 @@ async function renderSettings(notice) {
         '<div class="field"><label for="newPw">새 비밀번호 (10자 이상)</label><input id="newPw" type="password"></div>' +
         '<button class="btn" id="changePwBtn">변경</button>' +
       '</div>' +
-      '<div class="card"><h2>버전</h2><p class="hint" id="verLine" style="margin:0;"></p></div>' +
+      '<div class="card"><h2>포털 상태 · 버전</h2>' + (st && st.success ? portalStatsHtml_(st) : '') + '<p class="hint" id="verLine" style="margin:0;"></p></div>' +
     '</div>'
   );
   document.getElementById('changePwBtn').onclick = doChangePassword;
