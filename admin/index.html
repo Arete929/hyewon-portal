@@ -88,6 +88,14 @@
   .psk-l { display: flex; flex-wrap: wrap; gap: 6px; }
   .psc { display: inline-flex; align-items: center; gap: 4px; font-size: 12.5px; padding: 4px 9px; border-radius: 999px; background: #F3F5F4; color: #8A9894; border: 1px solid #E6EBE8; }
   .psc b { font-size: 11px; color: #A9B4B0; } .psc i { font-style: normal; font-size: 11px; }
+  button.psc { font: inherit; font-size: 12.5px; cursor: pointer; }
+  .psc em { font-style: normal; font-size: 10.5px; font-weight: 700; opacity: .8; margin-left: 2px; }
+  .psc.was { background: #FFF4E5; color: #9A5B00; border-color: #F5D59A; } .psc.was b { color: #C27A10; }
+  .nh-now { font-size: 13px; background: #F2FAF5; border: 1px solid #DDEFE4; border-radius: 12px; padding: 10px 12px; margin-bottom: 10px; color: #0F5B3E; }
+  .nh { list-style: none; margin: 0; padding: 0; position: relative; }
+  .nh li { display: flex; gap: 10px; padding: 8px 0; border-bottom: 1px solid #F1F5F3; font-size: 13.5px; }
+  .nh li small { display: block; font-size: 12px; color: #5F6F6B; margin-top: 2px; }
+  .nh li.auto b { color: #B26A00; } .nh li.on b { color: #12805B; } .nh li.off b { color: #5F6F6B; }
   .psc.on { background: #E6F6EE; color: #0F5B3E; border-color: #BFE4D3; font-weight: 700; } .psc.on b { color: #2E9E6B; }
   @media (max-width: 760px) { .ps-top { grid-template-columns: 1fr 1fr; } .ps-top .dk2:last-child { grid-column: 1 / -1; } .psks { grid-template-columns: 1fr; } }
   /* 진행 중 과제 아코디언 */
@@ -3181,7 +3189,7 @@ function portalStatsHtml_(st) {
     '</div>';
 }
 // 웹 화면이 기대하는 서버 버전 — 서버 배포(GitHub Actions)가 실패해 서버가 뒤처지면 현황 맨 위에 알려요
-const WEB_EXPECTS_SERVER = 74;
+const WEB_EXPECTS_SERVER = 75;
 function serverBehindHtml_(v) {
   v = Number(v) || 0;
   if (!v || v >= WEB_EXPECTS_SERVER) return '';
@@ -3283,9 +3291,14 @@ function paintPushStatus_(r) {
   const classes = {};
   shown.forEach(function (x) { const k = String(x.id).slice(0, 2); (classes[k] = classes[k] || []).push(x); });
   const kIcon = { '안드로이드': '🤖', '아이폰': '🍎', 'PC': '💻', '기타': '📱' };
+  const md = function (at) { const m = /^\d{4}-(\d{2})-(\d{2})/.exec(at || ''); return m ? Number(m[1]) + '/' + Number(m[2]) : ''; };
   const chip = function (x) {
-    return '<span class="psc' + (x.on ? ' on' : '') + '" title="' + escapeHtml(x.id + ' ' + x.name + (x.on ? ' · 알림 켬 · 기기 ' + x.n + '대 · 마지막 ' + x.last : ' · 알림 안 켬')) + '">' +
-      '<b>' + escapeHtml(String(x.id).slice(2)) + '</b>' + escapeHtml(x.name) + (x.on ? '<i>' + (x.kinds || []).map(function (k) { return kIcon[k] || '📱'; }).join('') + '</i>' : '') + '</span>';
+    // 초록 = 켬(켠 날) · 주황 = 켰다가 꺼짐(끈 날) · 회색 = 한 번도 안 켬
+    const was = !x.on && x.ev && x.ev.kind !== '켬';
+    const tag = x.on ? md(x.first || x.last) : was ? md(x.ev.at) + (x.ev.kind === '자동 해제' ? ' 해제' : ' 끔') : '';
+    return '<button type="button" class="psc' + (x.on ? ' on' : was ? ' was' : '') + '" data-psh="' + escapeHtml(x.id) + '" data-psn="' + escapeHtml(x.name) + '" title="눌러서 켬·끔 기록 보기">' +
+      '<b>' + escapeHtml(String(x.id).slice(2)) + '</b>' + escapeHtml(x.name) + (x.on ? '<i>' + (x.kinds || []).map(function (k) { return kIcon[k] || '📱'; }).join('') + '</i>' : '') +
+      (tag ? '<em>' + tag + '</em>' : '') + '</button>';
   };
   const cls = Object.keys(classes).sort().map(function (k) {
     const arr = classes[k], on = arr.filter(function (x) { return x.on; }).length, p = Math.round(on / arr.length * 100);
@@ -3305,8 +3318,10 @@ function paintPushStatus_(r) {
       '<span style="flex:1;"></span><button type="button" class="seg' + (onlyOff ? ' on' : '') + '" id="psOff">안 켠 학생만</button><button type="button" class="btn-outline btn-sm" id="psCopy">📋 안 켠 학생 복사</button><button type="button" class="btn-outline btn-sm" id="psRe">↻ 새로고침</button></div>' +
     '<div class="psks">' + (cls || '<p class="hint">학생이 없어요.</p>') + '</div>' +
     ((r.extra && r.extra.length) ? '<div class="dcard" style="margin-top:14px;"><div class="dc-h">명렬에 없는 기기 <span class="hint">시험 계정·전학생 등</span></div><div class="psk-l">' + r.extra.map(function (x) { return chip(Object.assign({ on: true }, x)); }).join('') + '</div></div>' : '') +
-    '<p class="hint" style="margin-top:12px;">학생 안내: 혜원포털에 로그인 → «오늘의 과제» 화면의 🔔 «알림 받기» 누르기. 폰을 바꾸거나 앱을 지우면 다시 켜야 해요. 알림이 실패한 기기는 자동으로 빠져요.</p>';
+    '<p class="hint" style="margin-top:12px;"><span class="psc on" style="pointer-events:none;">켬 <em>켠 날</em></span> <span class="psc was" style="pointer-events:none;">꺼짐 <em>끈 날</em></span> <span class="psc" style="pointer-events:none;">한 번도 안 켬</span> · 학생을 누르면 켬·끔 기록이 보여요. «해제»는 앱을 지웠거나 폰에서 알림 권한을 꺼서 서버가 뺀 거예요.</p>' +
+    '<p class="hint" style="margin-top:6px;">학생 안내: 혜원포털에 로그인 → «오늘의 과제» 화면의 🔔 «알림 받기» 누르기. 폰을 바꾸거나 앱을 지우면 다시 켜야 해요. 알림이 실패한 기기는 자동으로 빠져요.</p>';
   body.querySelectorAll('[data-psg]').forEach(function (b2) { b2.onclick = function () { state.psGrade = b2.getAttribute('data-psg'); paintPushStatus_(r); }; });
+  body.querySelectorAll('[data-psh]').forEach(function (b2) { b2.onclick = function () { openNotiHistory_(b2.getAttribute('data-psh'), b2.getAttribute('data-psn')); }; });
   document.getElementById('psOff').onclick = function () { state.psOff = !state.psOff; paintPushStatus_(r); };
   document.getElementById('psRe').onclick = function () { state.pushStat = null; renderPushStatus(); };
   document.getElementById('psCopy').onclick = async function () {
@@ -3317,6 +3332,25 @@ function paintPushStatus_(r) {
     try { await navigator.clipboard.writeText(txt); btn.textContent = '✅ 복사했어요'; } catch (e) { prompt('복사해서 쓰세요', txt); }
     setTimeout(function () { btn.textContent = '📋 안 켠 학생 복사'; }, 1800);
   };
+}
+
+// 학생 한 명의 알림 켬·끔 기록
+async function openNotiHistory_(sid, name) {
+  const el = document.createElement('div'); el.className = 'rvsheet';
+  el.innerHTML = '<div class="rv-panel" style="max-width:460px;"><div class="rv-head"><b>🔔 ' + escapeHtml(sid + ' ' + (name || '')) + ' 알림 기록</b><button class="rv-x" type="button" aria-label="닫기">✕</button></div><div id="nhBody"><div class="loading">불러오는 중…</div></div></div>';
+  document.body.appendChild(el);
+  const close = function () { el.remove(); };
+  el.querySelector('.rv-x').onclick = close; el.addEventListener('click', function (e) { if (e.target === el) close(); });
+  let r; try { r = await api('getNotiHistory', { studentId: sid }); } catch (e) { r = null; }
+  const box = el.querySelector('#nhBody'); if (!box) return;
+  if (!r || !r.success) { box.innerHTML = '<p class="hint">' + escapeHtml(r && r.error === 'unknown_action' ? '서버가 예전 버전이에요(v75부터 기록이 보여요).' : ((r && r.message) || '불러오지 못했어요.')) + '</p>'; return; }
+  const ic = { '켬': ['🟢', 'on'], '끔': ['⚪', 'off'], '자동 해제': ['🟠', 'auto'] };
+  box.innerHTML =
+    '<div class="nh-now">' + (r.devices.length ? '지금 켜져 있는 기기 <b>' + r.devices.length + '대</b> · ' + r.devices.map(function (d) { return escapeHtml(d.device + ' (' + d.at.replace(/^\d{4}-/, '').replace('-', '/') + ' 켬)'); }).join(', ') : '지금 켜져 있는 기기가 없어요') + '</div>' +
+    (r.items.length ? '<ol class="nh">' + r.items.map(function (it) {
+      const c = ic[it.kind] || ['•', ''];
+      return '<li class="' + c[1] + '"><span class="nh-d">' + c[0] + '</span><div><b>' + escapeHtml(it.kind) + '</b> <span class="hint">' + escapeHtml(it.device || '') + '</span><small>' + escapeHtml(it.at) + (it.note ? ' · ' + escapeHtml(it.note) : '') + '</small></div></li>';
+    }).join('') + '</ol>' : '<p class="hint" style="margin:12px 0 0;">켬·끔 기록이 아직 없어요. (기록은 11/6부터 쌓여요. 그 전에 켠 기기는 위 «지금 켜져 있는 기기»에 켠 날이 보여요.)</p>');
 }
 
 // ---------- 진행 중 과제 아코디언: 날짜별 제출 그래프(밀어서 넘기기) + 미검토 빠른 보기 ----------
