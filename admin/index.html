@@ -82,13 +82,6 @@
   .sh-img { flex: none; width: 180px; height: 101px; border-radius: 12px; background: #E8EFEA 34% 22% / cover; box-shadow: inset 0 0 0 1px rgba(0,0,0,.06); }
   /* 🗳 투표 · 학생 화면 미리보기 */
   .vprev-btn { width: 100%; margin-bottom: 10px; border-color: #A78BFA !important; color: #6C4BD8 !important; font-weight: 800; }
-  .vpv-bg { position: fixed; inset: 0; z-index: 200; background: rgba(10,20,18,.55); display: grid; place-items: center; padding: 16px; }
-  .vpv { background: #fff; border-radius: 22px; padding: 14px 16px 18px; max-height: 96vh; overflow: auto; box-shadow: 0 20px 60px rgba(0,0,0,.3); }
-  .vpv-h { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; } .vpv-h b { white-space: nowrap; } .vpv-h .hint { font-size: 12px; } .vpv-h .rv-x { margin-left: auto; }
-  @media (max-width: 560px) { .vpv-h .hint { display: none; } .vpv { padding: 12px 12px 14px; } .vpv-phone { max-width: 100%; border-width: 8px; } }
-  .vpv-c { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
-  .vpv-phone { width: 390px; max-width: 86vw; height: min(760px, 74vh); border: 10px solid #10201C; border-radius: 36px; overflow: hidden; margin: 0 auto; background: #F4F7F5; }
-  .vpv-phone iframe { width: 100%; height: 100%; border: 0; display: block; }
   /* 🗳 투표 */
   .vrounds { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
   .vrd { display: flex; gap: 12px; align-items: center; cursor: pointer; margin: 0; } .vrd:hover { border-color: #CDBFFF; }
@@ -2505,7 +2498,7 @@ async function renderDetail(tabName, fresh) {
           '<button type="button" class="ms-l" data-oam="code">🔑 학생코드</button>' +
           '<button type="button" class="ms-tg" role="switch" aria-label="제출 방식: 켜면 QR코드" aria-checked="' + (openAcc ? 'true' : 'false') + '" data-oam="flip"><i></i></button>' +
           '<button type="button" class="ms-l" data-oam="qr">📱 QR코드</button></div>' +
-        '<button type="button" class="pillbtn" id="previewBtn" style="background:#4B3BB5;border-color:#4B3BB5;color:#fff;">👀 학생 화면 미리보기</button>' +
+        '<button type="button" class="pillbtn" id="previewBtn" style="background:#4B3BB5;border-color:#4B3BB5;color:#fff;">👀 학생 화면 미리보기 ↗</button>' +
       (tab.meta && tab.meta.shortCode ? '<button type="button" class="pillbtn" id="qrHeadBtn" style="background:#0F766E;border-color:#0F766E;color:#fff;">📱 QR 크게</button>' : '') +
       '</div>' +
       '<div id="tabSaved" class="tab-saved" data-tab="' + escapeHtml(tabName) + '"></div>' +
@@ -3455,7 +3448,7 @@ async function renderVoteDetail(id, tab) {
   const tabs = [['settings', '⚙️ 설정'], ['notice', '📢 안내문·링크'], ['result', '📊 결과·선정'], ['part', '👥 참여 현황'], ['image', '🖼 안내 이미지']];
   render('<div class="wrap wide"><a href="#" class="hint" id="vBack">← 투표 목록</a>' +
     '<div class="vhead"><h1 class="serif" style="margin:6px 0 0;">🗳 ' + escapeHtml(v ? v.title : '새 투표 만들기') + '</h1>' + (v ? '<span class="vst ' + st[1] + '">' + st[0] + '</span>' : '') +
-      '<span style="flex:1"></span><button type="button" class="btn-outline btn-sm" id="vPrevBtn" style="border-color:#A78BFA;color:#6C4BD8;">👀 학생 화면 미리보기</button>' +
+      '<span style="flex:1"></span><button type="button" class="btn-outline btn-sm" id="vPrevBtn" style="border-color:#A78BFA;color:#6C4BD8;">👀 학생 화면 미리보기 ↗</button>' +
       (v ? (v.status !== 'live' ? '<button type="button" class="btn btn-sm" data-vs="live" style="background:#6C4BD8;">▶ 시작(예약)하기</button>' : '') +
         (v.status === 'live' ? '<button type="button" class="btn-outline btn-sm" data-vs="closed">■ 지금 마감</button>' : '') +
         (v.status === 'closed' ? '<button type="button" class="btn-outline btn-sm" data-vs="live">↺ 다시 열기</button>' : '') +
@@ -3538,7 +3531,7 @@ async function vSettings_(body, v) {
       '<div class="vf vf-top"><label>공개</label><div>' + tog('anonymous', '누가 누구를 골랐는지는 선생님만 보기', '(학생끼리는 비밀)') + tog('showCounts', '결과 발표 안내문에 득표수 넣기') + '</div></div>' +
       '<div class="vf vf-top"><label>알림</label><div>' + tog('notifyOpen', '열릴 때 대상 학생에게 폰 알림') + tog('notifyRemind', '마감 1시간 전, 안 한 학생에게 다시 알림') + '</div></div></div>' +
     '</div><div class="vside"><div class="card vsum" id="vSum"></div><div class="card" id="vChk"></div>' +
-      '<button type="button" class="btn-outline vprev-btn" id="vPrevBtn2">👀 학생 화면 미리보기</button>' +
+      '<button type="button" class="btn-outline vprev-btn" id="vPrevBtn2">👀 학생 화면 미리보기 ↗</button>' +
       '<div class="vbtns">' + (v ? '<button type="button" class="btn" id="vSave" style="background:#6C4BD8;">저장</button>' : '<button type="button" class="btn-outline" id="vSaveDraft">미리 저장</button><button type="button" class="btn" id="vSaveLive" style="background:#6C4BD8;">시작(예약)하기</button>') + '</div><div class="hint" id="vSaveMsg" style="margin-top:8px;"></div></div></div>';
   // 연결
   const rerender = function () { const y = window.scrollY; vSettings_(body, v).then(function () { window.scrollTo(0, y); }); };
@@ -3662,25 +3655,17 @@ function vSummary_(students) {
   chk.innerHTML = '<div class="vstep" style="font-size:14px;margin-bottom:8px;">✅ 확인</div><ul class="vchk">' + items.map(function (x) { return '<li class="' + x[0] + '">' + escapeHtml(x[1]) + '</li>'; }).join('') + '</ul>';
 }
 
-// ---- 👀 학생 화면 미리보기: 지금 설정(저장 전이어도)대로 학생 화면을 휴대폰 틀에 그려요 ----
-async function openVotePreview_() {
-  const d = state.vEdit; if (!d) return;
-  const students = await loadSourceStudents_();
+// ---- 👀 학생 화면 미리보기: 새 창(끌어서 옮기고 크기도 바꿀 수 있어요)에 학생 화면을 띄워요 ----
+// 설정을 고치면(저장 전이어도) 열린 미리보기 창이 바로 따라 바뀌어요. 같은 주소(origin)끼리만 주고받아요.
+state.vPrev = { win: null, cls: '', done: false, students: null, last: '', timer: 0 };
+function vPrevBuild_() {
+  const d = state.vEdit, P = state.vPrev; if (!d || !P.students) return null;
+  const students = P.students;
   const voters = students.filter(function (x) { return vMatch_(d.targets, x.studentId); });
   const classes = Array.from(new Set(voters.map(function (x) { return vClsKey_(x.studentId); }))).sort();
-  let cls = state.vPrevCls && classes.indexOf(state.vPrevCls) >= 0 ? state.vPrevCls : classes[0] || '';
-  let done = false;
-  const el = document.createElement('div'); el.className = 'vpv-bg';
-  el.innerHTML = '<div class="vpv"><div class="vpv-h"><b>👀 학생 화면 미리보기</b><span class="hint">눌러서 골라 볼 수 있어요 · 제출은 되지 않아요</span><button type="button" class="rv-x" aria-label="닫기">✕</button></div>' +
-    '<div class="vpv-c">' + (d.type !== 'options' && classes.length ? '<div class="vseg" id="vpvCls">' + classes.map(function (c) { return '<button type="button" data-val="' + c + '" class="' + (c === cls ? 'on' : '') + '">' + c + '</button>'; }).join('') + '</div>' : '') +
-      '<div class="vseg" id="vpvStep"><button type="button" data-val="ballot" class="on">고르는 화면</button><button type="button" data-val="done">제출 완료 화면</button></div></div>' +
-    '<div class="vpv-phone"><iframe id="vpvF" src="../report/index.html?vpreview=1" title="학생 화면 미리보기"></iframe></div></div>';
-  document.body.appendChild(el);
-  const close = function () { window.removeEventListener('message', onMsg); el.remove(); };
-  el.querySelector('.rv-x').onclick = close; el.addEventListener('click', function (e) { if (e.target === el) close(); });
-  const fr = document.getElementById('vpvF');
-  const send = function () {
-    const nm = {}; students.forEach(function (x) { nm[x.studentId] = x.name; });
+  if (classes.indexOf(P.cls) < 0) P.cls = classes[0] || '';
+  const cls = P.cls;
+  const nm = {}; students.forEach(function (x) { nm[x.studentId] = x.name; });
     const prev = {}; (state.votes || []).forEach(function (x) { if (d.excludePrevVotes.indexOf(x.id) >= 0 && x.winnersSel) (x.winnersSel.ids || []).forEach(function (id) { prev[id] = 1; }); });
     const ex = {}; d.excludeIds.forEach(function (id) { ex[id] = 1; });
     const me = (voters.find(function (x) { return vClsKey_(x.studentId) === cls; }) || voters[0] || { studentId: '0000', name: '미리보기 학생' });
@@ -3698,13 +3683,40 @@ async function openVotePreview_() {
       pick: d.pick, pickExact: d.pickExact, ranked: d.ranked, candidates: cands, avatars: {}, myPicks: [], doneAt: '', anonymous: d.anonymous !== false,
       prevWinners: cands.filter(function (c) { return c.off === '이전 선정'; }).map(function (c) { return c.id + ' ' + c.name; }), candInfo: d.candInfo || {},
       me: { id: String(me.studentId), name: me.name, cls: vClsKey_(me.studentId) } };
-    try { fr.contentWindow.postMessage({ type: 'vpreview', vote: vote, cls: cls, done: done, teacher: teacherInfo_() }, location.origin); } catch (e) {}
-  };
-  const onMsg = function (e) { if (e.origin === location.origin && e.data && e.data.type === 'vpreview-ready') send(); };
-  window.addEventListener('message', onMsg);
-  el.querySelectorAll('#vpvCls button').forEach(function (b) { b.onclick = function () { cls = state.vPrevCls = b.getAttribute('data-val'); el.querySelectorAll('#vpvCls button').forEach(function (x) { x.classList.toggle('on', x === b); }); send(); }; });
-  el.querySelectorAll('#vpvStep button').forEach(function (b) { b.onclick = function () { done = b.getAttribute('data-val') === 'done'; el.querySelectorAll('#vpvStep button').forEach(function (x) { x.classList.toggle('on', x === b); }); send(); }; });
+  return { type: 'vpreview', vote: vote, cls: cls, classes: d.type !== 'options' ? classes : [], done: P.done, teacher: teacherInfo_() };
 }
+function vPrevSend_(force) {
+  const P = state.vPrev;
+  if (!P.win || P.win.closed) { if (P.timer) clearInterval(P.timer); P.timer = 0; P.win = null; return; }
+  const m = vPrevBuild_(); if (!m) return;
+  const j = JSON.stringify(m); if (!force && j === P.last) return; P.last = j;
+  try { P.win.postMessage(m, location.origin); } catch (e) {}
+}
+function vPrevTick_() { if (!state.vPrev.timer) state.vPrev.timer = setInterval(function () { vPrevSend_(false); }, 700); }
+async function openVotePreview_() {
+  const P = state.vPrev; if (!state.vEdit) return;
+  if (!P.win || P.win.closed) {
+    const w = Math.min(430, screen.availWidth || 430), h = Math.min(900, (screen.availHeight || 940) - 40);
+    const left = Math.max(0, (window.screenX || 0) + (window.outerWidth || 1200) - w - 40), top = Math.max(0, (window.screenY || 0) + 40);
+    P.win = window.open('../report/index.html?vpreview=1', 'hyewonVotePreview', 'popup=yes,width=' + w + ',height=' + h + ',left=' + left + ',top=' + top);
+    P.last = '';
+    if (!P.win) { alert('미리보기 창이 막혔어요. 주소창 오른쪽의 «팝업 차단» 표시를 눌러 이 사이트의 팝업을 허용해 주세요.'); return; }
+  } else { try { P.win.focus(); } catch (e) {} }
+  if (!P.students) P.students = await loadSourceStudents_();
+  vPrevSend_(true); vPrevTick_();
+}
+window.addEventListener('message', function (e) {
+  if (e.origin !== location.origin || !e.data) return;
+  const P = state.vPrev;
+  if (e.data.type === 'vpreview-ready') {   // 미리보기 창을 새로고침하거나 관리자 화면을 새로고침해도 다시 이어져요
+    P.win = e.source; P.last = ''; vPrevTick_();
+    if (P.students) vPrevSend_(true); else loadSourceStudents_().then(function (x) { P.students = x; vPrevSend_(true); });
+  } else if (e.data.type === 'vpreview-set') {
+    if (e.data.cls !== undefined) P.cls = String(e.data.cls);
+    if (e.data.done !== undefined) P.done = !!e.data.done;
+    vPrevSend_(true);
+  }
+});
 
 // ---- 📢 안내문·링크 ----
 function vNoticeText_(v, kind, cls, opt, res) {

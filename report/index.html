@@ -226,6 +226,12 @@
   .extras .noti-on { margin: 0; font-size: 12px; }
   html[data-theme="dark"] .extras .noti-card button { background: #2FBF8A; color: #062B20; }
   html[data-theme="dark"] .noti-card { background: linear-gradient(135deg, #12332B, #2B2A18); border-color: #2A4A40; }
+  .vpbar { padding: 8px 10px 9px; display: flex; flex-direction: column; gap: 6px; position: sticky; top: 0; z-index: 30; }
+  .vpb-t { font-size: 12.5px; } .vpb-t span { opacity: .75; font-weight: 600; }
+  .vpb-row { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+  .vpb-seg { display: inline-flex; gap: 3px; padding: 3px; border-radius: 999px; background: rgba(255,255,255,.14); overflow-x: auto; max-width: 100%; }
+  .vpb-seg button { border: 0; background: transparent; color: #fff; font: inherit; font-size: 12px; font-weight: 800; padding: 5px 11px; border-radius: 999px; cursor: pointer; white-space: nowrap; }
+  .vpb-seg button.on { background: #fff; color: #4B3BB5; }
   .peekbar { background: #4B3BB5; color: #fff; font-size: 12.5px; font-weight: 700; text-align: center; padding: 6px 10px; flex-shrink: 0; }
   .appbar { flex-shrink: 0; background: var(--hyewon-emerald); padding: 16px 18px 18px; display: flex; align-items: center; justify-content: space-between; border-radius: 0 0 22px 22px; box-shadow: 0 4px 14px rgba(8,122,85,.18); }
   .appbar .brand { display: flex; align-items: center; gap: 8px; color: #fff; font-weight: 800; font-size: 16px; }
@@ -535,6 +541,7 @@ function clearLogin() {
 function render(html) {
   document.getElementById('app').innerHTML = html;
   paintFootVer_();
+  if (state.login && state.login.preview) wireVPrevBar_();
   try { heroSwap_(); } catch (e) {}
 }
 
@@ -1578,7 +1585,7 @@ function appbarHtml_(title, withBack) {
 // 마스터코드로 들어온 선생님 확인용 둘러보기 — 제출은 막힙니다(서버도 거절).
 function isPeek_() { return !!(state.login && (state.login.master || state.login.preview)); }
 function peekBarHtml_() {
-  if (state.login && state.login.preview) return '<div class="peekbar">선생님 미리보기 · 학생에게 이렇게 보여요 (제출은 되지 않아요)</div>';
+  if (state.login && state.login.preview) return vPrevBarHtml_();
   return isPeek_() ? '<div class="peekbar">마스터코드로 보는 중 · 제출은 되지 않아요</div>' : '';
 }
 
@@ -1776,18 +1783,45 @@ function heroSwap_() {
 function bootVotePreview_() {
   state.config = { serverVersion: 76, tabs: [], teacher: {} };
   state.login = { studentId: '', studentName: '미리보기 학생', code: '', preview: true };
+  state.vprev = { classes: [], cls: '', done: false };
+  document.title = '학생 화면 미리보기';
+  const host = window.opener || (window.parent !== window ? window.parent : null);
+  state.vprevHost = host;
   render('<div class="main" style="padding-top:40px;"><div class="loading">미리보기를 준비하는 중…</div></div>');
+  let got = false;
+  setTimeout(function () { if (!got) render('<div class="main" style="padding-top:40px;"><div class="card" style="text-align:center;"><p class="hint">관리자 화면과 연결이 끊겼어요.<br>관리자 화면 «투표»에서 <b>👀 학생 화면 미리보기</b>를 다시 눌러 주세요.</p></div></div>'); }, 5000);
   window.addEventListener('message', function (e) {
     if (e.origin !== location.origin || !e.data || e.data.type !== 'vpreview') return;
+    got = true;
     const v = e.data.vote || {};
+    const old = state.vote, oldP = state.vprev || {};
+    const same = old && old.v && old.v.id === v.id && old.cls === e.data.cls;
+    const keepScroll = same && !!oldP.done === !!e.data.done;
+    const se = document.scrollingElement || document.documentElement, y = se.scrollTop;
     state.config.teacher = e.data.teacher || {};
-    state.heroUrl = null;
-    state.vote = { v: v, picks: (state.vote && state.vote.v && state.vote.v.id === v.id && state.vote.cls === e.data.cls) ? state.vote.picks.filter(function (id) { return (v.candidates || []).some(function (c) { return c.id === id && !c.off; }); }) : [] };
+    state.vprev = { classes: e.data.classes || [], cls: e.data.cls || '', done: !!e.data.done };
+    document.title = '미리보기 · ' + (v.title || '투표');
+    state.vote = { v: v, picks: same ? old.picks.filter(function (id) { return (v.candidates || []).some(function (c) { return c.id === id && !c.off; }); }) : [] };
     state.vote.cls = e.data.cls;
-    if (e.data.done) { v.myPicks = state.vote.picks.slice(); v.doneAt = v.doneAt || '11-06 16:20'; return renderVoteDone_(v); }
-    paintVote_();
+    if (e.data.done) { v.myPicks = state.vote.picks.slice(); v.doneAt = v.doneAt || '11-06 16:20'; renderVoteDone_(v); }
+    else paintVote_();
+    se.scrollTop = keepScroll ? y : 0;
   });
-  try { window.parent.postMessage({ type: 'vpreview-ready' }, location.origin); } catch (e) {}
+  try { if (host) host.postMessage({ type: 'vpreview-ready' }, location.origin); } catch (e) {}
+}
+// 미리보기 창 맨 위 띠: 반 고르기 · 고르는/제출 완료 화면 바꾸기 (관리자 화면에 알려서 다시 받아요)
+function vPrevBarHtml_() {
+  const p = state.vprev || {};
+  const chip = function (attr, val, on, label) { return '<button type="button" ' + attr + '="' + escapeHtml(val) + '" class="' + (on ? 'on' : '') + '">' + escapeHtml(label) + '</button>'; };
+  return '<div class="peekbar vpbar"><div class="vpb-t">👀 학생 화면 미리보기 <span>· 제출은 되지 않아요</span></div><div class="vpb-row">' +
+    (p.classes && p.classes.length ? '<div class="vpb-seg">' + p.classes.map(function (c) { return chip('data-vpc', c, c === p.cls, c); }).join('') + '</div>' : '') +
+    '<div class="vpb-seg">' + chip('data-vpd', '0', !p.done, '고르는 화면') + chip('data-vpd', '1', !!p.done, '제출 완료') + '</div></div></div>';
+}
+function wireVPrevBar_() {
+  const h = state.vprevHost; if (!h) return;
+  const post = function (m) { m.type = 'vpreview-set'; try { h.postMessage(m, location.origin); } catch (e) {} };
+  document.querySelectorAll('[data-vpc]').forEach(function (b) { b.onclick = function () { post({ cls: b.getAttribute('data-vpc') }); }; });
+  document.querySelectorAll('[data-vpd]').forEach(function (b) { b.onclick = function () { post({ done: b.getAttribute('data-vpd') === '1' }); }; });
 }
 function previewLock_() {   // 미리보기 안에서는 뒤로·홈·아래 메뉴가 아무 데도 가지 않아요
   document.querySelectorAll('#backBtn2, #homeBtn2, #profileBtn2, [data-nav]').forEach(function (b) { b.onclick = function (e) { e.preventDefault(); }; });
@@ -1924,7 +1958,7 @@ function renderVoteDone_(v) {
   requestAnimationFrame(function () { const ok = document.querySelector('.v-done'); if (ok) ok.classList.add('on'); });
   if (qs('vpreview') === '1') {   // 미리보기: 고치기는 고르는 화면으로, 나머지는 그대로
     wireChrome_(); previewLock_();
-    document.getElementById('vEdit').onclick = function () { paintVote_(); };
+    document.getElementById('vEdit').onclick = function () { const h = state.vprevHost; if (h) try { h.postMessage({ type: 'vpreview-set', done: false }, location.origin); return; } catch (e) {} paintVote_(); };
     document.getElementById('vHome').onclick = function () {};
     return;
   }
