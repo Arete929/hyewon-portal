@@ -648,6 +648,7 @@ function statusLabel(s) {
 
 async function boot() {
   if (getTheme_() === 'dark') setTheme_('dark');   // 주소창 색도 맞춰요
+  if (qs('vpreview') === '1') return bootVotePreview_();
   state.tab = qs('tab') || '';
   state.tabsFilter = qs('tabs') ? qs('tabs').split(',').map(function (s) { return s.trim(); }).filter(Boolean) : null;
   state.groupLabel = qs('label') || '';
@@ -1771,6 +1772,27 @@ function heroSwap_() {
 }
 
 // ---------- 🗳 투표 · 추천 ----------
+// 선생님 «학생 화면 미리보기»(관리자 화면 안의 휴대폰 틀): 같은 주소(origin)에서 온 메시지만 받아요.
+function bootVotePreview_() {
+  state.config = { serverVersion: 76, tabs: [], teacher: {} };
+  state.login = { studentId: '', studentName: '미리보기 학생', code: '', preview: true };
+  render('<div class="main" style="padding-top:40px;"><div class="loading">미리보기를 준비하는 중…</div></div>');
+  window.addEventListener('message', function (e) {
+    if (e.origin !== location.origin || !e.data || e.data.type !== 'vpreview') return;
+    const v = e.data.vote || {};
+    state.config.teacher = e.data.teacher || {};
+    state.heroUrl = null;
+    state.vote = { v: v, picks: (state.vote && state.vote.v && state.vote.v.id === v.id && state.vote.cls === e.data.cls) ? state.vote.picks.filter(function (id) { return (v.candidates || []).some(function (c) { return c.id === id && !c.off; }); }) : [] };
+    state.vote.cls = e.data.cls;
+    if (e.data.done) { v.myPicks = state.vote.picks.slice(); v.doneAt = v.doneAt || '11-06 16:20'; return renderVoteDone_(v); }
+    paintVote_();
+  });
+  try { window.parent.postMessage({ type: 'vpreview-ready' }, location.origin); } catch (e) {}
+}
+function previewLock_() {   // 미리보기 안에서는 뒤로·홈·아래 메뉴가 아무 데도 가지 않아요
+  document.querySelectorAll('#backBtn2, #homeBtn2, #profileBtn2, [data-nav]').forEach(function (b) { b.onclick = function (e) { e.preventDefault(); }; });
+  document.querySelectorAll('.footer .verline').forEach(function (el) { el.textContent = '혜원포털 · 학생 화면 미리보기'; });
+}
 const VOTE_TYPE_LABEL = { recommend: '친구 추천', election: '후보 선거', options: '선택지 투표' };
 function voteWhen_(ms) {
   if (!ms) return '';
@@ -1858,11 +1880,12 @@ function paintVote_() {
       tray + list +
       '<div class="v-msg" id="vMsg"></div>' +
       (closed ? '<div class="msg" style="margin-top:12px;">마감된 투표예요. 결과는 선생님이 알려 주세요.</div>'
-        : '<button type="button" class="btn v-submit" id="vSubmit"' + (okCount && !peek ? '' : ' disabled') + '>' + (peek ? '마스터코드로는 볼 수만 있어요' : v.pickExact && picks.length !== n ? n + voteNoun_(v) + '을 다 골라 주세요 (' + picks.length + '/' + n + ')' : (v.doneAt ? '다시 제출하기' : (v.type === 'recommend' ? '추천 제출하기' : '투표하기')) + ' (' + picks.length + voteNoun_(v) + ')') + '</button>') +
+        : '<button type="button" class="btn v-submit" id="vSubmit"' + (okCount && !peek ? '' : ' disabled') + '>' + (peek ? (state.login && state.login.preview ? '미리보기라 제출되지 않아요' : '마스터코드로는 볼 수만 있어요') : v.pickExact && picks.length !== n ? n + voteNoun_(v) + '을 다 골라 주세요 (' + picks.length + '/' + n + ')' : (v.doneAt ? '다시 제출하기' : (v.type === 'recommend' ? '추천 제출하기' : '투표하기')) + ' (' + picks.length + voteNoun_(v) + ')') + '</button>') +
       (v.anonymous ? '<p class="hint" style="text-align:center;margin:12px 0 0;">🔒 누가 누구를 골랐는지는 선생님만 봐요.</p>' : '') +
     '</div>' + footerHtml_() + bottombarHtml_('home')
   );
-  const back = wireChrome_(); if (back) back.onclick = function (e) { e.preventDefault(); renderToday(); };
+  const back = wireChrome_(); if (back) back.onclick = function (e) { e.preventDefault(); if (qs('vpreview') === '1') return; renderToday(); };
+  if (qs('vpreview') === '1') previewLock_();
   document.querySelectorAll('[data-pick]').forEach(function (b) {
     b.onclick = function () {
       const id = b.getAttribute('data-pick'), i = picks.indexOf(id);
@@ -1899,6 +1922,12 @@ function renderVoteDone_(v) {
     '</div></div>' + footerHtml_() + bottombarHtml_('home')
   );
   requestAnimationFrame(function () { const ok = document.querySelector('.v-done'); if (ok) ok.classList.add('on'); });
+  if (qs('vpreview') === '1') {   // 미리보기: 고치기는 고르는 화면으로, 나머지는 그대로
+    wireChrome_(); previewLock_();
+    document.getElementById('vEdit').onclick = function () { paintVote_(); };
+    document.getElementById('vHome').onclick = function () {};
+    return;
+  }
   const back = wireChrome_(); if (back) back.onclick = function (e) { e.preventDefault(); renderToday(); };
   document.getElementById('vEdit').onclick = function () { renderVote_(v.id); };
   document.getElementById('vHome').onclick = function () { renderToday(); };
