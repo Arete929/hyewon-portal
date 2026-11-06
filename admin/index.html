@@ -68,6 +68,7 @@
   .grid2 { margin-bottom: 16px; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; align-items: start; }
   .grid2 .card { max-width: none; margin-bottom: 0; }
   .bnav, .sheet, .sheetbg { display: none; }
+  .dash-stale { margin: -4px 0 12px; font-size: 12px; }
   .hello { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
   .hello .av { width: 42px; height: 42px; border-radius: 50%; background: var(--accent); color: #fff; display: grid; place-items: center; font-weight: 700; flex: none; }
   .hello h1 { font-size: 17px; margin: 0; line-height: 1.25; flex: 1; }
@@ -973,6 +974,7 @@ function doLogout() {
 async function renderDashboard() {
   state.nav = 'tasks';
   render('<div class="wrap"><div class="loading">불러오는 중…</div></div>');
+  const pProg = api('getTaskProgress').catch(function () { return null; });   // 목록과 동시에 물어봐요
   let cfg;
   try { cfg = await apiGet('getConfig'); } catch (e) { return render('<div class="wrap"><div class="msg error">서버에 연결할 수 없습니다.</div></div>'); }
   state.config = cfg;
@@ -1000,8 +1002,7 @@ async function renderDashboard() {
   });
   document.getElementById('newTabBtn').onclick = function () { renderNewTab(); };
   // 진행중 과제의 제출 현황(냄/대상) — 목록을 먼저 보여 주고 나중에 채워요
-  if (document.querySelector('[data-prog]')) {
-    api('getTaskProgress').then(function (r) {
+  function paintProg(r) {
       if (!r || !r.success) return;
       document.querySelectorAll('[data-prog]').forEach(function (el) {
         const p = (r.tabs || {})[el.getAttribute('data-prog')]; if (!p) return;
@@ -1010,7 +1011,10 @@ async function renderDashboard() {
           (p.total ? '<span class="ip-bar"><i style="width:' + pct + '%"></i></span>' : '') +
           (p.todo ? '<span class="ip-todo">검토 전 ' + p.todo + '</span>' : '');
       });
-    }).catch(function () {});
+  }
+  if (document.querySelector('[data-prog]')) {
+    if (state.progLast) paintProg(state.progLast);   // 지난번 값 먼저
+    pProg.then(function (r) { if (r && r.success) { state.progLast = r; if (state.nav === 'tasks') paintProg(r); } });
   }
 }
 
@@ -2826,11 +2830,22 @@ async function renderLog(tab) {
 
 // ---------- 현황(대시보드) · 마스터코드 ----------
 
+// 현황 화면을 마지막으로 본 모습 — 다음에 열 때 먼저 보여 주고, 새 값이 오면 바꿔요(이 기기에만 저장)
+const DASH_CACHE_KEY = 'hyewon_admin_dash_v1';
+function readDashCache_() { try { const c = JSON.parse(localStorage.getItem(DASH_CACHE_KEY) || 'null'); return c && c.body ? c : null; } catch (e) { return null; } }
+function saveDashCache_(part, html) { try { const c = readDashCache_() || {}; c[part] = html; c.at = Date.now(); localStorage.setItem(DASH_CACHE_KEY, JSON.stringify(c)); } catch (e) {} }
 async function renderPortal(notice) {
   state.nav = 'home';
-  render('<div class="wrap"><h1 class="serif">현황</h1><p class="hint">불러오는 중…</p></div>');
+  // 세 가지를 한꺼번에 물어봐요(예전에는 하나씩 차례로 — 과제마다 두 번씩 더 — 기다렸어요)
+  const pSt = api('getPortalStatus'), pCfg = apiGet('getConfig'), pProg = api('getTaskProgress').catch(function () { return null; });
+  pCfg.catch(function () {});
+  const cache = readDashCache_();
+  render('<div class="wrap"><div id="homeDash">' + (cache ? dashHead_(state.portalSt) + cache.body + '<p class="hint dash-stale">새로 불러오는 중…</p>' : '') + '</div>' +
+    '<div id="portalStats">' + (cache && cache.stats ? cache.stats : '<h1 class="serif">현황</h1><p class="hint">불러오는 중…</p>') + '</div></div>');
+  wireDashGo_();
   let st;
-  try { st = await api('getPortalStatus'); } catch (e) { return; }
+  try { st = await pSt; } catch (e) { return; }
+  if (state.nav !== 'home' || !document.getElementById('portalStats')) return;
   if (!st || !st.success) {
     render(
       '<div class="wrap"><h1 class="serif">현황</h1>' +
@@ -2842,9 +2857,8 @@ async function renderPortal(notice) {
     );
     return;
   }
-  render(
-    '<div class="wrap">' +
-      '<div id="homeDash"></div>' +
+  state.portalSt = st;
+  const statsHtml =
       '<h2 style="margin-top:8px;">포털 상태</h2>' +
       '<div class="stats">' +
         '<div class="stat"><span>과제</span><b>' + st.tabCount + '</b></div>' +
@@ -2854,12 +2868,21 @@ async function renderPortal(notice) {
         '<div class="stat"><span>서버 버전</span><b>' + st.serverVersion + '</b></div>' +
       '</div>' +
       '<p class="hint" id="verLine" style="margin:-4px 0 16px;"></p>' +
-      '<p class="hint" style="margin:0 0 16px;"><a href="#" id="goSet">마스터코드 · 학생 접속 주소 · 연결 시험은 «설정»으로 옮겼어요 →</a></p>' +
-    '</div>'
-  );
+      '<p class="hint" style="margin:0 0 16px;"><a href="#" id="goSet">마스터코드 · 학생 접속 주소 · 연결 시험은 «설정»으로 옮겼어요 →</a></p>';
+  document.getElementById('portalStats').innerHTML = statsHtml;
+  saveDashCache_('stats', statsHtml.replace(/<p class="hint" id="verLine"[^>]*><\/p>/, '').replace(/<p class="hint" style="margin:0 0 16px;"><a href="#" id="goSet">[\s\S]*$/, ''));
   document.getElementById('goSet').onclick = function (e) { e.preventDefault(); renderSettings(); };
   paintVer_();
-  loadHomeDash_(st);
+  loadHomeDash_(st, pCfg, pProg);
+}
+function dashHead_(st) {
+  const d = new Date(), days = ['일', '월', '화', '수', '목', '금', '토'];
+  const tp = (st && st.teacher) || (state.portalSt && state.portalSt.teacher) || {};
+  return '<div class="hello"><div class="av">' + escapeHtml((tp.subject || tp.name || '체').charAt(0)) + '</div><h1>안녕하세요, ' + (tp.name ? escapeHtml(tp.name) + ' ' : '') + '선생님' + (tp.subject ? ' <span class="hint" style="font-weight:600;">· ' + escapeHtml(tp.subject) + '</span>' : '') + '<small>' + (d.getMonth() + 1) + '월 ' + d.getDate() + '일 ' + days[d.getDay()] + '요일</small></h1></div>';
+}
+function wireDashGo_() {
+  const box = document.getElementById('homeDash'); if (!box) return;
+  box.querySelectorAll('[data-go]').forEach(function (el) { el.onclick = function () { renderDetail(el.getAttribute('data-go')); }; });
 }
 
 
@@ -2870,30 +2893,48 @@ function ringSvg_(pct, label) {
     '<circle cx="43" cy="43" r="34" fill="none" stroke="#2FBF8A" stroke-width="10" stroke-linecap="round" stroke-dasharray="' + d.toFixed(1) + ' ' + c.toFixed(1) + '" transform="rotate(-90 43 43)"/>' +
     '<text x="43" y="48" text-anchor="middle" fill="#fff" font-size="15" font-weight="700">' + escapeHtml(label) + '</text></svg>';
 }
-async function loadHomeDash_(st) {
-  const box = document.getElementById('homeDash');
+async function loadHomeDash_(st, pCfg, pProg) {
+  let box = document.getElementById('homeDash');
   if (!box) return;
-  const d = new Date();
-  const days = ['일', '월', '화', '수', '목', '금', '토'];
-  const tp = (st && st.teacher) || {};
-  const head = '<div class="hello"><div class="av">' + escapeHtml((tp.subject || tp.name || '체').charAt(0)) + '</div><h1>안녕하세요, ' + (tp.name ? escapeHtml(tp.name) + ' ' : '') + '선생님' + (tp.subject ? ' <span class="hint" style="font-weight:600;">· ' + escapeHtml(tp.subject) + '</span>' : '') + '<small>' + (d.getMonth() + 1) + '월 ' + d.getDate() + '일 ' + days[d.getDay()] + '요일</small></h1></div>';
-  box.innerHTML = head + '<div class="hint" style="margin-bottom:12px;">과제 현황을 불러오는 중…</div>';
+  const head = dashHead_(st);
+  if (!readDashCache_()) box.innerHTML = head + '<div class="hint" style="margin-bottom:12px;">과제 현황을 불러오는 중…</div>';
   let cfg;
-  try { cfg = state.config || await apiGet('getConfig'); state.config = cfg; } catch (e) { box.innerHTML = head; return; }
+  try { cfg = await (pCfg || apiGet('getConfig')); state.config = cfg; } catch (e) { box.innerHTML = head; return; }
   const tabs = (cfg.tabs || []);
   const open = tabs.filter(function (t) { return (effStatus_(t)) === 'open'; });
-  const stats = [];
-  for (const t of open.slice(0, 6)) {
-    let total = 0, done = 0, flagged = 0;
-    try {
-      const r1 = await api('getRoster', { tabName: t.sheetName }); total = (r1.entries || []).length;
-      const r2 = await api('getSubmissions', { tabName: t.sheetName }); done = (r2.rows || []).length;
-      const tr = r2.traces || {}, min = r2.antiPasteMin || 20;
-      Object.keys(tr).forEach(function (k) { if (tr[k].pasteTries > 0 || tr[k].maxChunk >= min) flagged++; });
-    } catch (e) {}
-    stats.push({ name: t.sheetName, total: total, done: done, flagged: flagged });
+  let prog = null;
+  try { prog = await (pProg || api('getTaskProgress')); } catch (e) {}
+  let stats;
+  if (prog && prog.success && prog.tabs) {
+    // 서버가 진행중 과제 전부를 한 번에 세어 줘요(명단 없는 과제도 과제 대상 수로)
+    stats = open.map(function (t) { const p = prog.tabs[t.sheetName] || {}; return { name: t.sheetName, total: p.total || 0, done: p.done || 0, flagged: p.flagged || 0, needFlag: p.flagged === undefined }; });
+  } else {
+    // 아주 예전 서버: 과제마다 묻되, 한꺼번에
+    stats = await Promise.all(open.slice(0, 6).map(async function (t) {
+      let total = 0, done = 0, flagged = 0;
+      try {
+        const rr = await Promise.all([api('getRoster', { tabName: t.sheetName }), api('getSubmissions', { tabName: t.sheetName })]);
+        total = (rr[0].entries || []).length; done = (rr[1].rows || []).length;
+        const tr = rr[1].traces || {}, min = rr[1].antiPasteMin || 20;
+        Object.keys(tr).forEach(function (k) { if (tr[k].pasteTries > 0 || tr[k].maxChunk >= min) flagged++; });
+      } catch (e) {}
+      return { name: t.sheetName, total: total, done: done, flagged: flagged };
+    }));
   }
-  if (!document.getElementById('homeDash')) return;
+  box = document.getElementById('homeDash');
+  if (!box || state.nav !== 'home') return;
+  paintHomeDash_(box, head, st, tabs, open, stats);
+  // 서버가 복붙 의심 수를 아직 안 주면(v71 전) 뒤에서 따로 세어 채워요
+  const need = stats.filter(function (x) { return x.needFlag; });
+  if (need.length) Promise.all(need.map(function (x) {
+    return api('getSubmissions', { tabName: x.name }).then(function (r2) {
+      const tr = (r2 && r2.traces) || {}, min = (r2 && r2.antiPasteMin) || 20; let f = 0;
+      Object.keys(tr).forEach(function (k) { if (tr[k].pasteTries > 0 || tr[k].maxChunk >= min) f++; });
+      x.flagged = f; x.needFlag = false;
+    }).catch(function () {});
+  })).then(function () { const b = document.getElementById('homeDash'); if (b && state.nav === 'home') paintHomeDash_(b, head, st, tabs, open, stats); });
+}
+function paintHomeDash_(box, head, st, tabs, open, stats) {
   const missing = stats.reduce(function (a, x) { return a + Math.max(0, x.total - x.done); }, 0);
   const flaggedAll = stats.reduce(function (a, x) { return a + x.flagged; }, 0);
   const lead = stats.slice().sort(function (a, b) { return (b.total - b.done) - (a.total - a.done); })[0];
@@ -2904,7 +2945,7 @@ async function loadHomeDash_(st) {
     '<div class="kpi"><span>미제출 학생(합계)</span><b>' + missing + '</b>' + (flaggedAll ? '<em class="dn">복붙 의심 ' + flaggedAll + '</em>' : '<em class="up">의심 0</em>') + '</div></div>' +
     (lead ? '<div class="focus" ' + go(lead.name) + '>' + ringSvg_(lead.total ? pct(lead) : (lead.done ? 1 : 0), lead.total ? Math.round(pct(lead) * 100) + '%' : lead.done + '건') +
       '<div><h3>' + escapeHtml(lead.name) + '</h3><p>' + (lead.total
-        ? '제출 ' + lead.done + ' / ' + lead.total + '명<br>미제출 ' + (lead.total - lead.done) + '명 · 알림 켠 기기 ' + st.tokenCount + '대'
+        ? '제출 ' + lead.done + ' / ' + lead.total + '명<br>미제출 ' + (lead.total - lead.done) + '명 · 알림 켠 기기 ' + (st.tokenCount || 0) + '대'
         : '제출 ' + lead.done + '건<br>명단 없는 과제(QR) · 누가 안 냈는지는 셀 수 없어요') + '</p></div></div>' : '') +
     '<div class="hnav">진행 중 과제<span>눌러서 상세 보기</span></div>' +
     (stats.map(function (x) {
@@ -2913,7 +2954,8 @@ async function loadHomeDash_(st) {
         (x.total ? '<span class="tag ' + (p >= 80 ? 'ok' : p >= 40 ? 'wr' : 'no') + '">' + p + '%</span>' : '<span class="tag ok">' + x.done + '건</span>') + '</div>' +
         '<div class="pbar"><i style="width:' + (x.total ? p : (x.done ? 100 : 0)) + '%"></i></div><div class="sub"><span>' + (x.total ? '제출 ' + x.done + ' / ' + x.total : '제출 ' + x.done + '건 · 명단 없는 과제(QR)') + '</span><span>' + (x.flagged ? '복붙 의심 ' + x.flagged + '명' : '') + '</span></div></div>';
     }).join('') || '<p class="hint">진행 중인 과제가 없어요.</p>');
-  box.querySelectorAll('[data-go]').forEach(function (el) { el.onclick = function () { renderDetail(el.getAttribute('data-go')); }; });
+  wireDashGo_();
+  saveDashCache_('body', box.innerHTML.slice(head.length));
 }
 
 // ---------- 명단: 학생명단 시트에서 가져오기 ----------
