@@ -2273,6 +2273,16 @@ function directUpload_(tab, file, onPct) {
   });
 }
 
+// 제출·업로드가 막히면 그 까닭을 서버 _로그에 남겨요(선생님이 무엇이 막혔는지 알 수 있게). 답은 기다리지 않아요.
+function reportFail_(tab, stage, msg, file) {
+  try {
+    if (Number(state.config && state.config.serverVersion) < 69) return;
+    apiOnce_('clientLog', { tab: tab && tab.sheetName, studentId: (state.login && state.login.studentId) || '', stage: stage, msg: String(msg || ''),
+      file: file ? file.name : '', size: file ? file.size : 0, ua: navigator.userAgent }).catch(function () {});
+  } catch (e) {}
+}
+window.addEventListener('error', function (e) { if (state.login) reportFail_(null, '화면 오류', (e && e.message) + ' @' + (e && e.lineno)); });
+window.addEventListener('unhandledrejection', function (e) { if (state.login) reportFail_(null, '화면 오류', String((e && e.reason && (e.reason.stack || e.reason.message)) || (e && e.reason) || '').slice(0, 250)); });
 async function doSubmit(tab, confirmOverwrite) {
   if (state.login && state.login.preview) { return renderCurrentForm(tab, '미리보기 화면이라 제출되지 않아요. 학생 화면도 이렇게 보여요.'); }
   if (isPeek_()) { return renderCurrentForm(tab, '마스터코드로는 둘러볼 수만 있어요. 제출은 학생 본인 코드로 해주세요.'); }
@@ -2312,6 +2322,7 @@ async function doSubmit(tab, confirmOverwrite) {
     try { up = await directUpload_(tab, pf.file, function (pct) { btn.textContent = '올리는 중 ' + label + pct + '% · ' + pf.file.name; }); }
     catch (e) { up = { error: String((e && e.message) || e) }; }
     if (up && up.token) { files.push({ index: pf.idx, name: pf.file.name, uploadToken: up.token }); continue; }
+    reportFail_(tab, up && up.hard ? '업로드 거부' : '바로 올리기 실패', up && up.error, pf.file);
     if (up && up.hard) { btn.disabled = false; btn.textContent = '제출하기'; return renderCurrentForm(tab, up.error); }
     // 예전 방식(서버가 직접 받기) — 25MB/합계 30MB
     if (pf.file.size > 25 * 1024 * 1024) { btn.disabled = false; btn.textContent = '제출하기'; return renderCurrentForm(tab, (up && up.error ? up.error + ' · ' : '') + '큰 파일을 올리지 못했어요. 잠시 뒤 다시 해 주세요. (' + pf.file.name + ' · ' + fileSizeLabel(pf.file.size) + ')'); }
@@ -2349,6 +2360,7 @@ async function doSubmit(tab, confirmOverwrite) {
     state.onApiWait = function (n) { btn.textContent = '제출하는 중… 내는 학생이 많아 잠깐 기다려요' + (n > 2 ? ' (' + n + ')' : ''); };
     try { res = await api('submit', payload); } finally { state.onApiWait = null; }
   } catch (e) {
+    reportFail_(tab, '제출 연결 실패', String((e && e.message) || e), picked[0] && picked[0].file);
     btn.disabled = false; btn.textContent = '제출하기';
     return renderCurrentForm(tab, '서버에 연결할 수 없습니다. 다시 시도해주세요.');
   }
@@ -2360,6 +2372,7 @@ async function doSubmit(tab, confirmOverwrite) {
     return;
   }
   if (!res.success) {
+    reportFail_(tab, '제출 실패', res.message || res.error || '', picked[0] && picked[0].file);
     btn.disabled = false; btn.textContent = '제출하기';
     return renderCurrentForm(tab, res.message || '제출에 실패했습니다.');
   }
