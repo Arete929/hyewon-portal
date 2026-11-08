@@ -3707,13 +3707,13 @@ async function openExport_(tabName) {
   const lab0 = ((tabName.split(' - ')[1] || tabName).trim().split(/\s+/)[0] || '').replace(/[\\/:*?"<>|]/g, '');
   const cands = r.candidates || [];
   let parent = cands[0] ? cands[0].id : (r.base ? r.base.id : '');
-  const chip = function (id, name, sub, path, url) { return '<button type="button" class="exp-chip" data-pid="' + escapeHtml(id) + '"><b>📁 ' + escapeHtml(name) + '</b>' + (sub ? '<small>' + escapeHtml(sub) + '</small>' : '') +
+  const chip = function (id, name, sub, path, url) { return '<button type="button" class="exp-chip" data-pid="' + escapeHtml(id) + '" title="' + escapeHtml((path ? '📍 ' + path : name) + (r.owner ? '\n(' + r.owner + ' 계정 드라이브)' : '')) + '"><b>📁 ' + escapeHtml(name) + '</b>' + (sub ? '<small>' + escapeHtml(sub) + '</small>' : '') +
     (path ? '<small class="exp-path" title="' + escapeHtml(path) + '">📍 ' + escapeHtml(path) + '</small>' : '') + (url ? '<span class="exp-open" role="link" data-url="' + escapeHtml(url) + '">드라이브에서 열기 ↗</span>' : '') + '</button>'; };
   box.innerHTML =
     '<div class="exp-sec"><label>① 넣을 곳 <span class="hint">이 폴더 안에 새 폴더를 만들어요</span></label><div class="exp-chips">' +
       cands.map(function (c) { return chip(c.id, c.name, '', c.path || (c.parent ? c.parent + ' / ' + c.name : ''), c.url); }).join('') +
       (r.base ? chip(r.base.id, r.base.name, '제출 파일 원본 폴더', r.base.path || '', r.base.url) : '') +
-      '<button type="button" class="exp-chip exp-browse" id="expBrowse"><b>📂 다른 폴더 고르기…</b><small>내 드라이브를 둘러봐요</small></button></div>' +
+      '<button type="button" class="exp-chip exp-browse" id="expBrowse" title="학교 계정(' + escapeHtml(r.owner || '') + ') 내 드라이브를 한 단계씩 둘러봐요"><b>📂 다른 폴더 고르기…</b><small>내 드라이브를 둘러봐요</small></button></div>' +
       '<div id="expTree" class="exp-tree" hidden></div>' +
       '<input id="expPid" type="text" placeholder="또는 드라이브 폴더 주소를 붙여넣어요 (학교 계정이 편집할 수 있는 폴더)"></div>' +
     '<div class="exp-sec exp-two"><div><label for="expFolder">② 새 폴더 이름</label><input id="expFolder" type="text" maxlength="60" value="' + escapeHtml(lab0) + '"></div>' +
@@ -3755,7 +3755,7 @@ async function openExport_(tabName) {
         (id !== 'shared' && b.crumbs.length <= 1 ? '<span>·</span><button type="button" data-go="shared">공유 문서함</button>' : '') + '</div>' +
         (b.canPick ? '<button type="button" class="btn btn-sm et-pick" data-pick="' + escapeHtml(b.id) + '" data-nm="' + escapeHtml(cur.name) + '" data-path="' + escapeHtml(b.crumbs.map(function (c) { return c.name; }).join(' / ')) + '">✅ «' + escapeHtml(cur.name) + '»에 넣기</button>' : '') +
         '<button type="button" class="rv-x et-x" aria-label="닫기">✕</button></div>' +
-      '<div class="et-list">' + (b.folders.length ? b.folders.map(function (f) { return '<button type="button" data-go="' + escapeHtml(f.id) + '">📁 ' + escapeHtml(f.name) + '</button>'; }).join('') : '<span class="hint">안에 폴더가 없어요. 위 «넣기»를 누르면 여기에 새 폴더를 만들어요.</span>') + '</div>';
+      '<div class="et-list">' + (b.folders.length ? b.folders.map(function (f) { return '<button type="button" data-go="' + escapeHtml(f.id) + '" title="📍 ' + escapeHtml(b.crumbs.map(function (c) { return c.name; }).concat([f.name]).join(' / ')) + '">📁 ' + escapeHtml(f.name) + '</button>'; }).join('') : '<span class="hint">안에 폴더가 없어요. 위 «넣기»를 누르면 여기에 새 폴더를 만들어요.</span>') + '</div>';
     tree.querySelectorAll('[data-go]').forEach(function (x) { x.onclick = function () { browse(x.getAttribute('data-go')); }; });
     const pk = tree.querySelector('.et-pick');
     if (pk) pk.onclick = function () {
