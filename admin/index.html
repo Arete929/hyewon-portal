@@ -80,6 +80,25 @@
   .subj-pick button.on { background: #0F3B34; border-color: #0F3B34; color: #fff; }
   .subj-hero { display: flex; gap: 12px; align-items: center; }
   .sh-img { flex: none; width: 180px; height: 101px; border-radius: 12px; background: #E8EFEA 34% 22% / cover; box-shadow: inset 0 0 0 1px rgba(0,0,0,.06); }
+  /* 📁 폴더로 모으기 */
+  .exp-bg { position: fixed; inset: 0; z-index: 200; background: rgba(10,20,18,.55); display: grid; place-items: center; padding: 16px; }
+  .exp { background: #fff; border-radius: 20px; width: min(820px, 100%); max-height: 92vh; display: flex; flex-direction: column; box-shadow: 0 20px 60px rgba(0,0,0,.3); }
+  .exp-h { display: flex; align-items: center; padding: 14px 18px; border-bottom: 1px solid #EEF2EF; font-size: 16px; }
+  .exp-b { padding: 14px 18px 18px; overflow: auto; display: flex; flex-direction: column; gap: 16px; }
+  .exp-sec label { display: block; font-weight: 800; font-size: 14px; margin-bottom: 8px; } .exp-sec label .hint { font-weight: 500; margin-left: 6px; }
+  .exp-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+  .exp-chip { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 8px 12px; border-radius: 12px; border: 1.5px solid #E5E9E6; background: #fff; font: inherit; cursor: pointer; text-align: left; }
+  .exp-chip b { font-size: 13.5px; } .exp-chip small { font-size: 11.5px; color: var(--text3); }
+  .exp-chip.on { border-color: #B45309; background: #FFF7ED; box-shadow: 0 0 0 3px rgba(180,83,9,.12); }
+  .exp-two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .exp-rows { display: flex; flex-direction: column; gap: 8px; }
+  .exp-row { display: grid; grid-template-columns: 170px 1fr; gap: 10px; align-items: start; padding: 10px 12px; border: 1px solid #EEF2EF; border-radius: 12px; }
+  .exp-who b { display: block; font-size: 14px; } .exp-who small { font-size: 12px; color: var(--text3); }
+  .exp-in { display: flex; flex-direction: column; gap: 4px; min-width: 0; } .exp-in input { padding: 8px 10px; }
+  .exp-in small { font-size: 11.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .exp-nm { color: #B45309; font-weight: 700; }
+  .exp-foot { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; position: sticky; bottom: -18px; background: #fff; padding: 10px 0 4px; }
+  .exp-foot .btn { width: auto; padding: 12px 20px; }
+  @media (max-width: 640px) { .exp-two, .exp-row { grid-template-columns: 1fr; } }
   /* 🗳 투표 · 학생 화면 미리보기 */
   .vprev-btn { width: 100%; margin-bottom: 10px; border-color: #A78BFA !important; color: #6C4BD8 !important; font-weight: 800; }
   /* 🗳 투표 */
@@ -2501,6 +2520,7 @@ async function renderDetail(tabName, fresh) {
           '<button type="button" class="ms-tg" role="switch" aria-label="제출 방식: 켜면 QR코드" aria-checked="' + (openAcc ? 'true' : 'false') + '" data-oam="flip"><i></i></button>' +
           '<button type="button" class="ms-l" data-oam="qr">📱 QR코드</button></div>' +
         '<button type="button" class="pillbtn" id="previewBtn" style="background:#4B3BB5;border-color:#4B3BB5;color:#fff;">👀 학생 화면 미리보기 ↗</button>' +
+        '<button type="button" class="pillbtn" id="exportBtn" style="background:#B45309;border-color:#B45309;color:#fff;">📁 폴더로 모으기</button>' +
       (tab.meta && tab.meta.shortCode ? '<button type="button" class="pillbtn" id="qrHeadBtn" style="background:#0F766E;border-color:#0F766E;color:#fff;">📱 QR 크게</button>' : '') +
       '</div>' +
       '<div id="tabSaved" class="tab-saved" data-tab="' + escapeHtml(tabName) + '"></div>' +
@@ -2726,6 +2746,7 @@ async function renderDetail(tabName, fresh) {
     }
     renderDetail(tabName);
   };
+  document.getElementById('exportBtn').onclick = function () { openExport_(tabName); };
   document.getElementById('previewBtn').onclick = function () {
     // 학생 화면을 폰 크기 새 창으로 — 대기·마감이어도 보이고 제출은 막혀요
     const url = new URL('../report/', location.href).href + '?tab=' + encodeURIComponent(tabName) + '&preview=1';
@@ -3284,7 +3305,7 @@ function portalStatsHtml_(st) {
     '</div>';
 }
 // 웹 화면이 기대하는 서버 버전 — 서버 배포(GitHub Actions)가 실패해 서버가 뒤처지면 현황 맨 위에 알려요
-const WEB_EXPECTS_SERVER = 76;
+const WEB_EXPECTS_SERVER = 77;
 function serverBehindHtml_(v) {
   v = Number(v) || 0;
   if (!v || v >= WEB_EXPECTS_SERVER) return '';
@@ -3655,6 +3676,73 @@ function vSummary_(students) {
   if (d.type === 'election' && d.candidates.length && d.candidates.length < d.pick) items.push(['w', '후보(' + d.candidates.length + '명)가 고르는 수(' + d.pick + '명)보다 적어요']);
   const err = vValidate_(d); if (err) items.unshift(['w', err]);
   chk.innerHTML = '<div class="vstep" style="font-size:14px;margin-bottom:8px;">✅ 확인</div><ul class="vchk">' + items.map(function (x) { return '<li class="' + x[0] + '">' + escapeHtml(x[1]) + '</li>'; }).join('') + '</ul>';
+}
+
+// ---- 📁 제출 파일을 드라이브 폴더 하나로 모으기: «학번이름_별칭_주제» 이름으로 복사(원본은 그대로) ----
+async function openExport_(tabName) {
+  const el = document.createElement('div'); el.className = 'exp-bg';
+  el.innerHTML = '<div class="exp"><div class="exp-h"><b>📁 제출 파일 폴더로 모으기</b><button type="button" class="rv-x" aria-label="닫기">✕</button></div>' +
+    '<div class="exp-b"><div class="loading" style="padding:30px 0;">제출 파일과 발표자료 첫 장을 읽는 중… <span class="hint">(학생 수에 따라 1분쯤 걸려요)</span></div></div></div>';
+  document.body.appendChild(el);
+  const close = function () { el.remove(); };
+  el.querySelector('.rv-x').onclick = close; el.addEventListener('click', function (e) { if (e.target === el) close(); });
+  let r;
+  try { r = await api('exportPreview', { tabName: tabName }); } catch (e) { r = { success: false, message: '서버와 연결하지 못했어요.' }; }
+  const box = el.querySelector('.exp-b');
+  if (!r || !r.success) { box.innerHTML = '<p class="hint" style="color:#C2410C;">' + escapeHtml((r && (r.message || r.error)) || '불러오지 못했어요.') + '</p>'; return; }
+  const lab0 = ((tabName.split(' - ')[1] || tabName).trim().split(/\s+/)[0] || '').replace(/[\\/:*?"<>|]/g, '');
+  const cands = r.candidates || [];
+  let parent = cands[0] ? cands[0].id : (r.base ? r.base.id : '');
+  const chip = function (id, name, sub) { return '<button type="button" class="exp-chip" data-pid="' + escapeHtml(id) + '"><b>📁 ' + escapeHtml(name) + '</b>' + (sub ? '<small>' + escapeHtml(sub) + '</small>' : '') + '</button>'; };
+  box.innerHTML =
+    '<div class="exp-sec"><label>① 넣을 곳 <span class="hint">이 폴더 안에 새 폴더를 만들어요</span></label><div class="exp-chips">' +
+      cands.map(function (c) { return chip(c.id, c.name, c.parent ? '« ' + c.parent : ''); }).join('') +
+      (r.base ? chip(r.base.id, r.base.name, '제출 파일 원본 폴더') : '') + '</div>' +
+      '<input id="expPid" type="text" placeholder="또는 드라이브 폴더 주소를 붙여넣어요 (학교 계정이 편집할 수 있는 폴더)"></div>' +
+    '<div class="exp-sec exp-two"><div><label for="expFolder">② 새 폴더 이름</label><input id="expFolder" type="text" maxlength="60" value="' + escapeHtml(lab0) + '"></div>' +
+      '<div><label for="expLabel">파일 이름 가운데 말</label><input id="expLabel" type="text" maxlength="30" value="' + escapeHtml(lab0) + '"></div></div>' +
+    '<div class="exp-sec"><label>③ 학생별 주제 <span class="hint">제출 메모의 «주제:»나 발표자료 첫 장 글자로 채웠어요 · 고쳐도 돼요</span></label>' +
+      '<div class="exp-rows">' + r.rows.map(function (x) {
+        const nf = x.files.filter(function (f) { return !f.missing; }).length;
+        return '<div class="exp-row" data-sid="' + escapeHtml(x.id) + '"><div class="exp-who"><b>' + escapeHtml(x.id + ' ' + x.name) + '</b><small>' +
+          (nf ? '파일 ' + nf + '개' : '파일 없음') + (x.links && x.links.length ? ' · 링크 ' + x.links.length + '개(메모 파일로)' : '') + (x.files.some(function (f) { return f.missing; }) ? ' · <span style="color:#C2410C;">못 찾은 파일 있음</span>' : '') + '</small></div>' +
+          '<div class="exp-in"><input type="text" maxlength="40" data-topic value="' + escapeHtml(x.topic || '') + '" placeholder="주제를 적어 주세요">' +
+          (x.firstSlide ? '<small class="hint" title="발표자료 첫 장">첫 장: ' + escapeHtml(x.firstSlide) + '</small>' : '') +
+          '<small class="exp-nm"></small></div></div>';
+      }).join('') + '</div></div>' +
+    '<div class="exp-foot"><button type="button" class="btn" id="expGo" style="background:#B45309;">📁 폴더 만들고 복사하기</button><span class="hint" id="expMsg">원본 파일은 그대로 두고 복사본만 만들어요. 같은 이름 파일이 이미 있으면 건너뛰어요.</span></div>';
+  const safe = function (v) { return String(v || '').replace(/[\\/:*?"<>|\n\r\t]/g, ' ').replace(/\s+/g, ' ').trim(); };
+  const paintNames = function () {
+    const lab = safe(document.getElementById('expLabel').value);
+    box.querySelectorAll('.exp-row').forEach(function (row) {
+      const x = r.rows.find(function (y) { return y.id === row.getAttribute('data-sid'); });
+      const t = safe(row.querySelector('[data-topic]').value);
+      const f = (x.files.find(function (q) { return !q.missing && q.name; }) || {}).name || '';
+      const m = f.match(/\.([A-Za-z0-9]{1,6})$/);
+      row.querySelector('.exp-nm').textContent = '→ ' + safe(x.id + x.name) + (lab ? '_' + lab : '') + (t ? '_' + t : '') + (m ? '.' + m[1].toLowerCase() : (x.links && x.links.length ? '_링크.txt' : ''));
+    });
+  };
+  const pickChip = function (id) { parent = id; box.querySelectorAll('.exp-chip').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-pid') === id); }); };
+  box.querySelectorAll('.exp-chip').forEach(function (b) { b.onclick = function () { document.getElementById('expPid').value = ''; pickChip(b.getAttribute('data-pid')); }; });
+  document.getElementById('expPid').addEventListener('input', function () { if (this.value.trim()) pickChip(''); });
+  pickChip(parent);
+  box.querySelectorAll('[data-topic], #expLabel').forEach(function (i) { i.addEventListener('input', paintNames); });
+  paintNames();
+  document.getElementById('expGo').onclick = async function () {
+    const btn = this, msg = document.getElementById('expMsg');
+    const pid = document.getElementById('expPid').value.trim() || parent;
+    const folderName = safe(document.getElementById('expFolder').value);
+    if (!folderName) { msg.innerHTML = '<span style="color:#C2410C;">새 폴더 이름을 적어 주세요.</span>'; return; }
+    const topics = {}; box.querySelectorAll('.exp-row').forEach(function (row) { topics[row.getAttribute('data-sid')] = row.querySelector('[data-topic]').value; });
+    btn.disabled = true; btn.textContent = '복사하는 중…'; msg.textContent = '파일이 많으면 1~2분 걸려요. 창을 닫지 말아 주세요.';
+    let res;
+    try { res = await api('exportFiles', { tabName: tabName, parentId: pid, folderName: folderName, label: document.getElementById('expLabel').value, topics: topics }); } catch (e) { res = { success: false, message: '서버와 연결하지 못했어요. 다시 누르면 이어서 해요(이미 복사한 파일은 건너뛰어요).' }; }
+    btn.disabled = false; btn.textContent = '📁 다시 복사하기 (빠진 것만)';
+    if (!res || !res.success) { msg.innerHTML = '<span style="color:#C2410C;">' + escapeHtml((res && (res.message || res.error)) || '실패했어요.') + '</span>'; return; }
+    msg.innerHTML = '✅ <b>' + res.copied + '개</b> 복사' + (res.skipped ? ' · ' + res.skipped + '개는 이미 있어서 건너뜀' : '') +
+      ' · <a href="' + escapeHtml(res.folder.url) + '" target="_blank" rel="noopener">«' + escapeHtml(res.folder.path || res.folder.name) + '» 열기 ↗</a>' +
+      (res.failed && res.failed.length ? '<br><span style="color:#C2410C;">못 한 것: ' + res.failed.map(escapeHtml).join(' / ') + '</span>' : '');
+  };
 }
 
 // ---- 👀 학생 화면 미리보기: 새 창(끌어서 옮기고 크기도 바꿀 수 있어요)에 학생 화면을 띄워요 ----
