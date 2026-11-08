@@ -3733,13 +3733,14 @@ async function openExport_(tabName) {
   if (!r || !r.success) { box.innerHTML = '<p class="hint" style="color:#C2410C;">' + escapeHtml((r && (r.message || r.error)) || '불러오지 못했어요.') + '</p>'; return; }
   const lab0 = ((tabName.split(' - ')[1] || tabName).trim().split(/\s+/)[0] || '').replace(/[\\/:*?"<>|]/g, '');
   const cands = r.candidates || [];
-  let parent = cands[0] ? cands[0].id : (r.base ? r.base.id : '');
+  let parent = '';   // 미리 고르지 않아요 — 원본 폴더 안에 잘못 만들어지는 일이 없게
   const chip = function (id, name, sub, path, url) { return '<button type="button" class="exp-chip" data-pid="' + escapeHtml(id) + '" title="' + escapeHtml((path ? '📍 ' + path : name) + (r.owner ? '\n(' + r.owner + ' 계정 드라이브)' : '')) + '"><b>📁 ' + escapeHtml(name) + '</b>' + (sub ? '<small>' + escapeHtml(sub) + '</small>' : '') +
     (path ? '<small class="exp-path" title="' + escapeHtml(path) + '">📍 ' + escapeHtml(path) + '</small>' : '') + (url ? '<span class="exp-open" role="link" data-url="' + escapeHtml(url) + '">드라이브에서 열기 ↗</span>' : '') + '</button>'; };
   box.innerHTML =
     '<div class="exp-sec"><label>① 넣을 곳 <span class="hint">이 폴더 안에 새 폴더를 만들어요</span></label><div class="exp-chips">' +
       cands.map(function (c) { return chip(c.id, c.name, '', c.path || (c.parent ? c.parent + ' / ' + c.name : ''), c.url); }).join('') +
-      (r.base ? chip(r.base.id, r.base.name, '제출 파일 원본 폴더', r.base.path || '', r.base.url) : '') +
+      chip('root', '내 드라이브', '맨 위 — «' + (r.owner || '학교 계정') + '»', '내 드라이브', 'https://drive.google.com/drive/my-drive') +
+      (r.base ? chip(r.base.id, r.base.name, '⚠️ 원본 파일 폴더 — 이 안에 만들어져요', r.base.path || '', r.base.url) : '') +
       '<button type="button" class="exp-chip exp-browse" id="expBrowse" title="학교 계정(' + escapeHtml(r.owner || '') + ') 내 드라이브를 한 단계씩 둘러봐요"><b>📂 다른 폴더 고르기…</b><small>내 드라이브를 둘러봐요</small></button></div>' +
       '<div id="expTree" class="exp-tree" hidden></div>' +
       '<input id="expPid" type="text" placeholder="폴더 주소 — 붙여넣거나, 위에서 고르면 여기에 채워져요"><div class="hint exp-pidmsg" id="expPidMsg"></div></div>' +
