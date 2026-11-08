@@ -100,6 +100,9 @@
   .et-crumbs button.on { color: #B45309; background: #FFEDD5; } .et-crumbs span { color: var(--text3); }
   .et-pick { width: auto !important; background: #B45309 !important; padding: 7px 12px !important; font-size: 13px !important; }
   .et-x { width: 30px; height: 30px; margin-left: 0; }
+  .et-mk { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; } .et-mk input { flex: 1; padding: 8px 10px; } .et-mk .btn { width: auto; background: #B45309; padding: 8px 14px; }
+  .et-new { width: auto !important; padding: 6px 10px !important; font-size: 12.5px !important; }
+  .exp-pidmsg { margin-top: 6px; font-size: 12.5px; }
   .et-list { display: flex; flex-wrap: wrap; gap: 6px; max-height: 210px; overflow: auto; }
   .et-list button { border: 1px solid #EADBC8; background: #fff; border-radius: 10px; padding: 7px 11px; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; text-align: left; }
   .et-list button:hover { border-color: #B45309; }
@@ -3715,7 +3718,7 @@ async function openExport_(tabName) {
       (r.base ? chip(r.base.id, r.base.name, '제출 파일 원본 폴더', r.base.path || '', r.base.url) : '') +
       '<button type="button" class="exp-chip exp-browse" id="expBrowse" title="학교 계정(' + escapeHtml(r.owner || '') + ') 내 드라이브를 한 단계씩 둘러봐요"><b>📂 다른 폴더 고르기…</b><small>내 드라이브를 둘러봐요</small></button></div>' +
       '<div id="expTree" class="exp-tree" hidden></div>' +
-      '<input id="expPid" type="text" placeholder="또는 드라이브 폴더 주소를 붙여넣어요 (학교 계정이 편집할 수 있는 폴더)"></div>' +
+      '<input id="expPid" type="text" placeholder="폴더 주소 — 붙여넣거나, 위에서 고르면 여기에 채워져요"><div class="hint exp-pidmsg" id="expPidMsg"></div></div>' +
     '<div class="exp-sec exp-two"><div><label for="expFolder">② 새 폴더 이름</label><input id="expFolder" type="text" maxlength="60" value="' + escapeHtml(lab0) + '"></div>' +
       '<div><label for="expLabel">파일 이름 가운데 말</label><input id="expLabel" type="text" maxlength="30" value="' + escapeHtml(lab0) + '"></div></div>' +
     '<div class="exp-sec"><label>③ 학생별 주제 <span class="hint">제출 메모의 «주제:»나 발표자료 첫 장 글자로 채웠어요 · 고쳐도 돼요</span></label>' +
@@ -3727,7 +3730,7 @@ async function openExport_(tabName) {
           (x.firstSlide ? '<small class="hint" title="발표자료 첫 장">첫 장: ' + escapeHtml(x.firstSlide) + '</small>' : '') +
           '<small class="exp-nm"></small></div></div>';
       }).join('') + '</div></div>' +
-    '<div class="exp-foot"><button type="button" class="btn" id="expGo" style="background:#B45309;">📁 폴더 만들고 복사하기</button><span class="hint" id="expMsg">원본 파일은 그대로 두고 복사본만 만들어요. 같은 이름 파일이 이미 있으면 건너뛰어요.</span></div>';
+    '<div class="exp-foot"><button type="button" class="btn" id="expGo" style="background:#B45309;">📁 폴더 만들고 복사하기</button><span class="hint" id="expMsg">원본은 그대로 두고 복사본만 만들어요. 다시 모으면 바뀐 것만 반영해요 — 다시 낸 파일은 새로 복사하고 옛 복사본은 «이전 제출» 폴더로 옮겨요(지우지 않아요).</span></div>';
   const safe = function (v) { return String(v || '').replace(/[\\/:*?"<>|\n\r\t]/g, ' ').replace(/\s+/g, ' ').trim(); };
   const paintNames = function () {
     const lab = safe(document.getElementById('expLabel').value);
@@ -3740,8 +3743,19 @@ async function openExport_(tabName) {
     });
   };
   const pickChip = function (id) { parent = id; box.querySelectorAll('.exp-chip').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-pid') === id); }); };
+  const setAddr = function (url, note) { const i = document.getElementById('expPid'); i.value = url || ''; i.dataset.ok = url ? '1' : ''; const n = document.getElementById('expPidMsg'); if (n) n.innerHTML = note || ''; };
+  const useFolder = function (pid, nm, path, url) {
+    let c = box.querySelector('.exp-chip[data-pid="' + pid + '"]');
+    if (!c) {
+      const wrap = document.createElement('div'); wrap.innerHTML = chip(pid, nm, '고른 폴더', path, url || 'https://drive.google.com/drive/folders/' + pid); c = wrap.firstChild;
+      box.querySelector('.exp-chips').insertBefore(c, document.getElementById('expBrowse'));
+      c.onclick = function () { setAddr(c.querySelector('.exp-open') ? c.querySelector('.exp-open').getAttribute('data-url') : ''); pickChip(pid); };
+    }
+    setAddr(url || 'https://drive.google.com/drive/folders/' + pid, '✅ «' + escapeHtml(path || nm) + '»에 넣어요');
+    pickChip(pid);
+  };
   box.addEventListener('click', function (e) { const o = e.target.closest('.exp-open'); if (o) { e.stopPropagation(); e.preventDefault(); window.open(o.getAttribute('data-url'), '_blank', 'noopener'); } }, true);
-  box.querySelectorAll('.exp-chip[data-pid]').forEach(function (b) { b.onclick = function () { document.getElementById('expPid').value = ''; pickChip(b.getAttribute('data-pid')); }; });
+  box.querySelectorAll('.exp-chip[data-pid]').forEach(function (b) { b.onclick = function () { const o = b.querySelector('.exp-open'); setAddr(o ? o.getAttribute('data-url') : ''); pickChip(b.getAttribute('data-pid')); }; });
   // 📂 폴더 둘러보기: 한 단계씩 들어가서 «이 폴더에 넣기»
   const tree = document.getElementById('expTree');
   const browse = async function (id) {
@@ -3754,39 +3768,59 @@ async function openExport_(tabName) {
         b.crumbs.map(function (c, i) { return (i ? '<span>›</span>' : '') + '<button type="button" data-go="' + escapeHtml(c.id) + '"' + (i === b.crumbs.length - 1 ? ' class="on"' : '') + '>' + escapeHtml(c.name) + '</button>'; }).join('') +
         (id !== 'shared' && b.crumbs.length <= 1 ? '<span>·</span><button type="button" data-go="shared">공유 문서함</button>' : '') + '</div>' +
         (b.canPick ? '<button type="button" class="btn btn-sm et-pick" data-pick="' + escapeHtml(b.id) + '" data-nm="' + escapeHtml(cur.name) + '" data-path="' + escapeHtml(b.crumbs.map(function (c) { return c.name; }).join(' / ')) + '">✅ «' + escapeHtml(cur.name) + '»에 넣기</button>' : '') +
+        (b.canPick ? '<button type="button" class="btn-outline btn-sm et-new">➕ 새 폴더</button>' : '') +
         '<button type="button" class="rv-x et-x" aria-label="닫기">✕</button></div>' +
-      '<div class="et-list">' + (b.folders.length ? b.folders.map(function (f) { return '<button type="button" data-go="' + escapeHtml(f.id) + '" title="📍 ' + escapeHtml(b.crumbs.map(function (c) { return c.name; }).concat([f.name]).join(' / ')) + '">📁 ' + escapeHtml(f.name) + '</button>'; }).join('') : '<span class="hint">안에 폴더가 없어요. 위 «넣기»를 누르면 여기에 새 폴더를 만들어요.</span>') + '</div>';
+      '<div class="et-mk" hidden><input type="text" maxlength="60" placeholder="새 폴더 이름 (예: 2026 전환기)"><button type="button" class="btn btn-sm">만들기</button><span class="hint"></span></div>' +
+      '<div class="et-list">' + (b.folders.length ? b.folders.map(function (f) { return '<button type="button" data-go="' + escapeHtml(f.id) + '" title="📍 ' + escapeHtml(b.crumbs.map(function (c) { return c.name; }).concat([f.name]).join(' / ')) + '">📁 ' + escapeHtml(f.name) + '</button>'; }).join('') : '<span class="hint">안에 폴더가 없어요. «넣기»를 누르면 여기에 «' + escapeHtml(document.getElementById('expFolder').value || '새') + '» 폴더를 만들어 넣어요.</span>') + '</div>';
     tree.querySelectorAll('[data-go]').forEach(function (x) { x.onclick = function () { browse(x.getAttribute('data-go')); }; });
     const pk = tree.querySelector('.et-pick');
-    if (pk) pk.onclick = function () {
-      const pid = pk.getAttribute('data-pick'), nm = pk.getAttribute('data-nm');
-      let c = box.querySelector('.exp-chip[data-pid="' + pid + '"]');
-      if (!c) {
-        const wrap = document.createElement('div'); wrap.innerHTML = chip(pid, nm, '고른 폴더', pk.getAttribute('data-path'), 'https://drive.google.com/drive/folders/' + pid); c = wrap.firstChild;
-        box.querySelector('.exp-chips').insertBefore(c, document.getElementById('expBrowse'));
-        c.onclick = function () { document.getElementById('expPid').value = ''; pickChip(pid); };
-      }
-      document.getElementById('expPid').value = ''; pickChip(pid); tree.hidden = true;
-    };
+    if (pk) pk.onclick = function () { useFolder(pk.getAttribute('data-pick'), pk.getAttribute('data-nm'), pk.getAttribute('data-path'), b.url); tree.hidden = true; };
+    const nb = tree.querySelector('.et-new'), mk = tree.querySelector('.et-mk');
+    if (nb) nb.onclick = function () { mk.hidden = false; mk.querySelector('input').focus(); };
+    if (mk) {
+      const go = async function () {
+        const nmv = mk.querySelector('input').value.trim(), h = mk.querySelector('.hint');
+        if (!nmv) { h.textContent = '이름을 적어 주세요.'; return; }
+        h.textContent = '만드는 중…';
+        let m; try { m = await api('makeFolder', { parentId: b.id, name: nmv }); } catch (e) { m = { success: false, message: '서버와 연결하지 못했어요.' }; }
+        if (!m || !m.success) { h.innerHTML = '<span style="color:#C2410C;">' + escapeHtml((m && (m.message || m.error)) || '만들지 못했어요.') + '</span>'; return; }
+        browse(m.id);
+      };
+      mk.querySelector('button').onclick = go;
+      mk.querySelector('input').addEventListener('keydown', function (e) { if (e.key === 'Enter') go(); });
+    }
     tree.querySelector('.et-x').onclick = function () { tree.hidden = true; };
   };
   document.getElementById('expBrowse').onclick = function () { browse('root'); };
-  document.getElementById('expPid').addEventListener('input', function () { if (this.value.trim()) pickChip(''); });
+  let pidTimer = 0;
+  const resolveAddr = async function () {
+    const i = document.getElementById('expPid'), v = i.value.trim(), n = document.getElementById('expPidMsg');
+    if (!v || i.dataset.ok === '1') return;
+    if (!/[-\w]{25,}/.test(v)) { n.innerHTML = '<span style="color:#C2410C;">드라이브 폴더 주소가 아니에요. 폴더를 열고 주소창의 주소를 붙여넣어 주세요.</span>'; pickChip(''); return; }
+    n.textContent = '폴더를 찾는 중…';
+    let b; try { b = await api('browseFolders', { id: v }); } catch (e) { b = null; }
+    if (i.value.trim() !== v) return;
+    if (!b || !b.success || !b.canPick) { n.innerHTML = '<span style="color:#C2410C;">이 폴더를 열 수 없어요. 학교 계정(' + escapeHtml(r.owner || '') + ')이 편집할 수 있는 폴더인지 확인해 주세요.</span>'; pickChip(''); return; }
+    useFolder(b.id, b.name || (b.crumbs[b.crumbs.length - 1] || {}).name || '폴더', b.crumbs.map(function (c) { return c.name; }).join(' / '), b.url);
+  };
+  document.getElementById('expPid').addEventListener('input', function () { this.dataset.ok = ''; pickChip(''); clearTimeout(pidTimer); pidTimer = setTimeout(resolveAddr, 500); });
+  document.getElementById('expPid').addEventListener('paste', function () { clearTimeout(pidTimer); pidTimer = setTimeout(resolveAddr, 50); });
   pickChip(parent);
   box.querySelectorAll('[data-topic], #expLabel').forEach(function (i) { i.addEventListener('input', paintNames); });
   paintNames();
   document.getElementById('expGo').onclick = async function () {
     const btn = this, msg = document.getElementById('expMsg');
-    const pid = document.getElementById('expPid').value.trim() || parent;
+    const pid = parent || document.getElementById('expPid').value.trim();
+    if (!pid) { msg.innerHTML = '<span style="color:#C2410C;">넣을 폴더를 골라 주세요.</span>'; return; }
     const folderName = safe(document.getElementById('expFolder').value);
     if (!folderName) { msg.innerHTML = '<span style="color:#C2410C;">새 폴더 이름을 적어 주세요.</span>'; return; }
     const topics = {}; box.querySelectorAll('.exp-row').forEach(function (row) { topics[row.getAttribute('data-sid')] = row.querySelector('[data-topic]').value; });
     btn.disabled = true; btn.textContent = '복사하는 중…'; msg.textContent = '파일이 많으면 1~2분 걸려요. 창을 닫지 말아 주세요.';
     let res;
     try { res = await api('exportFiles', { tabName: tabName, parentId: pid, folderName: folderName, label: document.getElementById('expLabel').value, topics: topics }); } catch (e) { res = { success: false, message: '서버와 연결하지 못했어요. 다시 누르면 이어서 해요(이미 복사한 파일은 건너뛰어요).' }; }
-    btn.disabled = false; btn.textContent = '📁 다시 복사하기 (빠진 것만)';
+    btn.disabled = false; btn.textContent = '📁 다시 모으기 (바뀐 것만)';
     if (!res || !res.success) { msg.innerHTML = '<span style="color:#C2410C;">' + escapeHtml((res && (res.message || res.error)) || '실패했어요.') + '</span>'; return; }
-    msg.innerHTML = '✅ <b>' + res.copied + '개</b> 복사' + (res.skipped ? ' · ' + res.skipped + '개는 이미 있어서 건너뜀' : '') +
+    msg.innerHTML = '✅ 새로 <b>' + res.copied + '개</b>' + (res.renamed ? ' · 이름 고침 ' + res.renamed : '') + (res.kept ? ' · 그대로 ' + res.kept : '') + (res.archived ? ' · 옛 파일 ' + res.archived + '개는 «이전 제출» 폴더로' : '') +
       ' · <a href="' + escapeHtml(res.folder.url) + '" target="_blank" rel="noopener">«' + escapeHtml(res.folder.path || res.folder.name) + '» 열기 ↗</a>' +
       (res.failed && res.failed.length ? '<br><span style="color:#C2410C;">못 한 것: ' + res.failed.map(escapeHtml).join(' / ') + '</span>' : '');
   };
