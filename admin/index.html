@@ -89,6 +89,17 @@
   .exp-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
   .exp-chip { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 8px 12px; border-radius: 12px; border: 1.5px solid #E5E9E6; background: #fff; font: inherit; cursor: pointer; text-align: left; }
   .exp-chip b { font-size: 13.5px; } .exp-chip small { font-size: 11.5px; color: var(--text3); }
+  .exp-browse { border-style: dashed; background: #FFFBF5; }
+  .exp-tree { border: 1.5px solid #F3D3AE; background: #FFFBF5; border-radius: 14px; padding: 10px 12px; margin-bottom: 8px; }
+  .et-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+  .et-crumbs { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; flex: 1; min-width: 0; font-size: 13px; }
+  .et-crumbs button { border: 0; background: none; font: inherit; font-weight: 700; color: var(--text2); cursor: pointer; padding: 3px 6px; border-radius: 8px; }
+  .et-crumbs button.on { color: #B45309; background: #FFEDD5; } .et-crumbs span { color: var(--text3); }
+  .et-pick { width: auto !important; background: #B45309 !important; padding: 7px 12px !important; font-size: 13px !important; }
+  .et-x { width: 30px; height: 30px; margin-left: 0; }
+  .et-list { display: flex; flex-wrap: wrap; gap: 6px; max-height: 210px; overflow: auto; }
+  .et-list button { border: 1px solid #EADBC8; background: #fff; border-radius: 10px; padding: 7px 11px; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; text-align: left; }
+  .et-list button:hover { border-color: #B45309; }
   .exp-chip.on { border-color: #B45309; background: #FFF7ED; box-shadow: 0 0 0 3px rgba(180,83,9,.12); }
   .exp-two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
   .exp-rows { display: flex; flex-direction: column; gap: 8px; }
@@ -3697,7 +3708,9 @@ async function openExport_(tabName) {
   box.innerHTML =
     '<div class="exp-sec"><label>① 넣을 곳 <span class="hint">이 폴더 안에 새 폴더를 만들어요</span></label><div class="exp-chips">' +
       cands.map(function (c) { return chip(c.id, c.name, c.parent ? '« ' + c.parent : ''); }).join('') +
-      (r.base ? chip(r.base.id, r.base.name, '제출 파일 원본 폴더') : '') + '</div>' +
+      (r.base ? chip(r.base.id, r.base.name, '제출 파일 원본 폴더') : '') +
+      '<button type="button" class="exp-chip exp-browse" id="expBrowse"><b>📂 다른 폴더 고르기…</b><small>내 드라이브를 둘러봐요</small></button></div>' +
+      '<div id="expTree" class="exp-tree" hidden></div>' +
       '<input id="expPid" type="text" placeholder="또는 드라이브 폴더 주소를 붙여넣어요 (학교 계정이 편집할 수 있는 폴더)"></div>' +
     '<div class="exp-sec exp-two"><div><label for="expFolder">② 새 폴더 이름</label><input id="expFolder" type="text" maxlength="60" value="' + escapeHtml(lab0) + '"></div>' +
       '<div><label for="expLabel">파일 이름 가운데 말</label><input id="expLabel" type="text" maxlength="30" value="' + escapeHtml(lab0) + '"></div></div>' +
@@ -3723,7 +3736,36 @@ async function openExport_(tabName) {
     });
   };
   const pickChip = function (id) { parent = id; box.querySelectorAll('.exp-chip').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-pid') === id); }); };
-  box.querySelectorAll('.exp-chip').forEach(function (b) { b.onclick = function () { document.getElementById('expPid').value = ''; pickChip(b.getAttribute('data-pid')); }; });
+  box.querySelectorAll('.exp-chip[data-pid]').forEach(function (b) { b.onclick = function () { document.getElementById('expPid').value = ''; pickChip(b.getAttribute('data-pid')); }; });
+  // 📂 폴더 둘러보기: 한 단계씩 들어가서 «이 폴더에 넣기»
+  const tree = document.getElementById('expTree');
+  const browse = async function (id) {
+    tree.hidden = false; tree.innerHTML = '<div class="hint" style="padding:10px;">폴더를 여는 중…</div>';
+    let b; try { b = await api('browseFolders', { id: id }); } catch (e) { b = { success: false, message: '서버와 연결하지 못했어요.' }; }
+    if (!b || !b.success) { tree.innerHTML = '<div class="hint" style="padding:10px;color:#C2410C;">' + escapeHtml((b && (b.message || b.error)) || '열지 못했어요.') + '</div>'; return; }
+    const cur = b.crumbs[b.crumbs.length - 1] || { name: '' };
+    tree.innerHTML = '<div class="et-top"><div class="et-crumbs">' +
+        (id === 'shared' ? '<button type="button" data-go="root">내 드라이브</button><span>·</span>' : '') +
+        b.crumbs.map(function (c, i) { return (i ? '<span>›</span>' : '') + '<button type="button" data-go="' + escapeHtml(c.id) + '"' + (i === b.crumbs.length - 1 ? ' class="on"' : '') + '>' + escapeHtml(c.name) + '</button>'; }).join('') +
+        (id !== 'shared' && b.crumbs.length <= 1 ? '<span>·</span><button type="button" data-go="shared">공유 문서함</button>' : '') + '</div>' +
+        (b.canPick ? '<button type="button" class="btn btn-sm et-pick" data-pick="' + escapeHtml(b.id) + '" data-nm="' + escapeHtml(cur.name) + '">✅ «' + escapeHtml(cur.name) + '»에 넣기</button>' : '') +
+        '<button type="button" class="rv-x et-x" aria-label="닫기">✕</button></div>' +
+      '<div class="et-list">' + (b.folders.length ? b.folders.map(function (f) { return '<button type="button" data-go="' + escapeHtml(f.id) + '">📁 ' + escapeHtml(f.name) + '</button>'; }).join('') : '<span class="hint">안에 폴더가 없어요. 위 «넣기»를 누르면 여기에 새 폴더를 만들어요.</span>') + '</div>';
+    tree.querySelectorAll('[data-go]').forEach(function (x) { x.onclick = function () { browse(x.getAttribute('data-go')); }; });
+    const pk = tree.querySelector('.et-pick');
+    if (pk) pk.onclick = function () {
+      const pid = pk.getAttribute('data-pick'), nm = pk.getAttribute('data-nm');
+      let c = box.querySelector('.exp-chip[data-pid="' + pid + '"]');
+      if (!c) {
+        const wrap = document.createElement('div'); wrap.innerHTML = chip(pid, nm, '고른 폴더'); c = wrap.firstChild;
+        box.querySelector('.exp-chips').insertBefore(c, document.getElementById('expBrowse'));
+        c.onclick = function () { document.getElementById('expPid').value = ''; pickChip(pid); };
+      }
+      document.getElementById('expPid').value = ''; pickChip(pid); tree.hidden = true;
+    };
+    tree.querySelector('.et-x').onclick = function () { tree.hidden = true; };
+  };
+  document.getElementById('expBrowse').onclick = function () { browse('root'); };
   document.getElementById('expPid').addEventListener('input', function () { if (this.value.trim()) pickChip(''); });
   pickChip(parent);
   box.querySelectorAll('[data-topic], #expLabel').forEach(function (i) { i.addEventListener('input', paintNames); });
