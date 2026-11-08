@@ -23,9 +23,9 @@
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--text); font-family: 'Noto Sans KR', sans-serif; }
   .serif { font-family: 'Gugi', 'Noto Sans KR', sans-serif; font-weight: 400; letter-spacing: .01em; }
-  #app { min-height: 100vh; }
-  .shell { display: flex; min-height: 100vh; }
-  .side { width: 232px; flex-shrink: 0; background: linear-gradient(180deg, #0F3B34 0%, #0B2C27 100%); color: #CFE3DC; padding: 0 14px 18px; display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+  #app { min-height: calc(100vh / var(--uiz, 1)); }
+  .shell { display: flex; min-height: calc(100vh / var(--uiz, 1)); }
+  .side { width: 232px; flex-shrink: 0; background: linear-gradient(180deg, #0F3B34 0%, #0B2C27 100%); color: #CFE3DC; padding: 0 14px 18px; display: flex; flex-direction: column; position: sticky; top: 0; height: calc(100vh / var(--uiz, 1)); overflow-y: auto; }
   .side .photo { position: relative; height: 170px; margin: 0 -14px; flex: none; background: var(--hero, url(../assets/login-bg.webp)) 34% 22% / cover; }
   .side .photo:after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(15,59,52,0) 30%, rgba(15,59,52,.75) 72%, #0F3B34 100%); }
   .side .brandbox { position: relative; z-index: 1; display: flex; align-items: center; gap: 10px; margin: -44px 4px 18px; }
@@ -81,6 +81,10 @@
   .subj-hero { display: flex; gap: 12px; align-items: center; }
   .sh-img { flex: none; width: 180px; height: 101px; border-radius: 12px; background: #E8EFEA 34% 22% / cover; box-shadow: inset 0 0 0 1px rgba(0,0,0,.06); }
   /* 📁 폴더로 모으기 */
+  .uiz-pick { display: flex; gap: 8px; flex-wrap: wrap; }
+  .uiz-pick button { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 88px; padding: 10px 14px; border-radius: 14px; border: 1.5px solid #DCE6E0; background: #fff; font: inherit; font-weight: 800; color: #3B4A46; cursor: pointer; }
+  .uiz-pick button small { font-weight: 600; font-size: 11.5px; color: var(--text3); }
+  .uiz-pick button.on { border-color: #0F3B34; background: #0F3B34; color: #fff; } .uiz-pick button.on small { color: #BFE3D8; }
   .exp-bg { position: fixed; inset: 0; z-index: 200; background: rgba(10,20,18,.55); display: grid; place-items: center; padding: 16px; }
   .exp { background: #fff; border-radius: 20px; width: min(820px, 100%); max-height: 92vh; display: flex; flex-direction: column; box-shadow: 0 20px 60px rgba(0,0,0,.3); }
   .exp-h { display: flex; align-items: center; padding: 14px 18px; border-bottom: 1px solid #EEF2EF; font-size: 16px; }
@@ -1259,6 +1263,26 @@ function taskMetaHtml_() {
 }
 
 // ---------- 부팅 ----------
+
+// 🔠 관리자 화면 글자 크기: 넓은 화면은 기본 90%, 휴대폰은 100%. 설정 → 기본에서 바꿔요(이 기기에만 저장).
+const UIZ_KEY = 'hyewon_admin_uiz';
+function uiZoom_() {
+  let v = NaN; try { v = parseFloat(localStorage.getItem(UIZ_KEY)); } catch (e) {}
+  return (v >= 0.7 && v <= 1.3) ? v : (window.innerWidth >= 900 ? 0.9 : 1);
+}
+function applyUiZoom_(v) {
+  if (v == null) v = uiZoom_();
+  document.documentElement.style.zoom = v === 1 ? '' : String(v);
+  document.documentElement.style.setProperty('--uiz', String(v));
+}
+applyUiZoom_();
+document.addEventListener('click', function (e) {
+  const b = e.target.closest && e.target.closest('[data-uiz]'); if (!b) return;
+  const v = parseFloat(b.getAttribute('data-uiz'));
+  try { localStorage.setItem(UIZ_KEY, String(v)); } catch (err) {}
+  applyUiZoom_(v);
+  document.querySelectorAll('[data-uiz]').forEach(function (x) { x.classList.toggle('on', x === b); });
+});
 
 async function boot() {
   const override = qs('exec');
@@ -5326,7 +5350,7 @@ async function loadSheetsBox_() {
 // ---------- 설정 화면 묶기 (위쪽 탭 버튼) ----------
 // 카드 제목(h2)으로 무리를 나눠요. 새 카드는 제목 낱말만 아래에 더하면 돼요(맞는 게 없으면 «기타»).
 const SETTING_GROUPS = [
-  ['basic', '👤 기본', '교사 정보 · 비밀번호 · 학생 접속 · 테스트 계정', ['교사 정보', '비밀번호', '마스터코드', '학생 접속 주소', '테스트 계정']],
+  ['basic', '👤 기본', '교사 정보 · 글자 크기 · 비밀번호 · 학생 접속 · 테스트 계정', ['교사 정보', '글자 크기', '비밀번호', '마스터코드', '학생 접속 주소', '테스트 계정']],
   ['task', '📝 과제', '대상 묶음 · 이모지 · 제출 파일 저장 위치·보기 계정', ['대상 묶음', '과제 이모지', '제출 파일 저장 위치', '제출 파일을 볼 수 있는 계정']],
   ['noti', '🔔 알림', '선생님 알림 · 학생 자동 알림', ['선생님 알림', '학생 자동 알림']],
   ['link', '🔗 연결', '시트 · 성적 · Firestore · 썸네일', ['연결된 시트', '성적 조회', 'Firestore', '썸네일']],
@@ -5489,6 +5513,11 @@ async function renderSettings(notice) {
             '<li>Permissions → Repository permissions → <b>Contents: Read and write</b> (나머지는 그대로) → Generate token</li>' +
             '<li>나온 토큰(github_pat_…)을 복사해서 Apps Script 편집기 → 프로젝트 설정 → 스크립트 속성 → <b>GITHUB_TOKEN</b> 으로 넣어요. <span class="hint">채팅이나 다른 곳에는 붙이지 마세요.</span></li>' +
           '</ol>') +
+      '</div>' +
+      '<div class="card">' +
+        '<h2>🔠 화면 글자 크기</h2>' +
+        '<p class="hint" style="margin:0 0 10px;">관리자 화면 전체 크기를 바꿔요. 이 기기에서만 바뀌어요 (학생 화면은 그대로).</p>' +
+        '<div class="uiz-pick">' + [[0.8, '아주 작게'], [0.9, '작게'], [1, '원래대로'], [1.1, '크게']].map(function (z) { return '<button type="button" data-uiz="' + z[0] + '" class="' + (Math.abs(uiZoom_() - z[0]) < 0.001 ? 'on' : '') + '">' + z[1] + '<small>' + Math.round(z[0] * 100) + '%</small></button>'; }).join('') + '</div>' +
       '</div>' +
       '<div class="card">' +
         '<h2>관리자 비밀번호 변경</h2>' +
