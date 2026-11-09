@@ -455,6 +455,8 @@
   .who-chip { display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; max-width: 46vw; padding: 5px 12px 5px 5px; border-radius: 999px; background: rgba(255,255,255,.92); color: #0B3D33; font-size: 13.5px; font-weight: 800; box-shadow: 0 2px 10px rgba(0,0,0,.22); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .who-chip b { background: #087A55; color: #fff; font-size: 12px; font-weight: 800; padding: 3px 8px; border-radius: 999px; letter-spacing: .02em; }
   .appbar .who-chip { margin-left: auto; margin-right: 12px; font-size: 12.5px; padding: 4px 10px 4px 4px; box-shadow: none; }
+  .appbar .icons .who-chip { margin: 0; max-width: 38vw; }   /* 뒤로 가기 머리: 제목 옆, 홈 단추 앞 */
+  .appbar > a#backBtn2 { flex: 1; min-width: 0; }
   html[data-theme="dark"] .who-chip { background: rgba(11,44,39,.88); color: #E6F2EE; } html[data-theme="dark"] .who-chip b { background: #35D3C8; color: #0B2C27; }
   .hh-top .ib.av { overflow: hidden; border: 2px solid #fff; box-shadow: 0 2px 8px rgba(0,0,0,.3); }
   .hh-top .ib.av img { width: 100%; height: 100%; object-fit: cover; display: block; }
@@ -1586,7 +1588,7 @@ function appbarHtml_(title, withBack) {
       '</a>'
     : '<div class="brand"><img src="../assets/logo.png" alt=""><span class="gugi" style="font-size:18px;">혜원포털</span></div>' + whoChipHtml_();
   const right = withBack
-    ? '<a href="#" id="homeBtn2" style="color:#fff;display:flex;" aria-label="오늘의 과제로"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"></path><path d="M5 10v10h14V10"></path></svg></a>'
+    ? whoChipHtml_() + '<a href="#" id="homeBtn2" style="color:#fff;display:flex;" aria-label="오늘의 과제로"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"></path><path d="M5 10v10h14V10"></path></svg></a>'
     : '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>' +
       '<button id="profileBtn2" aria-label="내 정보" style="width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,0.25);overflow:hidden;padding:0;">' +
         (state.myAvatar ? '<img src="' + escapeHtml(state.myAvatar) + '" alt="" style="width:100%;height:100%;object-fit:cover;display:block;">' : '<svg width="14" height="14" viewBox="0 0 24 24" fill="#fff" style="margin:auto;"><circle cx="12" cy="8" r="4"></circle><path d="M4 20c0-4 4-6 8-6s8 2 8 6"></path></svg>') +
@@ -1597,7 +1599,7 @@ function appbarHtml_(title, withBack) {
 // 누가 로그인했는지: 머리 위쪽에 «3205 김수아» (마스터코드·미리보기는 빼요)
 function whoChipHtml_() {
   const L = state.login || {};
-  if (!L.studentId || L.master || L.preview) return '';
+  if (!L.studentId || L.preview) return '';
   return '<span class="who-chip" title="로그인한 학생"><b>' + escapeHtml(L.studentId) + '</b>' + escapeHtml(L.studentName || '') + '</span>';
 }
 // 마스터코드로 들어온 선생님 확인용 둘러보기 — 제출은 막힙니다(서버도 거절).
