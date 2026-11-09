@@ -2133,6 +2133,7 @@ function renderSubmissionStatus(tab, entry) {
   const done = reviewClass_(entry) === 'done';
   const rejected = reviewClass_(entry) === 'rejected';
   const over = deadlineBlocked_(tab);
+  const locked = entry.canResubmit === false;   // 선생님이 «고른 학생만» 다시 받게 해 둔 과제
   const canWithdraw = !done && !over && effStatus_(tab) === 'open' && !isPeek_() && (entry.canWithdraw !== false);
   render(
     appbarHtml_('제출 현황', true) +
@@ -2148,7 +2149,7 @@ function renderSubmissionStatus(tab, entry) {
       (entry.late && entry.late.days ? '<div class="msg warn" style="margin-bottom:12px;">⏰ 기한보다 늦게 냈어요 · <b>' + entry.late.days + '일 초과</b></div>' : '') +
       (done && entry.score ? '<div class="detail-card score-card"><div class="sec-head">🏅 점수</div><div class="score-big">' + escapeHtml(entry.score) +
           (/^\d+(\.\d+)?$/.test(entry.score) ? '<small>' + (entry.scoreMax ? ' / ' + entry.scoreMax + '점' : '점') + '</small>' : '') + '</div></div>' : '') +
-      (rejected ? '<div class="msg error" style="margin-bottom:12px;">선생님이 반려했어요. 아래 피드백을 보고 고쳐서 다시 제출해 주세요.</div>' : '') +
+      (rejected ? '<div class="msg error" style="margin-bottom:12px;">' + (locked ? '선생님이 반려했어요. 아래 피드백을 확인해 주세요.' : '선생님이 반려했어요. 아래 피드백을 보고 고쳐서 다시 제출해 주세요.') + '</div>' : '') +
       (hasFeedback
         ? '<div class="detail-card"><div class="sec-head">' + ic_('chat', 17, 'var(--text2)') + '선생님 피드백</div>' +
             '<div class="feedback-box"><p>' + linkifyHtml_(entry.feedback) + '</p>' + linkCardsHtml_(entry.feedback) + '</div></div>'
@@ -2157,6 +2158,8 @@ function renderSubmissionStatus(tab, entry) {
         ? '<div class="msg" style="margin-bottom:12px;background:var(--hyewon-mint);color:var(--hyewon-emerald);">✅ 선생님 검토가 끝나서 회수·다시 제출은 잠겼어요.</div>'
         : over
         ? '<div class="msg error" style="margin-bottom:12px;">제출 기한이 지나 수정 제출은 할 수 없어요.</div>'
+        : locked
+        ? '<div class="msg" style="margin-bottom:12px;background:var(--surface-2, #F3F6F4);color:var(--text2);">🔒 이 과제는 선생님이 고른 학생만 다시 낼 수 있어요. 고칠 점이 있으면 «💬 선생님께 문의» 단추로 알려 주세요.</div>'
         : '<button class="btn ghost" id="resubmitBtn" style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:12px;">' +
             ic_('refresh', 17, 'var(--hyewon-coral)', 2.4) + '<span>' + btnLabel + '</span>' +
             '<span style="margin-left:auto;display:flex;">' + ic_('chev', 16, 'var(--hyewon-coral)', 2.4) + '</span>' +

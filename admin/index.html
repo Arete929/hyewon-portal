@@ -81,6 +81,16 @@
   .subj-hero { display: flex; gap: 12px; align-items: center; }
   .sh-img { flex: none; width: 180px; height: 101px; border-radius: 12px; background: #E8EFEA 34% 22% / cover; box-shadow: inset 0 0 0 1px rgba(0,0,0,.06); }
   /* 📁 폴더로 모으기 */
+  .rs-mode { display: inline-flex; gap: 3px; padding: 3px; border-radius: 999px; background: #EEF3F0; margin: 4px 0 10px; }
+  .rs-mode button { border: 0; background: transparent; font: inherit; font-weight: 800; font-size: 13px; padding: 7px 14px; border-radius: 999px; color: #3B4A46; cursor: pointer; }
+  .rs-mode button.on { background: #0F3B34; color: #fff; }
+  .rs-tools { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; } .rs-tools .hint { flex: 1; min-width: 160px; }
+  .rs-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+  .rs-chips button { display: inline-flex; align-items: center; gap: 5px; padding: 6px 11px; border-radius: 999px; border: 1.5px solid #DCE6E0; background: #fff; font: inherit; font-size: 13px; color: #3B4A46; cursor: pointer; }
+  .rs-chips button small { font-size: 10.5px; font-weight: 800; color: #BE123C; background: #FFE4E6; padding: 1px 6px; border-radius: 99px; }
+  .rs-chips button small.ok { color: #15803D; background: #DCFCE7; }
+  .rs-chips button.on { border-color: #0F766E; background: #E6F6F1; color: #0B3D33; box-shadow: inset 0 0 0 1px #0F766E; }
+  .rs-chips button.on::before { content: '✓'; font-weight: 900; color: #0F766E; }
   .uiz-pick { display: flex; gap: 8px; flex-wrap: wrap; }
   .uiz-pick button { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 88px; padding: 10px 14px; border-radius: 14px; border: 1.5px solid #DCE6E0; background: #fff; font: inherit; font-weight: 800; color: #3B4A46; cursor: pointer; }
   .uiz-pick button small { font-weight: 600; font-size: 11.5px; color: var(--text3); }
@@ -2600,6 +2610,17 @@ async function renderDetail(tabName, fresh) {
             '<button class="btn-outline btn-sm" id="smSave" type="button">저장</button>' +
             '<span class="hint" id="smMsg">' + (tab.meta && tab.meta.scoreMax ? '제출 현황 타일에 «18/' + tab.meta.scoreMax + '점»처럼 보여요.' : '비워 두면 점수만 보여요(글자 점수도 돼요).') + '</span></div>' +
         '</div>' +
+        (function () {
+          const pick = !!(tab.meta && tab.meta.resubmitPick);
+          return '<div class="card wide tile" style="max-width:720px;" id="rsTile">' +
+            '<div class="tile-head"><span class="tile-label">🔁 다시 제출 받기</span><span class="hint">이미 낸 학생이 고쳐서 다시 낼 수 있는지 (처음 내는 학생은 늘 받아요)</span></div>' +
+            '<div class="rs-mode" id="rsMode"><button type="button" data-rs="all" class="' + (pick ? '' : 'on') + '">모두 받기</button><button type="button" data-rs="pick" class="' + (pick ? 'on' : '') + '">고른 학생만</button></div>' +
+            '<div id="rsPick"' + (pick ? '' : ' hidden') + '>' +
+              '<div class="rs-tools"><span class="hint">눌러서 켠 학생만 다시 낼 수 있어요</span><button type="button" class="btn-outline btn-sm" id="rsRej">반려된 학생 모두</button><button type="button" class="btn-outline btn-sm" id="rsNone">모두 끄기</button></div>' +
+              '<div class="rs-chips" id="rsChips"><span class="hint">낸 학생을 불러오는 중…</span></div></div>' +
+            '<div class="sched-row"><button class="btn btn-sm" id="rsSave" type="button">저장</button><span class="hint" id="rsMsg">' +
+              (pick ? '지금: 고른 학생 <b>' + ((tab.meta.resubmitIds || []).length) + '명</b>만 다시 낼 수 있어요. 나머지는 다시 내기·회수가 잠겨요.' : '지금: 낸 학생 누구나 다시 낼 수 있어요.') + '</span></div></div>';
+        })() +
         '<div class="card wide tile" style="max-width:720px;">' +
           '<div class="tile-head"><span class="tile-label">🎯 대상</span><span class="hint">' + (tg.length ? escapeHtml(targetsLabel_(tg)) : '제한 없음 (전교생)') + '</span>' +
             '<button class="btn-outline btn-sm" id="tgEdit" type="button" style="margin-left:auto;">대상 바꾸기</button></div>' +
@@ -2739,6 +2760,44 @@ async function renderDetail(tabName, fresh) {
     let r; try { r = await api('setLateOk', { tabName: tabName, on: on }); } catch (e) { msg.textContent = '서버에 연결하지 못했어요.'; return; }
     msg.textContent = (r && r.success) ? (on ? '기한 뒤에도 받아요.' : '기한 뒤에는 받지 않아요.') : ((r && r.message) || '저장하지 못했어요. 서버(Code.gs)가 버전 47 이상인지 확인해주세요.');
   };
+  // 🔁 다시 제출 받기 — 낸 학생 칩을 켜고 끄기
+  (function () {
+    let mode = tab.meta && tab.meta.resubmitPick ? 'pick' : 'all';
+    const on = {}; ((tab.meta && tab.meta.resubmitIds) || []).forEach(function (x) { on[String(x)] = 1; });
+    let rows = [];
+    const paint = function () {
+      const box = document.getElementById('rsChips'); if (!box) return;
+      if (!rows.length) { box.innerHTML = '<span class="hint">아직 낸 학생이 없어요.</span>'; return; }
+      box.innerHTML = rows.map(function (r) { return '<button type="button" data-sid="' + escapeHtml(r.id) + '" class="' + (on[r.id] ? 'on' : '') + (r.st === '반려' ? ' rej' : '') + '"><b>' + escapeHtml(r.id) + '</b> ' + escapeHtml(r.name) + (r.st === '반려' ? '<small>반려</small>' : r.st === '검토완료' ? '<small class="ok">완료</small>' : '') + '</button>'; }).join('');
+      box.querySelectorAll('[data-sid]').forEach(function (b) { b.onclick = function () { const k = b.getAttribute('data-sid'); if (on[k]) delete on[k]; else on[k] = 1; b.classList.toggle('on', !!on[k]); }; });
+    };
+    const load = function (res) {
+      if (!res || !res.success) return;
+      const f = res.fields || [], si = f.findIndex(function (x) { return x.type === 'reviewStatus'; });
+      rows = (res.rows || []).map(function (r) { return { id: String(r[0] || ''), name: String(r[1] || ''), st: si >= 0 ? String(r[si] || '') : '' }; }).filter(function (r) { return r.id; });
+      rows.sort(function (a, b) { return a.id.localeCompare(b.id); });
+      paint();
+    };
+    const c = state.subsCache && state.subsCache[tabName];
+    if (c) load(c.res);
+    api('getSubmissions', { tabName: tabName }).then(load).catch(function () {});
+    document.querySelectorAll('#rsMode [data-rs]').forEach(function (b) { b.onclick = function () {
+      mode = b.getAttribute('data-rs');
+      document.querySelectorAll('#rsMode [data-rs]').forEach(function (x) { x.classList.toggle('on', x === b); });
+      document.getElementById('rsPick').hidden = mode !== 'pick';
+    }; });
+    document.getElementById('rsRej').onclick = function () { rows.forEach(function (r) { if (r.st === '반려') on[r.id] = 1; }); paint(); };
+    document.getElementById('rsNone').onclick = function () { Object.keys(on).forEach(function (k) { delete on[k]; }); paint(); };
+    document.getElementById('rsSave').onclick = async function () {
+      const msg = document.getElementById('rsMsg'); msg.textContent = '저장 중…';
+      const ids = Object.keys(on);
+      let r; try { r = await api('setResubmit', { tabName: tabName, pick: mode === 'pick', ids: ids }); } catch (e) { msg.textContent = '서버에 연결하지 못했어요.'; return; }
+      if (!r || !r.success) { msg.textContent = (r && r.message) || '저장하지 못했어요. 서버가 78판 이상인지 확인해 주세요.'; return; }
+      tab.meta = tab.meta || {}; if (r.pick) { tab.meta.resubmitPick = true; tab.meta.resubmitIds = r.ids; } else { delete tab.meta.resubmitPick; delete tab.meta.resubmitIds; }
+      state.configStale = true;
+      msg.innerHTML = r.pick ? '✅ 저장했어요. 고른 <b>' + r.ids.length + '명</b>만 다시 낼 수 있어요. 나머지는 다시 내기·회수가 잠겨요.' : '✅ 저장했어요. 낸 학생 누구나 다시 낼 수 있어요.';
+    };
+  })();
   document.getElementById('smSave').onclick = async function () {
     const msg = document.getElementById('smMsg'); msg.textContent = '저장 중…';
     let r; try { r = await api('setScoreMax', { tabName: tabName, max: document.getElementById('smIn').value.trim() }); } catch (e) { msg.textContent = '서버에 연결하지 못했어요.'; return; }
@@ -3346,7 +3405,7 @@ function portalStatsHtml_(st) {
     '</div>';
 }
 // 웹 화면이 기대하는 서버 버전 — 서버 배포(GitHub Actions)가 실패해 서버가 뒤처지면 현황 맨 위에 알려요
-const WEB_EXPECTS_SERVER = 77;
+const WEB_EXPECTS_SERVER = 78;
 function serverBehindHtml_(v) {
   v = Number(v) || 0;
   if (!v || v >= WEB_EXPECTS_SERVER) return '';
