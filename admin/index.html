@@ -5203,6 +5203,25 @@ async function tGetToken_() {
   await navigator.serviceWorker.ready;
   return firebase.messaging().getToken({ vapidKey: T_VAPID, serviceWorkerRegistration: reg });
 }
+// 관리자 앱을 켜 둔(화면에 떠 있는) 동안 온 알림도 휴대폰 알림으로 띄워요 — 기본으로는 앱이 닫혀 있을 때만 떠요.
+async function tListenForeground_() {
+  try {
+    if (window.__tFg || !('serviceWorker' in navigator) || !window.Notification || Notification.permission !== 'granted') return;
+    let saved = ''; try { saved = localStorage.getItem(T_TOKEN_KEY) || ''; } catch (e) {}
+    if (!saved) return;
+    await tLoadScript_('https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js');
+    await tLoadScript_('https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js');
+    if (!firebase.apps || !firebase.apps.length) firebase.initializeApp(T_FCM);
+    const reg = (await navigator.serviceWorker.getRegistration('./')) || (await navigator.serviceWorker.register('./sw.js'));
+    if (window.__tFg) return; window.__tFg = 1;
+    firebase.messaging().onMessage(function (p) {
+      const n = (p && p.notification) || {};
+      const link = (p && p.fcmOptions && p.fcmOptions.link) || (p && p.data && p.data.link) || '';
+      try { reg.showNotification(n.title || '혜원포털', { body: n.body || '', icon: '../assets/admin-192.png', badge: '../assets/admin-192.png', tag: 'hp-' + Date.now(), data: { link: link } }); } catch (e) {}
+    });
+  } catch (e) {}
+}
+setTimeout(tListenForeground_, 2500);
 function tIsIOS_() { return /iphone|ipad|ipod/i.test(navigator.userAgent); }
 function tStandalone_() { return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true; }
 async function loadTeacherPushBox_() {
@@ -5254,6 +5273,7 @@ async function loadTeacherPushBox_() {
       const res = await api('saveTeacherToken', { pushToken: token, ua: navigator.userAgent });
       if (!res || res.success !== true) throw new Error((res && res.message) || 'save');
       try { localStorage.setItem(T_TOKEN_KEY, token); } catch (e) {}
+      tListenForeground_();
     } catch (e) { alert('알림을 켜지 못했어요. 잠시 후 다시 시도해 주세요. (' + (e.message || e) + ')'); }
     loadTeacherPushBox_();
   };

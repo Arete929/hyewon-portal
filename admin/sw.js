@@ -1,6 +1,6 @@
 /* 혜원포털 관리자 서비스워커 — 홈 화면 설치(PWA) + 선생님 알림(FCM).
    서버(Apps Script)·GitHub 호출은 캐시하지 않고 그대로 통과(다른 주소). 화면 파일은 «네트워크 먼저», 안 되면 저장본. */
-var CACHE = 'admin-shell-v3';
+var CACHE = 'admin-shell-v4';
 var FCM_CONFIG = { apiKey: 'AIzaSyBtpG79Dr6u-pLz3FiwebWf3v8Qq16OXv8', authDomain: 'hyewon-portal.firebaseapp.com', projectId: 'hyewon-portal', storageBucket: 'hyewon-portal.firebasestorage.app', messagingSenderId: '926603414719', appId: '1:926603414719:web:a068b0a313ca0986834a0a' };
 try {
   importScripts('https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js');
@@ -31,5 +31,16 @@ self.addEventListener('fetch', function (e) {
     return res;
   }).catch(function () {
     return caches.match(req).then(function (r) { return r || caches.match('./index.html'); });
+  }));
+});
+
+// 앱을 켜 둔 채 받은 알림(화면에서 띄운 것)을 누르면 그 과제 화면을 열어요. FCM이 직접 띄운 알림은 FCM이 처리해요.
+self.addEventListener('notificationclick', function (e) {
+  var d = e.notification && e.notification.data;
+  if (!d || !d.link || d.FCM_MSG) return;
+  e.notification.close();
+  e.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function (cs) {
+    for (var i = 0; i < cs.length; i++) { if (cs[i].url.indexOf('/admin/') >= 0 && 'focus' in cs[i]) { cs[i].navigate(d.link).catch(function () {}); return cs[i].focus(); } }
+    return self.clients.openWindow(d.link);
   }));
 });
