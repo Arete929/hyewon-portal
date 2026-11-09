@@ -5209,7 +5209,7 @@ async function loadTeacherPushBox_() {
   const box = document.getElementById('tpushBox'); if (!box) return;
   let saved = ''; try { saved = localStorage.getItem(T_TOKEN_KEY) || ''; } catch (e) {}
   let r = null;
-  try { r = await api('getTeacherPush', { token: saved }); } catch (e) {}
+  try { r = await api('getTeacherPush', { pushToken: saved }); } catch (e) {}
   if (!document.getElementById('tpushBox')) return;
   if (!r || r.success !== true) { box.innerHTML = '<span class="hint">서버(Code.gs) 버전 41 이상에서 쓸 수 있어요.</span>'; return; }
   const st = r.settings || {};
@@ -5251,7 +5251,7 @@ async function loadTeacherPushBox_() {
       if (perm !== 'granted') { alert('알림 창에서 «허용»을 눌러야 켜져요.'); loadTeacherPushBox_(); return; }
       const token = await tGetToken_();
       if (!token) throw new Error('no token');
-      const res = await api('saveTeacherToken', { token: token, ua: navigator.userAgent });
+      const res = await api('saveTeacherToken', { pushToken: token, ua: navigator.userAgent });
       if (!res || res.success !== true) throw new Error((res && res.message) || 'save');
       try { localStorage.setItem(T_TOKEN_KEY, token); } catch (e) {}
     } catch (e) { alert('알림을 켜지 못했어요. 잠시 후 다시 시도해 주세요. (' + (e.message || e) + ')'); }
@@ -5260,7 +5260,7 @@ async function loadTeacherPushBox_() {
   const off = document.getElementById('tpOff');
   if (off) off.onclick = async function () {
     if (!confirm('이 기기에서 교사 알림을 끌까요?')) return;
-    try { await api('removeTeacherToken', { token: saved }); } catch (e) {}
+    try { await api('removeTeacherToken', { pushToken: saved }); } catch (e) {}
     try { localStorage.removeItem(T_TOKEN_KEY); } catch (e) {}
     loadTeacherPushBox_();
   };
