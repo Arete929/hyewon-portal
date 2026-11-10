@@ -777,6 +777,20 @@ async function tryAutoLogin(tab, saved) {
   if (!res.success) { clearLogin(); return renderLogin(tab); }
 
   state.login = { studentId: saved.studentId, studentName: res.studentName, code: saved.code, master: !!res.master };
+  openTaskAfterLogin_(tab);
+}
+
+// 과제 링크로 들어와 로그인했을 때: 이미 낸 과제면 «제출 현황»(검토 상태·반려·피드백)부터 보여 줘요. 안 낸 과제면 제출 화면.
+async function openTaskAfterLogin_(tab) {
+  render('<div class="loading">불러오는 중…</div>');
+  let r = null;
+  try { r = await api('getMySubmissions', { studentId: state.login.studentId, code: state.login.code }); } catch (e) {}
+  if (r && r.success) {
+    state.myTabs = r.tabs || [];
+    if (r.avatar) state.myAvatar = r.avatar;
+    const entry = state.myTabs.find(function (x) { return x.sheetName === tab.sheetName; });
+    if (entry && entry.submitted) return renderSubmissionStatus(tab, entry);
+  }
   renderForm(tab);
 }
 
@@ -2430,7 +2444,7 @@ async function doLogin(tab) {
 
   state.login = { studentId: studentId, studentName: res.studentName, code: code, master: !!res.master };
   saveLogin(studentId, code);
-  renderForm(tab);
+  openTaskAfterLogin_(tab);
 }
 
 // ---------- 제출 폼 ----------
